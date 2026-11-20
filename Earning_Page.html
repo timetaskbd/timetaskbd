@@ -1,0 +1,808 @@
+<!doctype html>
+<html class="light" lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <title>Time Task BD - Earning Page</title>
+  <!-- Supabase Client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../supabase-client.js"></script>
+  <script src="../navbar-auth.js"></script>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400;500;600;700&amp;display=swap"
+    rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+    rel="stylesheet" />
+  <script>
+    (async function checkRole() {
+      const _supabase = window.supabaseClient;
+      // Wait for supabase client to be available if loaded async
+      if (!_supabase) return;
+
+      const { data: { session } } = await _supabase.auth.getSession();
+      if (session) {
+        const { data: profile } = await _supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', session.user.id)
+          .single();
+
+        if (profile && profile.role === 'Buyer') {
+          // Redirect buyers to their dashboard
+          window.location.href = '../Buyer Dashboard/Buyer Index.html';
+        }
+      }
+    })();
+  </script>
+</head>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        colors: {
+          primary: "#13ec5b",
+          "background-light": "#f6f8f6",
+          "background-dark": "#102216",
+          "footer-light": "#f0f2f0",
+          "footer-dark": "#1a2e20",
+          "text-main": "#111813",
+          "text-muted": "#61896f",
+        },
+        fontFamily: {
+          display: ["Work Sans"],
+        },
+        borderRadius: {
+          DEFAULT: "0.25rem",
+          lg: "0.5rem",
+          xl: "0.75rem",
+          full: "9999px",
+        },
+      },
+    },
+  };
+</script>
+<style type="text/tailwindcss">
+  body {
+        font-family: "Work Sans", sans-serif;
+      }
+      .material-symbols-outlined {
+        font-variation-settings:
+          "FILL" 0,
+          "wght" 400,
+          "GRAD" 0,
+          "opsz" 24;
+      }
+      .active-nav-link {
+        @apply text-[#0d1b12] dark:text-white font-bold relative;
+      }
+      .active-nav-link::after {
+        content: "";
+        @apply absolute -bottom-[31px] left-0 w-full h-[3px] bg-primary rounded-t-full;
+      }
+      .list-row-hover:hover {
+        box-shadow: 0 4px 12px rgba(19, 236, 91, 0.08);
+        transform: translateY(-1px);
+      }
+      .custom-scrollbar::-webkit-scrollbar {
+        height: 4px;
+        width: 6px;
+      }
+      .custom-scrollbar::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: #e2e8f0;
+        border-radius: 10px;
+      }
+    </style>
+</head>
+
+<body class="bg-background-light dark:bg-background-dark text-[#0d1b12] dark:text-white min-h-screen flex flex-col">
+  <header
+    class="sticky top-0 z-50 w-full bg-white/95 dark:bg-background-dark/95 backdrop-blur-md border-b border-[#e7f3eb] dark:border-white/10">
+    <div class="max-w-[1280px] mx-auto h-20 flex items-center justify-between">
+      <div class="flex items-center shrink-0">
+        <a class="flex items-center gap-2 group" href="#">
+          <div class="size-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
+            <span class="material-symbols-outlined text-2xl">update</span>
+          </div>
+          <span class="text-xl font-bold tracking-tight text-[#0d1b12] dark:text-white ml-1">Time Task <span
+              class="text-primary">BD</span></span>
+        </a>
+      </div>
+      <div class="flex items-center justify-end flex-grow gap-5 ml-auto">
+        <nav class="hidden lg:flex items-center gap-10">
+          <a class="text-sm transition-colors text-[#0d1b12] dark:text-gray-300 font-medium hover:text-primary"
+            href="Home_Page.html">Home</a>
+          <a class="text-sm font-medium hover:text-primary transition-colors text-[#0d1b12] dark:text-gray-300"
+            href="Blog_Page.html">Blog</a>
+          <a class="text-sm font-medium hover:text-primary transition-colors text-[#0d1b12] dark:text-gray-300"
+            href="Video_Gallery_Page.html">Video Gallery
+          </a>
+          <a class="text-sm font-medium hover:text-primary transition-colors text-[#0d1b12] dark:text-gray-300"
+            href="About_Page.html">About Us</a>
+          <a class="text-sm font-medium hover:text-primary transition-colors text-[#0d1b12] dark:text-gray-300"
+            href="Contact_Page.html">Contact Us</a>
+          <a class="text-sm active-nav-link transition-colors" href="Earning_Page.html">Earning Page</a>
+        </nav>
+        <div class="flex items-center gap-3">
+          <button
+            class="p-2.5 rounded-lg hover:bg-[#e7f3eb] dark:hover:bg-white/10 transition-colors text-[#0d1b12] dark:text-white flex items-center justify-center">
+            <span class="material-symbols-outlined text-[22px]">dark_mode</span>
+          </button>
+          <div class="h-8 w-[1px] bg-[#e7f3eb] dark:bg-white/10 mx-1"></div>
+          <button onclick="window.location.href = 'Login_Page.html'"
+            class="px-4 h-10 text-sm font-bold text-[#0d1b12] dark:text-white hover:text-primary transition-colors">
+            Login
+          </button>
+          <button onclick="window.location.href = 'Register_Page.html'"
+            class="bg-primary hover:bg-[#11d853] text-black px-6 h-10 rounded-lg text-sm font-bold tracking-wide transition-all shadow-sm">
+            Register
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+  <main class="max-w-[1280px] mx-auto px-6 py-10">
+    <div class="mb-10">
+      <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
+        <div>
+          <h2 class="text-text-main dark:text-white text-3xl font-extrabold tracking-tight">
+            Marketplace: Live Earning Tasks
+          </h2>
+          <p class="text-text-muted mt-2 text-base font-medium">
+            Browse active orders, copy Order IDs, and start earning instantly.
+          </p>
+        </div>
+        <div class="flex items-center gap-3" id="sort-buttons">
+          <button data-sort="rate_per_unit-asc"
+            class="px-4 py-2 bg-white dark:bg-[#152a1c] text-text-muted text-xs font-bold hover:bg-gray-50 dark:hover:bg-[#1a3322] rounded-lg transition-colors border border-[#f0f4f2] dark:border-[#1d2d21]">
+            Low Payout
+          </button>
+          <button data-sort="rate_per_unit-desc"
+            class="px-4 py-2 bg-white dark:bg-[#152a1c] text-text-muted text-xs font-bold hover:bg-gray-50 dark:hover:bg-[#1a3322] rounded-lg transition-colors border border-[#f0f4f2] dark:border-[#1d2d21]">
+            High Payout
+          </button>
+          <button data-sort="created_at-desc"
+            class="px-4 py-2 bg-white dark:bg-[#152a1c] text-text-muted text-xs font-bold hover:bg-gray-50 dark:hover:bg-[#1a3322] rounded-lg transition-colors border border-[#f0f4f2] dark:border-[#1d2d21]">
+            Fast Approval
+          </button>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 overflow-x-auto pb-4 custom-scrollbar whitespace-nowrap" id="filter-buttons">
+        <button data-platform="All"
+          class="px-5 py-2.5 bg-primary text-text-main text-sm font-bold rounded-full shadow-sm shadow-primary/20">
+          All
+        </button>
+        <button data-platform="Facebook"
+          class="px-5 py-2.5 bg-white dark:bg-[#152a1c] text-text-muted text-sm font-bold rounded-full border border-[#f0f4f2] dark:border-[#1d2d21] hover:border-primary/50 transition-colors">
+          Facebook
+        </button>
+        <button data-platform="Gmail"
+          class="px-5 py-2.5 bg-white dark:bg-[#152a1c] text-text-muted text-sm font-bold rounded-full border border-[#f0f4f2] dark:border-[#1d2d21] hover:border-primary/50 transition-colors">
+          Gmail
+        </button>
+        <button data-platform="TikTok"
+          class="px-5 py-2.5 bg-white dark:bg-[#152a1c] text-text-muted text-sm font-bold rounded-full border border-[#f0f4f2] dark:border-[#1d2d21] hover:border-primary/50 transition-colors">
+          TikTok
+        </button>
+        <button data-platform="Instagram"
+          class="px-5 py-2.5 bg-white dark:bg-[#152a1c] text-text-muted text-sm font-bold rounded-full border border-[#f0f4f2] dark:border-[#1d2d21] hover:border-primary/50 transition-colors">
+          Instagram
+        </button>
+        <button data-platform="Telegram"
+          class="px-5 py-2.5 bg-white dark:bg-[#152a1c] text-text-muted text-sm font-bold rounded-full border border-[#f0f4f2] dark:border-[#1d2d21] hover:border-primary/50 transition-colors">
+          Telegram
+        </button>
+        <button data-platform="Other"
+          class="px-5 py-2.5 bg-white dark:bg-[#152a1c] text-text-muted text-sm font-bold rounded-full border border-[#f0f4f2] dark:border-[#1d2d21] hover:border-primary/50 transition-colors">
+          Other
+        </button>
+      </div>
+    </div>
+    <div class="flex flex-col lg:flex-row gap-8">
+      <div class="flex-1">
+        <div class="space-y-4">
+          <div
+            class="hidden bg-white dark:bg-[#152a1c] border border-[#f0f4f2] dark:border-[#1d2d21] rounded-xl md:grid grid-cols-12 gap-4 px-8 py-3 text-[11px] font-extrabold text-text-muted uppercase tracking-wider">
+            <div class="col-span-2">Order ID</div>
+            <div class="col-span-3">Platform &amp; Service</div>
+            <div class="col-span-2">Buyer Details</div>
+            <div class="col-span-2 text-center">Available Units</div>
+            <div class="col-span-1 text-center">Payout</div>
+            <div class="col-span-2 text-right">Action</div>
+          </div>
+
+          <!-- Dynamic Tasks Container -->
+          <div id="active-tasks-list" class="space-y-4">
+            <div class="text-center py-10 text-gray-400">Loading tasks...</div>
+          </div>
+        </div>
+        <div class="flex justify-center pt-6">
+          <button id="load-more-button"
+            class="flex items-center gap-2 px-8 py-3 bg-white dark:bg-[#152a1c] border border-[#f0f4f2] dark:border-[#1d2d21] rounded-xl text-sm font-bold text-text-muted hover:text-text-main dark:hover:text-white transition-all shadow-sm">
+            Load More Live Tasks
+            <span class="material-symbols-outlined text-lg">expand_more</span>
+          </button>
+        </div>
+      </div>
+      <aside class="w-full lg:w-[300px] flex flex-col gap-6">
+        <div class="bg-white dark:bg-[#152a1c] p-6 rounded-2xl border border-[#f0f4f2] dark:border-[#1d2d21] shadow-sm">
+          <div class="flex items-center justify-between mb-6 pb-4 border-b border-gray-50 dark:border-[#1d2d21]">
+            <h4 class="text-text-main dark:text-white font-extrabold">
+              Market Stats
+            </h4>
+            <span style="width: 45px; height: 25px"
+              class="rounded-lg bg-[#e7f9ee] dark:bg-[#1a3322] flex items-center justify-center text-primary border border-primary/10 material-symbols-outlined text-xl">insights</span>
+          </div>
+          <div class="space-y-6">
+            <div class="flex justify-between items-center">
+              <div class="flex items-center gap-3">
+                <div
+                  class="size-8 rounded-lg bg-[#f0f4f2] dark:bg-[#1d2d21] flex items-center justify-center text-text-muted">
+                  <span class="material-symbols-outlined text-lg">list_alt</span>
+                </div>
+                <span class="text-sm font-semibold text-text-muted">Active Tasks</span>
+              </div>
+              <span id="active-tasks-count" class="font-bold text-text-main dark:text-white text-base">0</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <div class="flex items-center gap-3">
+                <div
+                  class="size-8 rounded-lg bg-[#f0f4f2] dark:bg-[#1d2d21] flex items-center justify-center text-text-muted">
+                  <span class="material-symbols-outlined text-lg">groups</span>
+                </div>
+                <span class="text-sm font-semibold text-text-muted">Live Workers</span>
+              </div>
+              <span id="live-workers-count" class="font-bold text-text-main dark:text-white text-base">...</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <div class="flex items-center gap-3">
+                <div
+                  class="size-8 rounded-lg bg-[#f0f4f2] dark:bg-[#1d2d21] flex items-center justify-center text-text-muted">
+                  <span class="material-symbols-outlined text-lg">verified</span>
+                </div>
+                <span class="text-sm font-semibold text-text-muted">Avg. Approval</span>
+              </div>
+              <span id="avg-approval-time" class="font-bold text-text-main dark:text-white text-base">...</span>
+            </div>
+          </div>
+        </div>
+        <div class="bg-primary/5 border border-primary/20 p-5 rounded-2xl flex items-start gap-4">
+          <div class="size-10 bg-primary/20 rounded-xl flex items-center justify-center text-primary flex-shrink-0">
+            <span class="material-symbols-outlined font-bold">lightbulb</span>
+          </div>
+          <div>
+            <p class="text-sm font-extrabold text-text-main dark:text-white mb-1">
+              Earning Tip
+            </p>
+            <p class="text-xs text-text-muted leading-relaxed font-medium">
+              Always copy the Order ID before starting a task to ensure
+              accurate work submission through the portal.
+            </p>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </main>
+  <footer class="bg-footer-light dark:bg-footer-dark pt-16 pb-8 border-t border-[#e7f3eb] dark:border-white/5">
+    <div class="max-w-[1280px] mx-auto">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
+        <div class="space-y-6">
+          <div class="flex items-center gap-3">
+            <div class="size-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
+              <span class="material-symbols-outlined text-2xl">update</span>
+            </div>
+            <span class="text-xl font-bold tracking-tight text-[#0d1b12] dark:text-white">Time Task <span
+                class="text-primary">BD</span></span>
+          </div>
+          <p class="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">
+            Empowering your digital productivity through innovative task
+            management and streamlined earning opportunities.
+          </p>
+          <div class="flex gap-4">
+            <a class="size-10 rounded-xl border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-black transition-all"
+              href="#">
+              <span class="material-symbols-outlined text-[20px]">public</span>
+            </a>
+            <a class="size-10 rounded-xl border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-black transition-all"
+              href="#">
+              <span class="material-symbols-outlined text-[20px]">share</span>
+            </a>
+            <a class="size-10 rounded-xl border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-black transition-all"
+              href="#">
+              <span class="material-symbols-outlined text-[20px]">alternate_email</span>
+            </a>
+          </div>
+        </div>
+        <div>
+          <h4 class="text-sm font-bold uppercase tracking-widest mb-6 text-[#0d1b12] dark:text-white">
+            Quick Links
+          </h4>
+          <ul class="space-y-4">
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="Home_Page.html">Home</a>
+            </li>
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="Blog_Page.html">Our Blog</a>
+            </li>
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="About_Page.html">About Us</a>
+            </li>
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="Contact_Page.html">Contact Us</a>
+            </li>
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="Help_and_FAQ_Page.html">Help Center &amp; FAQ</a>
+            </li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="text-sm font-bold uppercase tracking-widest mb-6 text-[#0d1b12] dark:text-white">
+            Services &amp; Legal
+          </h4>
+          <ul class="space-y-4">
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="About_Page.html">About Us</a>
+            </li>
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="Privacy_Policy_Page.html">Privacy Policy</a>
+            </li>
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="Terms_of_Service_Page.html">Terms of Service</a>
+            </li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="text-sm font-bold uppercase tracking-widest mb-6 text-[#0d1b12] dark:text-white">
+            Contact Info
+          </h4>
+          <ul class="space-y-4">
+            <li class="flex items-start gap-3">
+              <span class="material-symbols-outlined text-primary text-[20px]">mail</span>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary"
+                href="mailto:support@timetaskbd.com">support@timetaskbd.com</a>
+            </li>
+            <li class="flex items-start gap-3">
+              <span class="material-symbols-outlined text-primary text-[20px]">call</span>
+              <span class="text-sm text-gray-600 dark:text-gray-400">+880 1234 567890</span>
+            </li>
+            <li class="flex items-start gap-3">
+              <span class="material-symbols-outlined text-primary text-[20px]">location_on</span>
+              <span class="text-sm text-gray-600 dark:text-gray-400">Chittagong, Bangladesh</span>
+            </li>
+          </ul>
+          <div class="mt-8 pt-8 border-t border-[#e7f3eb] dark:border-white/5">
+            <p class="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-4">
+              Social Media
+            </p>
+            <div class="flex gap-4">
+              <a class="text-[#4c9a66] hover:text-primary transition-colors" href="#">
+                <svg class="size-6" fill="currentColor" viewBox="0 0 24 24">
+                  <path
+                    d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z">
+                  </path>
+                </svg>
+              </a>
+              <a class="text-[#4c9a66] hover:text-primary transition-colors" href="#">
+                <svg class="size-6" fill="currentColor" viewBox="0 0 24 24">
+                  <path
+                    d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.84 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z">
+                  </path>
+                </svg>
+              </a>
+              <a class="text-[#4c9a66] hover:text-primary transition-colors" href="#">
+                <svg class="size-6" fill="currentColor" viewBox="0 0 24 24">
+                  <path
+                    d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z">
+                  </path>
+                </svg>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div
+        class="pt-8 border-t border-[#e7f3eb] dark:border-white/5 flex flex-col md:flex-row items-center justify-between gap-4">
+        <p class="text-sm text-gray-500 dark:text-gray-400">
+          Copyright © 2024
+          <span class="text-[#0d1b12] dark:text-white font-semibold">Time Task BD</span>. All rights reserved.
+        </p>
+        <p class="text-sm text-gray-500 dark:text-gray-400">
+          Developed with <span class="text-primary font-bold">★</span> by
+          <a class="text-primary font-medium hover:underline" href="#">Digital Dynamics Agency</a>
+        </p>
+      </div>
+    </div>
+  </footer>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../supabase-client.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      // Use shared client
+      const _supabase = window.supabaseClient || supabase.createClient("https://kdoouzlmncekkozjrsdf.supabase.co", "sb_publishable_N0bYkeKQceE8zG8APzzQGA_QQOHDbUa");
+
+      let currentUser = null;
+      const { data: { session } } = await _supabase.auth.getSession();
+      if (session) {
+        currentUser = session.user;
+      }
+
+      let allTasks = [];
+      let currentPlatform = 'All';
+      let currentSort = 'created_at-desc';
+      const tasksPerPage = 10;
+      let loadedTasks = 0;
+
+      // Fetch Tasks Logic
+      async function loadTasks() {
+        const container = document.getElementById("active-tasks-list");
+        container.innerHTML = `<div class="text-center py-10 text-gray-400">Loading tasks...</div>`;
+
+        try {
+          const [tasksRes, assetsRes, profilesRes] = await Promise.all([
+            _supabase.from('tasks').select('*').eq('status', 'active'),
+            _supabase.from('market_assets').select('platform_name, icon_svg'),
+            _supabase.from('profiles').select('id, full_name, username')
+          ]);
+
+          if (tasksRes.error) throw tasksRes.error;
+          if (assetsRes.error) console.warn('Could not fetch market assets:', assetsRes.error.message);
+          if (profilesRes.error) console.warn('Could not fetch profiles:', profilesRes.error.message);
+
+          const assetIconMap = new Map(assetsRes.data ? assetsRes.data.map(a => [a.platform_name, a.icon_svg]) : []);
+          const profileMap = new Map(profilesRes.data ? profilesRes.data.map(p => [p.id, p]) : []);
+
+          console.log("Raw Tasks Data:", JSON.stringify(tasksRes.data, null, 2));
+          console.log("Raw Profiles Data:", JSON.stringify(profilesRes.data, null, 2));
+
+          allTasks = (tasksRes.data || []).map(task => ({
+            ...task,
+            buyer: profileMap.get(task.created_by) || {},
+            iconSvg: assetIconMap.get(task.platform)
+          }));
+
+          if (allTasks.length === 0) {
+            container.innerHTML = `<div class="text-center py-10 text-gray-400">No active tasks available</div>`;
+            return;
+          }
+
+          applyFiltersAndRender();
+
+        } catch (error) {
+          console.error('Error loading tasks:', error);
+          container.innerHTML = `<div class="text-center py-10 text-red-500"><strong>Error loading tasks:</strong><br>${error.message}</div>`;
+        }
+      }
+
+      function applyFiltersAndRender() {
+        let filteredTasks = allTasks;
+
+        if (currentPlatform !== 'All') {
+          filteredTasks = allTasks.filter(task => task.platform === currentPlatform);
+        }
+
+        const [sortColumn, sortOrder] = currentSort.split('-');
+        filteredTasks.sort((a, b) => {
+          const valA = a[sortColumn];
+          const valB = b[sortColumn];
+
+          if (valA < valB) return sortOrder === 'asc' ? -1 : 1;
+          if (valA > valB) return sortOrder === 'asc' ? 1 : -1;
+          return 0;
+        });
+
+        loadedTasks = 0;
+        renderTasks(filteredTasks, true);
+      }
+
+      function renderTasks(tasksToRender, isNewFilter = false) {
+        const container = document.getElementById("active-tasks-list");
+        const loadMoreButton = document.getElementById("load-more-button");
+
+        if (isNewFilter) {
+          container.innerHTML = "";
+        }
+
+        const tasksToDisplay = tasksToRender.slice(loadedTasks, loadedTasks + tasksPerPage);
+
+        tasksToDisplay.forEach(task => {
+          const totalUnits = Number(task.total_units) || 0;
+          const remainingUnits = Number(task.remaining_units) || 0;
+          const completedUnits = totalUnits - remainingUnits;
+          const progress = totalUnits > 0 ? Math.round((completedUnits / totalUnits) * 100) : 0;
+          const left = remainingUnits;
+
+          const card = `
+            <div class="bg-white dark:bg-[#152a1c] border border-[#f0f4f2] dark:border-[#1d2d21] rounded-xl list-row-hover transition-all duration-200 shadow-sm">
+              <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-center px-8 py-6">
+                <!-- Order ID -->
+                <div class="col-span-2 flex items-center gap-2">
+                  <span class="text-text-main dark:text-white font-extrabold text-base tracking-tight">${task.order_id}</span>
+                  <button onclick="copyOrderId('${task.order_id}')" class="p-1.5 rounded-md text-text-muted hover:text-primary hover:bg-primary/10 transition-colors group flex items-center justify-center border border-transparent hover:border-primary/20" title="Copy ID">
+                    <span class="material-symbols-outlined text-[18px]">content_copy</span>
+                  </button>
+                </div>
+                
+                <!-- Platform -->
+                <div class="col-span-3 flex items-center gap-4">
+                  <div class="size-12 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
+                    ${task.iconSvg ? task.iconSvg.replace('<svg', '<svg class="w-6 h-6"') : '<span class="material-symbols-outlined text-gray-600 text-2xl">link</span>'}
+                  </div>                  
+                  <p class="text-sm font-bold text-text-main dark:text-white">${task.platform}</p>     
+                </div>
+                
+                <!-- Buyer Details -->
+                <div class="col-span-2">
+                  <div class="flex flex-col">
+                    <span class="text-xs font-bold text-text-main dark:text-gray-300">${task.buyer.full_name || 'Unknown Buyer'}</span>
+                    <span class="text-[10px] text-primary font-bold tracking-wide flex items-center gap-1">
+                      <span class="material-symbols-outlined text-[10px]">verified</span> Verified Buyer
+                    </span>
+                  </div>
+                </div>
+                
+                <!-- Progress -->
+                <div class="col-span-2">
+                  <div class="flex flex-col gap-2">
+                    <div class="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-1.5 overflow-hidden">
+                      <div class="bg-primary h-full" style="width: ${progress}%"></div>
+                    </div>
+                    <p class="text-[11px] font-bold text-text-muted text-center">${left} / ${totalUnits} left</p>
+                  </div>
+                </div>
+                
+                <!-- Payout -->
+                <div class="col-span-1 text-center">
+                  <p class="text-base font-extrabold text-primary">${task.rate_per_unit} Tk</p>
+                  <p class="text-[9px] text-text-muted uppercase font-bold">Per Unit</p>
+                </div>
+                
+                <!-- Action -->
+                <div class="col-span-2 text-right">
+                  <button onclick="addToActiveTasks('${task.id}')" class="bg-primary hover:bg-[#10d452] text-text-main text-sm font-extrabold py-2.5 px-6 rounded-lg transition-all w-full md:w-auto shadow-sm shadow-primary/20 whitespace-nowrap">
+                    Add Now
+                  </button>
+                </div>
+              </div>
+            </div>
+             `;
+          container.insertAdjacentHTML('beforeend', card);
+        });
+
+        loadedTasks += tasksToDisplay.length;
+
+        if (loadedTasks >= tasksToRender.length) {
+          loadMoreButton.style.display = 'none';
+        } else {
+          loadMoreButton.style.display = 'flex';
+        }
+
+        document.getElementById('active-tasks-count').textContent = tasksToRender.length;
+      }
+
+      async function loadMarketStats() {
+        // Live Workers
+        try {
+          const { count: liveWorkers } = await _supabase
+            .from('profiles')
+            .select('*', { count: 'exact', head: true })
+            .eq('status', 'active')
+            .eq('role', 'User');
+          document.getElementById('live-workers-count').textContent = liveWorkers || 0;
+        } catch (error) {
+          console.error('Error fetching live workers:', error);
+          document.getElementById('live-workers-count').textContent = 'N/A';
+        }
+
+        // Avg. Approval Time
+        try {
+          const { data: approvals, error } = await _supabase
+            .from('kyc_verifications')
+            .select('submitted_at, reviewed_at')
+            .eq('status', 'approved')
+            .not('reviewed_at', 'is', null);
+
+          if (error) throw error;
+
+          if (approvals && approvals.length > 0) {
+            const totalDuration = approvals.reduce((acc, approval) => {
+              const submitted = new Date(approval.submitted_at);
+              const reviewed = new Date(approval.reviewed_at);
+              return acc + (reviewed - submitted);
+            }, 0);
+
+            const avgDuration = totalDuration / approvals.length;
+
+            function formatDuration(ms) {
+              if (ms < 0) ms = 0;
+              const days = Math.floor(ms / (1000 * 60 * 60 * 24));
+              const hours = Math.floor((ms % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+              const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
+
+              if (days > 0) return `${days}d ${hours}h`;
+              if (hours > 0) return `${hours}h ${minutes}m`;
+              return `${minutes}m`;
+            }
+
+            document.getElementById('avg-approval-time').textContent = formatDuration(avgDuration);
+          } else {
+            document.getElementById('avg-approval-time').textContent = 'N/A';
+          }
+        } catch (error) {
+          console.error('Error fetching approval stats:', error);
+          document.getElementById('avg-approval-time').textContent = 'Error';
+        }
+      }
+
+      // Event Listeners
+      document.getElementById('filter-buttons').addEventListener('click', (e) => {
+        if (e.target.tagName === 'BUTTON') {
+          currentPlatform = e.target.dataset.platform;
+          applyFiltersAndRender();
+          updateFilterButtons();
+        }
+      });
+
+      document.getElementById('sort-buttons').addEventListener('click', (e) => {
+        if (e.target.tagName === 'BUTTON') {
+          currentSort = e.target.dataset.sort;
+          applyFiltersAndRender();
+          updateSortButtons();
+        }
+      });
+
+      document.getElementById('load-more-button').addEventListener('click', () => {
+        renderTasks(allTasks.filter(task => currentPlatform === 'All' || task.platform === currentPlatform));
+      });
+
+      function updateFilterButtons() {
+        document.querySelectorAll('#filter-buttons button').forEach(btn => {
+          if (btn.dataset.platform === currentPlatform) {
+            btn.classList.add('bg-primary', 'text-text-main', 'shadow-sm', 'shadow-primary/20');
+            btn.classList.remove('bg-white', 'dark:bg-[#152a1c]', 'text-text-muted');
+          } else {
+            btn.classList.remove('bg-primary', 'text-text-main', 'shadow-sm', 'shadow-primary/20');
+            btn.classList.add('bg-white', 'dark:bg-[#152a1c]', 'text-text-muted');
+          }
+        });
+      }
+
+      function updateSortButtons() {
+        document.querySelectorAll('#sort-buttons button').forEach(btn => {
+          if (btn.dataset.sort === currentSort) {
+            btn.classList.add('bg-primary', 'text-text-main');
+            btn.classList.remove('bg-white', 'dark:bg-[#152a1c]', 'text-text-muted');
+          } else {
+            btn.classList.remove('bg-primary', 'text-text-main');
+            btn.classList.add('bg-white', 'dark:bg-[#152a1c]', 'text-text-muted');
+          }
+        });
+      }
+
+      // Real-time subscription
+      _supabase
+        .channel('public:tasks')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, () => {
+          loadTasks();
+          loadMarketStats();
+        })
+        .subscribe();
+
+      // Global functions for buttons
+      window.copyOrderId = (id) => {
+        navigator.clipboard.writeText(id).then(() => {
+          showToast(`Order ID ${id} copied!`);
+        });
+      };
+
+      window.addToActiveTasks = async (taskId) => {
+        // 1. Auth check
+        if (!currentUser) {
+          window.location.href = "Login_Page.html";
+          return;
+        }
+
+        // 2. Check if already bookmarked (any status)
+        const { data: existing, error: checkError } = await _supabase
+          .from('user_active_tasks')
+          .select('id, status')
+          .eq('user_id', currentUser.id)
+          .eq('task_id', taskId)
+          .maybeSingle(); // Use maybeSingle() — returns null instead of error if not found
+
+        if (checkError) {
+          console.error('Check error:', checkError);
+          showToast("Something went wrong. Please try again.", 'error');
+          return;
+        }
+
+        if (existing) {
+          if (existing.status === 'saved') {
+            showToast("You have already bookmarked this task.");
+          } else if (existing.status === 'in_progress') {
+            showToast("You are already working on this task!");
+          } else {
+            showToast("You have already interacted with this task.");
+          }
+          return;
+        }
+
+        // 3. Verify task is still active
+        const { data: taskData, error: taskError } = await _supabase
+          .from('tasks')
+          .select('id, status, remaining_units')
+          .eq('id', taskId)
+          .single();
+
+        if (taskError || !taskData) {
+          showToast("Task not found.", 'error');
+          return;
+        }
+        if (taskData.status !== 'active') {
+          showToast("This task is no longer active.", 'error');
+          return;
+        }
+        if (taskData.remaining_units <= 0) {
+          showToast("Sorry, this task has no remaining units.", 'error');
+          return;
+        }
+
+        // 4. Bookmark the task (status = 'saved')
+        const { error: insertError } = await _supabase
+          .from('user_active_tasks')
+          .insert([{
+            user_id: currentUser.id,
+            task_id: taskId,
+            status: 'saved'
+            // added_at is set automatically by DEFAULT now()
+          }]);
+
+        if (insertError) {
+          console.error('Insert error:', insertError);
+          showToast("Error bookmarking task: " + insertError.message, 'error');
+        } else {
+          // Visual feedback: change the button text temporarily
+          const btn = document.querySelector(`button[onclick="addToActiveTasks('${taskId}')"]`);
+          if (btn) {
+            btn.textContent = "✓ Added!";
+            btn.disabled = true;
+            btn.classList.remove('bg-primary', 'hover:bg-[#10d452]');
+            btn.classList.add('bg-green-200', 'text-green-800', 'cursor-not-allowed');
+          }
+          // Show a toast or alert
+          showToast("Task bookmarked! Go to your dashboard to start working.");
+        }
+      };
+
+      // Simple toast helper (add to your JS utilities)
+      function showToast(message, type = 'success') {
+        const toast = document.createElement('div');
+        toast.className = `fixed bottom-6 right-6 z-50 px-5 py-3 rounded-xl font-bold text-sm shadow-xl transition-all 
+          ${type === 'success' ? 'bg-primary text-black' : 'bg-red-500 text-white'}`;
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3500);
+      }
+
+      loadTasks();
+      loadMarketStats();
+      updateFilterButtons();
+      updateSortButtons();
+    });
+  </script>
+  <script src="../auth-guard.js"></script>
+</body>
+
+</html>

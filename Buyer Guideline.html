@@ -1,0 +1,1259 @@
+<!doctype html>
+<html class="light" lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <title>Buyer Onboarding - Time Task BD</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&amp;display=swap"
+    rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+    rel="stylesheet" />
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            primary: "#13ec5b",
+            "background-light": "#f6f8f6",
+            "background-dark": "#102216",
+          },
+          fontFamily: {
+            display: ["Manrope", "sans-serif"],
+          },
+          borderRadius: {
+            DEFAULT: "0.25rem",
+            lg: "0.5rem",
+            xl: "0.75rem",
+            full: "9999px",
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    body {
+      font-family: "Manrope", sans-serif;
+    }
+
+    .material-symbols-outlined {
+      font-variation-settings:
+        "FILL" 0,
+        "wght" 400,
+        "GRAD" 0,
+        "opsz" 24;
+    }
+
+    /* Smooth Animation Classes */
+    .step-section {
+      display: none;
+      /* Hidden by default */
+      animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .step-section.active {
+      display: block;
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  </style>
+</head>
+
+<body
+  class="bg-background-light dark:bg-background-dark min-h-screen flex flex-col font-display transition-colors duration-300">
+  <!-- HEADER (Common for all steps) -->
+  <header
+    class="w-full bg-white dark:bg-background-dark border-b border-[#e7f3eb] dark:border-white/10 px-6 py-4 sticky top-0 z-50">
+    <div class="max-w-[1200px] mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="size-10 bg-primary/20 rounded-lg flex items-center justify-center text-primary">
+          <span class="material-symbols-outlined text-3xl font-bold">bolt</span>
+        </div>
+        <div>
+          <h2 class="text-[#0d1b12] dark:text-white text-xl font-extrabold leading-tight tracking-tight">
+            Time Task BD
+          </h2>
+          <p class="text-xs text-[#4c9a66] font-medium">Onboarding Guide</p>
+        </div>
+      </div>
+      <button onclick="completeOnboarding()"
+        class="flex items-center gap-2 cursor-pointer rounded-lg h-10 px-5 bg-white border border-[#e7f3eb] hover:bg-gray-50 dark:bg-transparent dark:border-white/20 dark:text-white text-[#0d1b12] text-sm font-bold transition-all">
+        <span>Skip Guide</span>
+        <span class="material-symbols-outlined text-lg">close</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- MAIN CONTENT CONTAINER -->
+  <div id="main-container" class="flex-1">
+    <!-- ==================== STEP 1 START ==================== -->
+    <div id="step-1" class="step-section active">
+      <main class="flex flex-col items-center py-12 px-4">
+        <div class="w-full max-w-[960px] mb-12">
+          <div
+            class="flex flex-col gap-4 p-4 bg-white dark:bg-white/5 rounded-xl border border-[#e7f3eb] dark:border-white/10 shadow-sm">
+            <div class="flex gap-6 justify-between items-center px-2">
+              <div class="flex flex-col">
+                <p class="text-[#0d1b12] dark:text-white text-lg font-bold">
+                  Step 1: Profile Setup
+                </p>
+                <p class="text-[#4c9a66] text-sm font-normal">
+                  Current: Completing profile details
+                </p>
+              </div>
+              <div class="flex items-center gap-4">
+                <span
+                  class="text-xs font-bold text-primary uppercase tracking-widest bg-primary/10 px-3 py-1.5 rounded-full">20%
+                  COMPLETE</span>
+                <p class="text-[#0d1b12] dark:text-white text-xl font-extrabold leading-normal">
+                  1/5
+                </p>
+              </div>
+            </div>
+            <div class="relative h-3 w-full bg-[#cfe7d7] dark:bg-white/10 rounded-full overflow-hidden">
+              <div class="absolute left-0 top-0 h-full rounded bg-primary transition-all duration-500"
+                style="width: 20%"></div>
+            </div>
+            <div class="grid grid-cols-5 gap-2 mt-2">
+              <div class="h-1 bg-primary rounded-full"></div>
+              <div class="h-1 bg-[#cfe7d7] dark:bg-white/10 rounded-full"></div>
+              <div class="h-1 bg-[#cfe7d7] dark:bg-white/10 rounded-full"></div>
+              <div class="h-1 bg-[#cfe7d7] dark:bg-white/10 rounded-full"></div>
+              <div class="h-1 bg-[#cfe7d7] dark:bg-white/10 rounded-full"></div>
+            </div>
+          </div>
+        </div>
+        <div class="w-full max-w-[960px]">
+          <div
+            class="bg-white dark:bg-white/5 rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.05)] border border-[#e7f3eb] dark:border-white/10 overflow-hidden">
+            <div class="flex flex-col md:flex-row min-h-[520px]">
+              <div
+                class="w-full md:w-1/2 relative bg-[#f0fff4] dark:bg-primary/5 flex items-center justify-center p-12">
+                <div class="absolute inset-0 opacity-10 pointer-events-none" style="
+                      background-image: radial-gradient(
+                        circle at 2px 2px,
+                        #13ec5b 1px,
+                        transparent 0
+                      );
+                      background-size: 24px 24px;
+                    "></div>
+                <div class="relative z-10 flex flex-col items-center text-center">
+                  <div
+                    class="w-48 h-48 bg-white dark:bg-background-dark rounded-full shadow-2xl flex items-center justify-center mb-8 border-4 border-primary/20">
+                    <span class="material-symbols-outlined text-[100px] text-primary"
+                      style="font-variation-settings: &quot;FILL&quot; 1">account_circle</span>
+                  </div>
+                  <div
+                    class="bg-white/80 dark:bg-white/10 backdrop-blur-sm border border-primary/20 text-[#0d1b12] dark:text-white px-5 py-2.5 rounded-full text-sm font-bold flex items-center gap-2 shadow-sm">
+                    <span class="material-symbols-outlined text-primary text-xl">verified_user</span>
+                    <span>Verification Required</span>
+                  </div>
+                </div>
+              </div>
+              <div class="w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center">
+                <h2 class="text-[#0d1b12] dark:text-white text-3xl font-extrabold mb-4 leading-tight">
+                  Complete Your Profile
+                </h2>
+                <p class="text-[#4c9a66] text-lg font-normal mb-8 leading-relaxed">
+                  To start hiring top talent on Time Task BD, we need to
+                  verify your identity. Complete these steps to set up your
+                  buyer account.
+                </p>
+                <div class="space-y-4 mb-10">
+                  <div
+                    class="flex items-start gap-4 p-4 rounded-xl bg-background-light dark:bg-white/5 border border-transparent hover:border-primary/30 transition-all">
+                    <div class="size-9 rounded-full bg-primary flex items-center justify-center shrink-0">
+                      <span class="material-symbols-outlined text-white text-xl">person</span>
+                    </div>
+                    <div>
+                      <h5 class="font-bold text-[#0d1b12] dark:text-white">
+                        Personal Information
+                      </h5>
+                      <p class="text-sm text-[#4c9a66]">
+                        Full name, WhatsApp, and contact details.
+                      </p>
+                    </div>
+                  </div>
+                  <div
+                    class="flex items-start gap-4 p-4 rounded-xl bg-background-light dark:bg-white/5 border border-transparent hover:border-primary/30 transition-all">
+                    <div class="size-9 rounded-full bg-primary flex items-center justify-center shrink-0">
+                      <span class="material-symbols-outlined text-white text-xl">mail</span>
+                    </div>
+                    <div>
+                      <h5 class="font-bold text-[#0d1b12] dark:text-white">
+                        Email Verification
+                      </h5>
+                      <p class="text-sm text-[#4c9a66]">
+                        Confirm your registered email address.
+                      </p>
+                    </div>
+                  </div>
+                  <div
+                    class="flex items-start gap-4 p-4 rounded-xl bg-background-light dark:bg-white/5 border border-transparent hover:border-primary/30 transition-all">
+                    <div class="size-9 rounded-full bg-primary flex items-center justify-center shrink-0">
+                      <span class="material-symbols-outlined text-white text-xl">badge</span>
+                    </div>
+                    <div>
+                      <h5 class="font-bold text-[#0d1b12] dark:text-white">
+                        Identity Verification
+                      </h5>
+                      <p class="text-sm text-[#4c9a66]">
+                        Upload NID or Birth Registration for security.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div class="flex flex-col sm:flex-row gap-4">
+                  <button
+                    class="flex-1 min-w-[120px] cursor-pointer items-center justify-center rounded-lg h-14 px-6 bg-transparent border-2 border-[#e7f3eb] dark:border-white/10 text-[#0d1b12] dark:text-white text-base font-bold transition-all hover:bg-gray-50 dark:hover:bg-white/5">
+                    <span class="truncate">Back</span>
+                  </button>
+                  <!-- NEXT BUTTON STEP 1 -->
+                  <button onclick="goToStep(2)"
+                    class="flex-[2] min-w-[120px] cursor-pointer items-center justify-center rounded-lg h-14 px-6 bg-primary text-[#0d1b12] text-base font-bold shadow-[0_4px_14px_rgba(19,236,91,0.4)] hover:shadow-[0_6px_20px_rgba(19,236,91,0.6)] hover:-translate-y-0.5 transition-all">
+                    <span class="truncate">Next Step</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <p class="text-center mt-6 text-[#4c9a66] text-sm italic">
+            Tip: Verified profiles get prioritized task moderation and higher
+            trust levels.
+          </p>
+        </div>
+        <!-- ROADMAP STEP 1 -->
+        <section class="max-w-[1200px] mx-auto w-full px-6 py-12">
+          <h3 class="text-[#0d1b12] dark:text-white text-xl font-bold mb-8 flex items-center gap-2">
+            <span class="material-symbols-outlined">map</span><span>Your Roadmap to Success</span>
+          </h3>
+          <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
+            <div
+              class="bg-white dark:bg-white/5 p-6 rounded-xl border-2 border-primary flex flex-col gap-3 shadow-[0_10px_20px_rgba(19,236,91,0.1)]">
+              <div class="size-10 rounded-lg bg-primary flex items-center justify-center text-white">
+                <span class="material-symbols-outlined font-bold">person_outline</span>
+              </div>
+              <h6 class="font-bold text-[#0d1b12] dark:text-white">
+                1. Profile Setup
+              </h6>
+              <p class="text-xs text-[#4c9a66]">
+                Complete personal info and verify identity.
+              </p>
+            </div>
+            <div
+              class="bg-white dark:bg-white/5 p-6 rounded-xl border border-[#e7f3eb] dark:border-white/10 flex flex-col gap-3 opacity-60">
+              <div
+                class="size-10 rounded-lg bg-[#cfe7d7] dark:bg-white/10 flex items-center justify-center text-gray-400">
+                <span class="material-symbols-outlined">account_balance_wallet</span>
+              </div>
+              <h6 class="font-bold text-[#0d1b12] dark:text-white">
+                2. Wallet Setup
+              </h6>
+              <p class="text-xs text-[#4c9a66]">
+                Add funds to your wallet for task payments.
+              </p>
+            </div>
+            <div
+              class="bg-white dark:bg-white/5 p-6 rounded-xl border border-[#e7f3eb] dark:border-white/10 flex flex-col gap-3 opacity-60">
+              <div
+                class="size-10 rounded-lg bg-[#cfe7d7] dark:bg-white/10 flex items-center justify-center text-gray-400">
+                <span class="material-symbols-outlined">add_task</span>
+              </div>
+              <h6 class="font-bold text-[#0d1b12] dark:text-white">
+                3. Order Placement
+              </h6>
+              <p class="text-xs text-[#4c9a66]">
+                Create your first task campaign for our users.
+              </p>
+            </div>
+            <div
+              class="bg-white dark:bg-white/5 p-6 rounded-xl border border-[#e7f3eb] dark:border-white/10 flex flex-col gap-3 opacity-60">
+              <div
+                class="size-10 rounded-lg bg-[#cfe7d7] dark:bg-white/10 flex items-center justify-center text-gray-400">
+                <span class="material-symbols-outlined">monitoring</span>
+              </div>
+              <h6 class="font-bold text-[#0d1b12] dark:text-white">
+                4. Monitoring
+              </h6>
+              <p class="text-xs text-[#4c9a66]">
+                Track submissions and approve user work quality.
+              </p>
+            </div>
+            <div
+              class="bg-white dark:bg-white/5 p-6 rounded-xl border border-[#e7f3eb] dark:border-white/10 flex flex-col gap-3 opacity-40 border-dashed">
+              <div
+                class="size-10 rounded-lg bg-[#cfe7d7] dark:bg-white/10 flex items-center justify-center text-gray-400">
+                <span class="material-symbols-outlined">description</span>
+              </div>
+              <h6 class="font-bold text-[#0d1b12] dark:text-white">
+                5. Invoice
+              </h6>
+              <p class="text-xs text-[#4c9a66]">
+                Download billing reports and payment receipts.
+              </p>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+    <!-- ==================== STEP 1 END ==================== -->
+
+    <!-- ==================== STEP 2 START ==================== -->
+    <div id="step-2" class="step-section">
+      <main class="flex flex-col items-center py-12 px-4">
+        <div class="w-full max-w-[960px] mb-12">
+          <div
+            class="flex flex-col gap-4 p-4 bg-white dark:bg-white/5 rounded-xl border border-[#e7f3eb] dark:border-white/10 shadow-sm">
+            <div class="flex gap-6 justify-between items-center px-2">
+              <div class="flex flex-col">
+                <p class="text-[#0d1b12] dark:text-white text-lg font-bold">
+                  Step 2: Wallet Setup
+                </p>
+                <p class="text-[#4c9a66] text-sm font-normal">
+                  Current: Adding funds to business wallet
+                </p>
+              </div>
+              <div class="flex items-center gap-4">
+                <span
+                  class="text-xs font-bold text-primary uppercase tracking-widest bg-primary/10 px-3 py-1.5 rounded-full">40%
+                  COMPLETE</span>
+                <p class="text-[#0d1b12] dark:text-white text-xl font-extrabold leading-normal">
+                  2/5
+                </p>
+              </div>
+            </div>
+            <div class="relative h-3 w-full bg-[#cfe7d7] dark:bg-white/10 rounded-full overflow-hidden">
+              <div class="absolute left-0 top-0 h-full rounded bg-primary transition-all duration-500"
+                style="width: 40%"></div>
+            </div>
+            <div class="grid grid-cols-5 gap-2 mt-2">
+              <div class="h-1 bg-primary rounded-full"></div>
+              <div class="h-1 bg-primary rounded-full"></div>
+              <div class="h-1 bg-[#cfe7d7] dark:bg-white/10 rounded-full"></div>
+              <div class="h-1 bg-[#cfe7d7] dark:bg-white/10 rounded-full"></div>
+              <div class="h-1 bg-[#cfe7d7] dark:bg-white/10 rounded-full"></div>
+            </div>
+          </div>
+        </div>
+        <div class="w-full max-w-[960px]">
+          <div
+            class="bg-white dark:bg-white/5 rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.05)] border border-[#e7f3eb] dark:border-white/10 overflow-hidden">
+            <div class="flex flex-col md:flex-row min-h-[520px]">
+              <div
+                class="w-full md:w-1/2 relative bg-[#f0fff4] dark:bg-primary/5 flex items-center justify-center p-12">
+                <div class="absolute inset-0 opacity-10 pointer-events-none" style="
+                      background-image: radial-gradient(
+                        circle at 2px 2px,
+                        #13ec5b 1px,
+                        transparent 0
+                      );
+                      background-size: 24px 24px;
+                    "></div>
+                <div class="relative z-10 flex flex-col items-center text-center">
+                  <div
+                    class="w-48 h-48 bg-white dark:bg-background-dark rounded-full shadow-2xl flex items-center justify-center mb-8 border-4 border-primary/20">
+                    <span class="material-symbols-outlined text-[100px] text-primary"
+                      style="font-variation-settings: &quot;FILL&quot; 1">account_balance_wallet</span>
+                  </div>
+                  <div
+                    class="bg-white/80 dark:bg-white/10 backdrop-blur-sm border border-primary/20 text-[#0d1b12] dark:text-white px-5 py-2.5 rounded-full text-sm font-bold flex items-center gap-2 shadow-sm">
+                    <span class="material-symbols-outlined text-primary text-xl">security</span>
+                    <span>Safe &amp; Secure</span>
+                  </div>
+                </div>
+              </div>
+              <div class="w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center">
+                <h2 class="text-[#0d1b12] dark:text-white text-3xl font-extrabold mb-4 leading-tight">
+                  Setup Your Business Wallet
+                </h2>
+                <p class="text-[#4c9a66] text-lg font-normal mb-8 leading-relaxed">
+                  Funding your wallet is necessary to process bulk orders and
+                  start your first task campaign.
+                </p>
+                <div class="space-y-4 mb-10">
+                  <div
+                    class="flex items-start gap-4 p-4 rounded-xl bg-background-light dark:bg-white/5 border border-transparent hover:border-primary/30 transition-all">
+                    <div class="size-9 rounded-full bg-primary flex items-center justify-center shrink-0">
+                      <span class="material-symbols-outlined text-white text-xl">payments</span>
+                    </div>
+                    <div>
+                      <h5 class="font-bold text-[#0d1b12] dark:text-white">
+                        Add Funds
+                      </h5>
+                      <p class="text-sm text-[#4c9a66]">
+                        Specify your initial deposit amount.
+                      </p>
+                    </div>
+                  </div>
+                  <div
+                    class="flex items-start gap-4 p-4 rounded-xl bg-background-light dark:bg-white/5 border border-transparent hover:border-primary/30 transition-all">
+                    <div class="size-9 rounded-full bg-primary flex items-center justify-center shrink-0">
+                      <span class="material-symbols-outlined text-white text-xl">account_balance</span>
+                    </div>
+                    <div>
+                      <h5 class="font-bold text-[#0d1b12] dark:text-white">
+                        Select Gateway
+                      </h5>
+                      <p class="text-sm text-[#4c9a66]">
+                        Choose bKash, Nagad, Rocket, or local methods.
+                      </p>
+                    </div>
+                  </div>
+                  <div
+                    class="flex items-start gap-4 p-4 rounded-xl bg-background-light dark:bg-white/5 border border-transparent hover:border-primary/30 transition-all">
+                    <div class="size-9 rounded-full bg-primary flex items-center justify-center shrink-0">
+                      <span class="material-symbols-outlined text-white text-xl">fact_check</span>
+                    </div>
+                    <div>
+                      <h5 class="font-bold text-[#0d1b12] dark:text-white">
+                        Confirm Deposit
+                      </h5>
+                      <p class="text-sm text-[#4c9a66]">
+                        Enter the Account Number & transaction ID to finalize
+                        balance.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div class="flex flex-col sm:flex-row gap-4">
+                  <button onclick="goToStep(1)"
+                    class="flex-1 min-w-[120px] cursor-pointer items-center justify-center rounded-lg h-14 px-6 bg-transparent border-2 border-[#e7f3eb] dark:border-white/10 text-[#0d1b12] dark:text-white text-base font-bold transition-all hover:bg-gray-50 dark:hover:bg-white/5">
+                    <span class="truncate">Back</span>
+                  </button>
+                  <!-- NEXT BUTTON STEP 2 -->
+                  <button onclick="goToStep(3)"
+                    class="flex-[2] min-w-[120px] cursor-pointer items-center justify-center rounded-lg h-14 px-6 bg-primary text-[#0d1b12] text-base font-bold shadow-[0_4px_14px_rgba(19,236,91,0.4)] hover:shadow-[0_6px_20px_rgba(19,236,91,0.6)] hover:-translate-y-0.5 transition-all">
+                    <span class="truncate">Next Step</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <p class="text-center mt-6 text-[#4c9a66] text-sm italic">
+            Tip: Funding your wallet ahead of time ensures instant task
+            activation.
+          </p>
+        </div>
+        <!-- ROADMAP STEP 2 -->
+        <section class="max-w-[1200px] mx-auto w-full px-6 py-12">
+          <h3 class="text-[#0d1b12] dark:text-white text-xl font-bold mb-8 flex items-center gap-2">
+            <span class="material-symbols-outlined">map</span><span>Your Roadmap to Success</span>
+          </h3>
+          <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
+            <div
+              class="bg-white dark:bg-white/5 p-6 rounded-xl border border-[#e7f3eb] dark:border-white/10 flex flex-col gap-3 relative">
+              <div class="absolute top-4 right-4 text-primary">
+                <span class="material-symbols-outlined font-bold">check_circle</span>
+              </div>
+              <div class="size-10 rounded-lg bg-primary/20 flex items-center justify-center text-primary">
+                <span class="material-symbols-outlined font-bold">person</span>
+              </div>
+              <h6 class="font-bold text-[#0d1b12] dark:text-white">
+                1. Profile Setup
+              </h6>
+              <p class="text-xs text-[#4c9a66]">
+                Completed and verified identity.
+              </p>
+            </div>
+            <div
+              class="bg-white dark:bg-white/5 p-6 rounded-xl border-2 border-primary flex flex-col gap-3 shadow-[0_10px_20px_rgba(19,236,91,0.1)]">
+              <div class="size-10 rounded-lg bg-primary flex items-center justify-center text-white">
+                <span class="material-symbols-outlined font-bold">account_balance_wallet</span>
+              </div>
+              <h6 class="font-bold text-[#0d1b12] dark:text-white">
+                2. Wallet Setup
+              </h6>
+              <p class="text-xs text-[#4c9a66]">
+                Add funds to your wallet for task payments.
+              </p>
+            </div>
+            <div
+              class="bg-white dark:bg-white/5 p-6 rounded-xl border border-[#e7f3eb] dark:border-white/10 flex flex-col gap-3 opacity-50">
+              <div
+                class="size-10 rounded-lg bg-[#cfe7d7] dark:bg-white/10 flex items-center justify-center text-gray-400">
+                <span class="material-symbols-outlined">add_task</span>
+              </div>
+              <h6 class="font-bold text-[#0d1b12] dark:text-white">
+                3. Order Placement
+              </h6>
+              <p class="text-xs text-[#4c9a66]">
+                Create your first task campaign for our users.
+              </p>
+            </div>
+            <div
+              class="bg-white dark:bg-white/5 p-6 rounded-xl border border-[#e7f3eb] dark:border-white/10 flex flex-col gap-3 opacity-50">
+              <div
+                class="size-10 rounded-lg bg-[#cfe7d7] dark:bg-white/10 flex items-center justify-center text-gray-400">
+                <span class="material-symbols-outlined">monitoring</span>
+              </div>
+              <h6 class="font-bold text-[#0d1b12] dark:text-white">
+                4. Monitoring
+              </h6>
+              <p class="text-xs text-[#4c9a66]">
+                Track submissions and approve user work quality.
+              </p>
+            </div>
+            <div
+              class="bg-white dark:bg-white/5 p-6 rounded-xl border border-[#e7f3eb] dark:border-white/10 flex flex-col gap-3 opacity-30 border-dashed">
+              <div
+                class="size-10 rounded-lg bg-[#cfe7d7] dark:bg-white/10 flex items-center justify-center text-gray-400">
+                <span class="material-symbols-outlined">description</span>
+              </div>
+              <h6 class="font-bold text-[#0d1b12] dark:text-white">
+                5. Invoice
+              </h6>
+              <p class="text-xs text-[#4c9a66]">
+                Download billing reports and payment receipts.
+              </p>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+    <!-- ==================== STEP 2 END ==================== -->
+
+    <!-- ==================== STEP 3 START ==================== -->
+    <div id="step-3" class="step-section">
+      <main class="flex flex-col items-center py-12 px-4">
+        <div class="w-full max-w-[960px] mb-12">
+          <div
+            class="flex flex-col gap-4 p-4 bg-white dark:bg-white/5 rounded-xl border border-[#e7f3eb] dark:border-white/10 shadow-sm">
+            <div class="flex gap-6 justify-between items-center px-2">
+              <div class="flex flex-col">
+                <p class="text-[#0d1b12] dark:text-white text-lg font-bold">
+                  Step 3: Order Placement
+                </p>
+                <p class="text-[#4c9a66] text-sm font-normal">
+                  Current: Setting up your first bulk task campaign
+                </p>
+              </div>
+              <div class="flex items-center gap-4">
+                <span
+                  class="text-xs font-bold text-primary uppercase tracking-widest bg-primary/10 px-3 py-1.5 rounded-full">60%
+                  COMPLETE</span>
+                <p class="text-[#0d1b12] dark:text-white text-xl font-extrabold leading-normal">
+                  3/5
+                </p>
+              </div>
+            </div>
+            <div class="relative h-3 w-full bg-[#cfe7d7] dark:bg-white/10 rounded-full overflow-hidden">
+              <div class="absolute left-0 top-0 h-full rounded bg-primary transition-all duration-500"
+                style="width: 60%"></div>
+            </div>
+            <div class="grid grid-cols-5 gap-2 mt-2">
+              <div class="h-1 bg-primary rounded-full"></div>
+              <div class="h-1 bg-primary rounded-full"></div>
+              <div class="h-1 bg-primary rounded-full"></div>
+              <div class="h-1 bg-[#cfe7d7] dark:bg-white/10 rounded-full"></div>
+              <div class="h-1 bg-[#cfe7d7] dark:bg-white/10 rounded-full"></div>
+            </div>
+          </div>
+        </div>
+        <div class="w-full max-w-[960px]">
+          <div
+            class="bg-white dark:bg-white/5 rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.05)] border border-[#e7f3eb] dark:border-white/10 overflow-hidden">
+            <div class="flex flex-col md:flex-row min-h-[520px]">
+              <div
+                class="w-full md:w-1/2 relative bg-[#f0fff4] dark:bg-primary/5 flex items-center justify-center p-12">
+                <div class="absolute inset-0 opacity-10 pointer-events-none" style="
+                      background-image: radial-gradient(
+                        circle at 2px 2px,
+                        #13ec5b 1px,
+                        transparent 0
+                      );
+                      background-size: 24px 24px;
+                    "></div>
+                <div class="relative z-10 flex flex-col items-center text-center">
+                  <div
+                    class="w-48 h-48 bg-white dark:bg-background-dark rounded-full shadow-2xl flex items-center justify-center mb-8 border-4 border-primary/20">
+                    <span class="material-symbols-outlined text-[100px] text-primary"
+                      style="font-variation-settings: &quot;FILL&quot; 1">shopping_cart_checkout</span>
+                  </div>
+                  <div
+                    class="bg-white/80 dark:bg-white/10 backdrop-blur-sm border border-primary/20 text-[#0d1b12] dark:text-white px-5 py-2.5 rounded-full text-sm font-bold flex items-center gap-2 shadow-sm">
+                    <span class="material-symbols-outlined text-primary text-xl">bolt</span>
+                    <span>Instant Activation</span>
+                  </div>
+                </div>
+              </div>
+              <div class="w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center">
+                <h2 class="text-[#0d1b12] dark:text-white text-3xl font-extrabold mb-4 leading-tight">
+                  Place Your First Bulk Order
+                </h2>
+                <p class="text-[#4c9a66] text-lg font-normal mb-8 leading-relaxed">
+                  Defining task requirements clearly allows our workers to
+                  start delivering high-quality results immediately.
+                </p>
+                <div class="space-y-4 mb-10">
+                  <div
+                    class="flex items-start gap-4 p-4 rounded-xl bg-background-light dark:bg-white/5 border border-transparent hover:border-primary/30 transition-all">
+                    <div class="size-9 rounded-full bg-primary flex items-center justify-center shrink-0">
+                      <span class="material-symbols-outlined text-white text-xl">category</span>
+                    </div>
+                    <div>
+                      <h5 class="font-bold text-[#0d1b12] dark:text-white">
+                        Select Category
+                      </h5>
+                      <p class="text-sm text-[#4c9a66]">
+                        Choose platforms like Facebook, Gmail, or TikTok.
+                      </p>
+                    </div>
+                  </div>
+                  <div
+                    class="flex items-start gap-4 p-4 rounded-xl bg-background-light dark:bg-white/5 border border-transparent hover:border-primary/30 transition-all">
+                    <div class="size-9 rounded-full bg-primary flex items-center justify-center shrink-0">
+                      <span class="material-symbols-outlined text-white text-xl">sell</span>
+                    </div>
+                    <div>
+                      <h5 class="font-bold text-[#0d1b12] dark:text-white">
+                        Set Quantity &amp; Price
+                      </h5>
+                      <p class="text-sm text-[#4c9a66]">
+                        Define unit counts and your offer per account.
+                      </p>
+                    </div>
+                  </div>
+                  <div
+                    class="flex items-start gap-4 p-4 rounded-xl bg-background-light dark:bg-white/5 border border-transparent hover:border-primary/30 transition-all">
+                    <div class="size-9 rounded-full bg-primary flex items-center justify-center shrink-0">
+                      <span class="material-symbols-outlined text-white text-xl">fingerprint</span>
+                    </div>
+                    <div>
+                      <h5 class="font-bold text-[#0d1b12] dark:text-white">
+                        Generate Order ID
+                      </h5>
+                      <p class="text-sm text-[#4c9a66]">
+                        Create the 4-digit tracking ID for task submissions.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div class="flex flex-col sm:flex-row gap-4">
+                  <button onclick="goToStep(2)"
+                    class="flex-1 min-w-[120px] cursor-pointer items-center justify-center rounded-lg h-14 px-6 bg-transparent border-2 border-[#e7f3eb] dark:border-white/10 text-[#0d1b12] dark:text-white text-base font-bold transition-all hover:bg-gray-50 dark:hover:bg-white/5">
+                    <span class="truncate">Back</span>
+                  </button>
+                  <!-- NEXT BUTTON STEP 3 -->
+                  <button onclick="goToStep(4)"
+                    class="flex-[2] min-w-[120px] cursor-pointer items-center justify-center rounded-lg h-14 px-6 bg-primary text-[#0d1b12] text-base font-bold shadow-[0_4px_14px_rgba(19,236,91,0.4)] hover:shadow-[0_6px_20px_rgba(19,236,91,0.6)] hover:-translate-y-0.5 transition-all">
+                    <span class="truncate">Next Step</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <p class="text-center mt-6 text-[#4c9a66] text-sm italic">
+            Tip: Detailed instructions reduce worker rejection rates and speed
+            up approvals.
+          </p>
+        </div>
+        <!-- ROADMAP STEP 3 -->
+        <section class="max-w-[1200px] mx-auto w-full px-6 py-12">
+          <h3 class="text-[#0d1b12] dark:text-white text-xl font-bold mb-8 flex items-center gap-2">
+            <span class="material-symbols-outlined">map</span><span>Your Roadmap to Success</span>
+          </h3>
+          <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
+            <div
+              class="bg-white dark:bg-white/5 p-6 rounded-xl border border-[#e7f3eb] dark:border-white/10 flex flex-col gap-3 relative">
+              <div class="absolute top-4 right-4 text-primary">
+                <span class="material-symbols-outlined font-bold">check_circle</span>
+              </div>
+              <div class="size-10 rounded-lg bg-primary/20 flex items-center justify-center text-primary">
+                <span class="material-symbols-outlined font-bold">person</span>
+              </div>
+              <h6 class="font-bold text-[#0d1b12] dark:text-white">
+                1. Profile Setup
+              </h6>
+              <p class="text-xs text-[#4c9a66]">
+                Completed and verified identity.
+              </p>
+            </div>
+            <div
+              class="bg-white dark:bg-white/5 p-6 rounded-xl border border-[#e7f3eb] dark:border-white/10 flex flex-col gap-3 relative">
+              <div class="absolute top-4 right-4 text-primary">
+                <span class="material-symbols-outlined font-bold">check_circle</span>
+              </div>
+              <div class="size-10 rounded-lg bg-primary/20 flex items-center justify-center text-primary">
+                <span class="material-symbols-outlined font-bold">account_balance_wallet</span>
+              </div>
+              <h6 class="font-bold text-[#0d1b12] dark:text-white">
+                2. Wallet Setup
+              </h6>
+              <p class="text-xs text-[#4c9a66]">
+                Funds added successfully to wallet.
+              </p>
+            </div>
+            <div
+              class="bg-white dark:bg-white/5 p-6 rounded-xl border-2 border-primary flex flex-col gap-3 shadow-[0_10px_20px_rgba(19,236,91,0.1)]">
+              <div class="size-10 rounded-lg bg-primary flex items-center justify-center text-white">
+                <span class="material-symbols-outlined font-bold">add_task</span>
+              </div>
+              <h6 class="font-bold text-[#0d1b12] dark:text-white">
+                3. Order Placement
+              </h6>
+              <p class="text-xs text-[#4c9a66]">
+                Create your first task campaign for our users.
+              </p>
+            </div>
+            <div
+              class="bg-white dark:bg-white/5 p-6 rounded-xl border border-[#e7f3eb] dark:border-white/10 flex flex-col gap-3 opacity-50">
+              <div
+                class="size-10 rounded-lg bg-[#cfe7d7] dark:bg-white/10 flex items-center justify-center text-gray-400">
+                <span class="material-symbols-outlined">monitoring</span>
+              </div>
+              <h6 class="font-bold text-[#0d1b12] dark:text-white">
+                4. Monitoring
+              </h6>
+              <p class="text-xs text-[#4c9a66]">
+                Track submissions and approve user work quality.
+              </p>
+            </div>
+            <div
+              class="bg-white dark:bg-white/5 p-6 rounded-xl border border-[#e7f3eb] dark:border-white/10 flex flex-col gap-3 opacity-30 border-dashed">
+              <div
+                class="size-10 rounded-lg bg-[#cfe7d7] dark:bg-white/10 flex items-center justify-center text-gray-400">
+                <span class="material-symbols-outlined">description</span>
+              </div>
+              <h6 class="font-bold text-[#0d1b12] dark:text-white">
+                5. Invoice
+              </h6>
+              <p class="text-xs text-[#4c9a66]">
+                Download billing reports and payment receipts.
+              </p>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+    <!-- ==================== STEP 3 END ==================== -->
+
+    <!-- ==================== STEP 4 START ==================== -->
+    <div id="step-4" class="step-section">
+      <main class="flex flex-col items-center py-12 px-4">
+        <div class="w-full max-w-[960px] mb-12">
+          <div
+            class="flex flex-col gap-4 p-4 bg-white dark:bg-white/5 rounded-xl border border-[#e7f3eb] dark:border-white/10 shadow-sm">
+            <div class="flex gap-6 justify-between items-center px-2">
+              <div class="flex flex-col">
+                <p class="text-[#0d1b12] dark:text-white text-lg font-bold">
+                  Step 4: Monitoring &amp; Tracking
+                </p>
+                <p class="text-[#4c9a66] text-sm font-normal">
+                  Keep track of your campaign progress and results
+                </p>
+              </div>
+              <div class="flex items-center gap-4">
+                <span
+                  class="text-xs font-bold text-primary uppercase tracking-widest bg-primary/10 px-3 py-1.5 rounded-full">80%
+                  COMPLETE</span>
+                <p class="text-[#0d1b12] dark:text-white text-xl font-extrabold leading-normal">
+                  4/5
+                </p>
+              </div>
+            </div>
+            <div class="relative h-3 w-full bg-[#cfe7d7] dark:bg-white/10 rounded-full overflow-hidden">
+              <div class="absolute left-0 top-0 h-full rounded bg-primary transition-all duration-500"
+                style="width: 80%"></div>
+            </div>
+            <div class="grid grid-cols-5 gap-2 mt-2">
+              <div class="h-1 bg-primary rounded-full"></div>
+              <div class="h-1 bg-primary rounded-full"></div>
+              <div class="h-1 bg-primary rounded-full"></div>
+              <div class="h-1 bg-primary rounded-full"></div>
+              <div class="h-1 bg-[#cfe7d7] dark:bg-white/10 rounded-full"></div>
+            </div>
+          </div>
+        </div>
+        <div class="w-full max-w-[960px]">
+          <div
+            class="bg-white dark:bg-white/5 rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.05)] border border-[#e7f3eb] dark:border-white/10 overflow-hidden">
+            <div class="flex flex-col md:flex-row min-h-[520px]">
+              <div
+                class="w-full md:w-1/2 relative bg-[#f0fff4] dark:bg-primary/5 flex items-center justify-center p-12">
+                <div class="absolute inset-0 opacity-10 pointer-events-none" style="
+                      background-image: radial-gradient(
+                        circle at 2px 2px,
+                        #13ec5b 1px,
+                        transparent 0
+                      );
+                      background-size: 24px 24px;
+                    "></div>
+                <div class="relative z-10 flex flex-col items-center text-center">
+                  <div
+                    class="w-48 h-48 bg-white dark:bg-background-dark rounded-full shadow-2xl flex items-center justify-center mb-8 border-4 border-primary/20">
+                    <span class="material-symbols-outlined text-[100px] text-primary"
+                      style="font-variation-settings: &quot;FILL&quot; 1">analytics</span>
+                  </div>
+                  <div
+                    class="bg-white/80 dark:bg-white/10 backdrop-blur-sm border border-primary/20 text-[#0d1b12] dark:text-white px-5 py-2.5 rounded-full text-sm font-bold flex items-center gap-2 shadow-sm">
+                    <span class="material-symbols-outlined text-primary text-xl">insights</span>
+                    <span>Real-time tracking</span>
+                  </div>
+                </div>
+              </div>
+              <div class="w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center">
+                <h2 class="text-[#0d1b12] dark:text-white text-3xl font-extrabold mb-4 leading-tight">
+                  Track Your Order Progress
+                </h2>
+                <p class="text-[#4c9a66] text-lg font-normal mb-8 leading-relaxed">
+                  Monitor task submissions in real-time and maintain direct
+                  communication with our administrative team for a seamless
+                  experience.
+                </p>
+                <div class="space-y-4 mb-10">
+                  <div
+                    class="flex items-start gap-4 p-4 rounded-xl bg-background-light dark:bg-white/5 border border-transparent hover:border-primary/30 transition-all">
+                    <div class="size-9 rounded-full bg-primary flex items-center justify-center shrink-0">
+                      <span class="material-symbols-outlined text-white text-xl">dashboard</span>
+                    </div>
+                    <div>
+                      <h5 class="font-bold text-[#0d1b12] dark:text-white">
+                        Dashboard Insights
+                      </h5>
+                      <p class="text-sm text-[#4c9a66]">
+                        View aggregate platform stats and live project volume.
+                      </p>
+                    </div>
+                  </div>
+                  <div
+                    class="flex items-start gap-4 p-4 rounded-xl bg-background-light dark:bg-white/5 border border-transparent hover:border-primary/30 transition-all">
+                    <div class="size-9 rounded-full bg-primary flex items-center justify-center shrink-0">
+                      <span class="material-symbols-outlined text-white text-xl">history</span>
+                    </div>
+                    <div>
+                      <h5 class="font-bold text-[#0d1b12] dark:text-white">
+                        Order History
+                      </h5>
+                      <p class="text-sm text-[#4c9a66]">
+                        Monitor individual order status from pending to
+                        completion.
+                      </p>
+                    </div>
+                  </div>
+                  <div
+                    class="flex items-start gap-4 p-4 rounded-xl bg-background-light dark:bg-white/5 border border-transparent hover:border-primary/30 transition-all">
+                    <div class="size-9 rounded-full bg-primary flex items-center justify-center shrink-0">
+                      <span class="material-symbols-outlined text-white text-xl">forum</span>
+                    </div>
+                    <div>
+                      <h5 class="font-bold text-[#0d1b12] dark:text-white">
+                        Direct Communication
+                      </h5>
+                      <p class="text-sm text-[#4c9a66]">
+                        Discuss order specifics directly with Admins via our
+                        messaging hub.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div class="flex flex-col sm:flex-row gap-4">
+                  <button onclick="goToStep(3)"
+                    class="flex-1 min-w-[120px] cursor-pointer items-center justify-center rounded-lg h-14 px-6 bg-transparent border-2 border-[#e7f3eb] dark:border-white/10 text-[#0d1b12] dark:text-white text-base font-bold transition-all hover:bg-gray-50 dark:hover:bg-white/5">
+                    <span class="truncate">Back</span>
+                  </button>
+                  <!-- NEXT BUTTON STEP 4 -->
+                  <button onclick="goToStep(5)"
+                    class="flex-[2] min-w-[120px] cursor-pointer items-center justify-center rounded-lg h-14 px-6 bg-primary text-[#0d1b12] text-base font-bold shadow-[0_4px_14px_rgba(19,236,91,0.4)] hover:shadow-[0_6px_20px_rgba(19,236,91,0.6)] hover:-translate-y-0.5 transition-all">
+                    <span class="truncate">Next Step</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <p class="text-center mt-6 text-[#4c9a66] text-sm italic">
+            Tip: Use the real-time dashboard to identify high-performing
+            worker groups and optimize your campaigns.
+          </p>
+        </div>
+        <!-- ROADMAP STEP 4 -->
+        <section class="max-w-[1200px] mx-auto w-full px-6 py-12">
+          <h3 class="text-[#0d1b12] dark:text-white text-xl font-bold mb-8 flex items-center gap-2">
+            <span class="material-symbols-outlined">map</span><span>Your Roadmap to Success</span>
+          </h3>
+          <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
+            <div
+              class="bg-white dark:bg-white/5 p-6 rounded-xl border border-[#e7f3eb] dark:border-white/10 flex flex-col gap-3 relative">
+              <div class="absolute top-4 right-4 text-primary">
+                <span class="material-symbols-outlined font-bold">check_circle</span>
+              </div>
+              <div class="size-10 rounded-lg bg-primary/20 flex items-center justify-center text-primary">
+                <span class="material-symbols-outlined font-bold">person</span>
+              </div>
+              <h6 class="font-bold text-[#0d1b12] dark:text-white">
+                1. Profile Setup
+              </h6>
+              <p class="text-xs text-[#4c9a66]">
+                Completed and verified identity.
+              </p>
+            </div>
+            <div
+              class="bg-white dark:bg-white/5 p-6 rounded-xl border border-[#e7f3eb] dark:border-white/10 flex flex-col gap-3 relative">
+              <div class="absolute top-4 right-4 text-primary">
+                <span class="material-symbols-outlined font-bold">check_circle</span>
+              </div>
+              <div class="size-10 rounded-lg bg-primary/20 flex items-center justify-center text-primary">
+                <span class="material-symbols-outlined font-bold">account_balance_wallet</span>
+              </div>
+              <h6 class="font-bold text-[#0d1b12] dark:text-white">
+                2. Wallet Setup
+              </h6>
+              <p class="text-xs text-[#4c9a66]">
+                Funds added successfully to wallet.
+              </p>
+            </div>
+            <div
+              class="bg-white dark:bg-white/5 p-6 rounded-xl border border-[#e7f3eb] dark:border-white/10 flex flex-col gap-3 relative">
+              <div class="absolute top-4 right-4 text-primary">
+                <span class="material-symbols-outlined font-bold">check_circle</span>
+              </div>
+              <div class="size-10 rounded-lg bg-primary/20 flex items-center justify-center text-primary">
+                <span class="material-symbols-outlined font-bold">add_task</span>
+              </div>
+              <h6 class="font-bold text-[#0d1b12] dark:text-white">
+                3. Order Placement
+              </h6>
+              <p class="text-xs text-[#4c9a66]">
+                Campaign created and active.
+              </p>
+            </div>
+            <div
+              class="bg-white dark:bg-white/5 p-6 rounded-xl border-2 border-primary flex flex-col gap-3 shadow-[0_10px_20px_rgba(19,236,91,0.1)]">
+              <div class="size-10 rounded-lg bg-primary flex items-center justify-center text-white">
+                <span class="material-symbols-outlined font-bold">monitoring</span>
+              </div>
+              <h6 class="font-bold text-[#0d1b12] dark:text-white">
+                4. Monitoring
+              </h6>
+              <p class="text-xs text-[#4c9a66]">
+                Track submissions and approve user work quality.
+              </p>
+            </div>
+            <div
+              class="bg-white dark:bg-white/5 p-6 rounded-xl border border-[#e7f3eb] dark:border-white/10 flex flex-col gap-3 opacity-30 border-dashed">
+              <div
+                class="size-10 rounded-lg bg-[#cfe7d7] dark:bg-white/10 flex items-center justify-center text-gray-400">
+                <span class="material-symbols-outlined">description</span>
+              </div>
+              <h6 class="font-bold text-[#0d1b12] dark:text-white">
+                5. Invoice
+              </h6>
+              <p class="text-xs text-[#4c9a66]">
+                Download billing reports and payment receipts.
+              </p>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+    <!-- ==================== STEP 4 END ==================== -->
+
+    <!-- ==================== STEP 5 START ==================== -->
+    <div id="step-5" class="step-section">
+      <main class="flex flex-col items-center py-12 px-4">
+        <div class="w-full max-w-[960px] mb-12">
+          <div
+            class="flex flex-col gap-4 p-4 bg-white dark:bg-white/5 rounded-xl border border-[#e7f3eb] dark:border-white/10 shadow-sm">
+            <div class="flex gap-6 justify-between items-center px-2">
+              <div class="flex flex-col">
+                <p class="text-[#0d1b12] dark:text-white text-lg font-bold">
+                  Step 5: Professional Invoicing
+                </p>
+                <p class="text-[#4c9a66] text-sm font-normal">
+                  Manage your business records with automated billing
+                </p>
+              </div>
+              <div class="flex items-center gap-4">
+                <span
+                  class="text-xs font-bold text-primary uppercase tracking-widest bg-primary/10 px-3 py-1.5 rounded-full">100%
+                  COMPLETE</span>
+                <p class="text-[#0d1b12] dark:text-white text-xl font-extrabold leading-normal">
+                  5/5
+                </p>
+              </div>
+            </div>
+            <div class="relative h-3 w-full bg-[#cfe7d7] dark:bg-white/10 rounded-full overflow-hidden">
+              <div class="absolute left-0 top-0 h-full rounded bg-primary transition-all duration-500"
+                style="width: 100%"></div>
+            </div>
+            <div class="grid grid-cols-5 gap-2 mt-2">
+              <div class="h-1 bg-primary rounded-full"></div>
+              <div class="h-1 bg-primary rounded-full"></div>
+              <div class="h-1 bg-primary rounded-full"></div>
+              <div class="h-1 bg-primary rounded-full"></div>
+              <div class="h-1 bg-primary rounded-full"></div>
+            </div>
+          </div>
+        </div>
+        <div class="w-full max-w-[960px]">
+          <div
+            class="bg-white dark:bg-white/5 rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.05)] border border-[#e7f3eb] dark:border-white/10 overflow-hidden">
+            <div class="flex flex-col md:flex-row min-h-[520px]">
+              <div
+                class="w-full md:w-1/2 relative bg-[#f0fff4] dark:bg-primary/5 flex items-center justify-center p-12">
+                <div class="absolute inset-0 opacity-10 pointer-events-none" style="
+                      background-image: radial-gradient(
+                        circle at 2px 2px,
+                        #13ec5b 1px,
+                        transparent 0
+                      );
+                      background-size: 24px 24px;
+                    "></div>
+                <div class="relative z-10 flex flex-col items-center text-center">
+                  <div
+                    class="w-48 h-48 bg-white dark:bg-background-dark rounded-full shadow-2xl flex items-center justify-center mb-8 border-4 border-primary/20">
+                    <span class="material-symbols-outlined text-[100px] text-primary"
+                      style="font-variation-settings: &quot;FILL&quot; 1">description</span>
+                  </div>
+                  <div
+                    class="bg-white/80 dark:bg-white/10 backdrop-blur-sm border border-primary/20 text-[#0d1b12] dark:text-white px-5 py-2.5 rounded-full text-sm font-bold flex items-center gap-2 shadow-sm">
+                    <span class="material-symbols-outlined text-primary text-xl">verified</span>
+                    <span>Official Records</span>
+                  </div>
+                </div>
+              </div>
+              <div class="w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center">
+                <h2 class="text-[#0d1b12] dark:text-white text-3xl font-extrabold mb-4 leading-tight">
+                  Access Your Billing Reports
+                </h2>
+                <p class="text-[#4c9a66] text-lg font-normal mb-8 leading-relaxed">
+                  Download professional PDF invoices for all your bulk account
+                  purchases directly from your dashboard for seamless
+                  bookkeeping.
+                </p>
+                <div class="space-y-4 mb-10">
+                  <div
+                    class="flex items-start gap-4 p-4 rounded-xl bg-background-light dark:bg-white/5 border border-transparent hover:border-primary/30 transition-all">
+                    <div class="size-9 rounded-full bg-primary flex items-center justify-center shrink-0">
+                      <span class="material-symbols-outlined text-white text-xl">auto_awesome</span>
+                    </div>
+                    <div>
+                      <h5 class="font-bold text-[#0d1b12] dark:text-white">
+                        Automated Generation
+                      </h5>
+                      <p class="text-sm text-[#4c9a66]">
+                        Invoices are created instantly upon order
+                        confirmation.
+                      </p>
+                    </div>
+                  </div>
+                  <div
+                    class="flex items-start gap-4 p-4 rounded-xl bg-background-light dark:bg-white/5 border border-transparent hover:border-primary/30 transition-all">
+                    <div class="size-9 rounded-full bg-primary flex items-center justify-center shrink-0">
+                      <span class="material-symbols-outlined text-white text-xl">picture_as_pdf</span>
+                    </div>
+                    <div>
+                      <h5 class="font-bold text-[#0d1b12] dark:text-white">
+                        PDF Downloads
+                      </h5>
+                      <p class="text-sm text-[#4c9a66]">
+                        Access high-quality, printable reports from your order
+                        history.
+                      </p>
+                    </div>
+                  </div>
+                  <div
+                    class="flex items-start gap-4 p-4 rounded-xl bg-background-light dark:bg-white/5 border border-transparent hover:border-primary/30 transition-all">
+                    <div class="size-9 rounded-full bg-primary flex items-center justify-center shrink-0">
+                      <span class="material-symbols-outlined text-white text-xl">receipt_long</span>
+                    </div>
+                    <div>
+                      <h5 class="font-bold text-[#0d1b12] dark:text-white">
+                        Financial Transparency
+                      </h5>
+                      <p class="text-sm text-[#4c9a66]">
+                        Track every Taka spent with detailed itemized
+                        breakdowns.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div class="flex flex-col sm:flex-row gap-4">
+                  <button onclick="goToStep(4)"
+                    class="flex-1 min-w-[120px] cursor-pointer items-center justify-center rounded-lg h-14 px-6 bg-transparent border-2 border-[#e7f3eb] dark:border-white/10 text-[#0d1b12] dark:text-white text-base font-bold transition-all hover:bg-gray-50 dark:hover:bg-white/5">
+                    <span class="truncate">Back</span>
+                  </button>
+                  <!-- FINAL BUTTON STEP 5 -->
+                  <button onclick="handleCompleteOnboarding()"
+                    class="flex-[2] min-w-[120px] cursor-pointer items-center justify-center rounded-lg h-14 px-6 bg-primary text-[#0d1b12] text-base font-bold shadow-[0_4px_14px_rgba(19,236,91,0.4)] hover:shadow-[0_6px_20px_rgba(19,236,91,0.6)] hover:-translate-y-0.5 transition-all">
+                    <span class="truncate">Finish &amp; Go to Dashboard</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <p class="text-center mt-6 text-[#4c9a66] text-sm italic">
+            Tip: You can find all your past receipts in the 'Billing' section
+            of your profile settings.
+          </p>
+        </div>
+        <!-- ROADMAP STEP 5 -->
+        <section class="max-w-[1200px] mx-auto w-full px-6 py-12">
+          <h3 class="text-[#0d1b12] dark:text-white text-xl font-bold mb-8 flex items-center gap-2">
+            <span class="material-symbols-outlined">map</span><span>Your Roadmap to Success</span>
+          </h3>
+          <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
+            <div
+              class="bg-white dark:bg-white/5 p-6 rounded-xl border border-[#e7f3eb] dark:border-white/10 flex flex-col gap-3 relative">
+              <div class="absolute top-4 right-4 text-primary">
+                <span class="material-symbols-outlined font-bold">check_circle</span>
+              </div>
+              <div class="size-10 rounded-lg bg-primary/20 flex items-center justify-center text-primary">
+                <span class="material-symbols-outlined font-bold">person</span>
+              </div>
+              <h6 class="font-bold text-[#0d1b12] dark:text-white">
+                1. Profile Setup
+              </h6>
+              <p class="text-xs text-[#4c9a66]">
+                Completed and verified identity.
+              </p>
+            </div>
+            <div
+              class="bg-white dark:bg-white/5 p-6 rounded-xl border border-[#e7f3eb] dark:border-white/10 flex flex-col gap-3 relative">
+              <div class="absolute top-4 right-4 text-primary">
+                <span class="material-symbols-outlined font-bold">check_circle</span>
+              </div>
+              <div class="size-10 rounded-lg bg-primary/20 flex items-center justify-center text-primary">
+                <span class="material-symbols-outlined font-bold">account_balance_wallet</span>
+              </div>
+              <h6 class="font-bold text-[#0d1b12] dark:text-white">
+                2. Wallet Setup
+              </h6>
+              <p class="text-xs text-[#4c9a66]">
+                Funds added successfully to wallet.
+              </p>
+            </div>
+            <div
+              class="bg-white dark:bg-white/5 p-6 rounded-xl border border-[#e7f3eb] dark:border-white/10 flex flex-col gap-3 relative">
+              <div class="absolute top-4 right-4 text-primary">
+                <span class="material-symbols-outlined font-bold">check_circle</span>
+              </div>
+              <div class="size-10 rounded-lg bg-primary/20 flex items-center justify-center text-primary">
+                <span class="material-symbols-outlined font-bold">add_task</span>
+              </div>
+              <h6 class="font-bold text-[#0d1b12] dark:text-white">
+                3. Order Placement
+              </h6>
+              <p class="text-xs text-[#4c9a66]">
+                Campaign created and active.
+              </p>
+            </div>
+            <div
+              class="bg-white dark:bg-white/5 p-6 rounded-xl border border-[#e7f3eb] dark:border-white/10 flex flex-col gap-3 relative">
+              <div class="absolute top-4 right-4 text-primary">
+                <span class="material-symbols-outlined font-bold">check_circle</span>
+              </div>
+              <div class="size-10 rounded-lg bg-primary/20 flex items-center justify-center text-primary">
+                <span class="material-symbols-outlined font-bold">monitoring</span>
+              </div>
+              <h6 class="font-bold text-[#0d1b12] dark:text-white">
+                4. Monitoring
+              </h6>
+              <p class="text-xs text-[#4c9a66]">
+                Track submissions and quality.
+              </p>
+            </div>
+            <div
+              class="bg-white dark:bg-white/5 p-6 rounded-xl border-2 border-primary flex flex-col gap-3 relative shadow-[0_10px_20px_rgba(19,236,91,0.1)]">
+              <div class="absolute top-4 right-4 text-primary">
+                <span class="material-symbols-outlined font-bold">check_circle</span>
+              </div>
+              <div class="size-10 rounded-lg bg-primary flex items-center justify-center text-white">
+                <span class="material-symbols-outlined font-bold">description</span>
+              </div>
+              <h6 class="font-bold text-[#0d1b12] dark:text-white">
+                5. Invoice
+              </h6>
+              <p class="text-xs text-[#4c9a66]">
+                Download billing reports and receipts.
+              </p>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+    <!-- ==================== STEP 5 END ==================== -->
+  </div>
+
+  <!-- FOOTER (Common) -->
+  <footer
+    class="w-full bg-white dark:bg-background-dark border-t border-[#e7f3eb] dark:border-white/10 py-8 px-6 mt-auto">
+    <div class="max-w-[1200px] mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
+      <div class="flex items-center gap-2 text-[#4c9a66] text-sm">
+        <span class="material-symbols-outlined text-base">copyright</span>
+        <span>2024 Time Task BD. All rights reserved.</span>
+      </div>
+      <div class="flex gap-8">
+        <a class="text-[#4c9a66] hover:text-primary text-sm font-medium transition-colors" href="#">Privacy Policy</a>
+        <a class="text-[#4c9a66] hover:text-primary text-sm font-medium transition-colors" href="#">Terms of Service</a>
+        <a class="text-[#4c9a66] hover:text-primary text-sm font-medium transition-colors" href="#">Support Center</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- JAVASCRIPT LOGIC -->
+  <script type="module">
+    import {
+      requireAuth,
+      setOnboardingStep,
+      completeOnboarding,
+      signOut,
+      PATH
+    } from '../auth_backend_logic.js';
+
+    window.goToStep = function(stepNumber) {
+      // 1. Hide all steps
+      const allSteps = document.querySelectorAll(".step-section");
+      allSteps.forEach((step) => {
+        step.classList.remove("active");
+      });
+
+      // 2. Show the specific step
+      const targetStep = document.getElementById("step-" + stepNumber);
+      if (targetStep) {
+        targetStep.classList.add("active");
+
+        // 3. Smooth scroll to top of container
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    };
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      // Auth guard — only Buyers can access this page
+      const authData = await requireAuth('BUYER');
+      if (!authData) return; // requireAuth handles redirect
+
+      const { session } = authData;
+
+      // Update DB to step 2 (Guideline)
+      await setOnboardingStep(2);
+
+      const handleFinish = async () => {
+         const finishBtn = document.querySelector('button[onclick="handleCompleteOnboarding()"]');
+         const skipBtn = document.querySelector('button[onclick="completeOnboarding()"]');
+         if(finishBtn) finishBtn.disabled = true;
+         if(skipBtn) skipBtn.disabled = true;
+         
+         await completeOnboarding(session.user.id);
+         window.location.href = PATH.buyerDash;
+      };
+
+      window.handleCompleteOnboarding = handleFinish;
+      window.completeOnboarding = handleFinish;
+    });
+  </script>
+</body>
+
+</html>

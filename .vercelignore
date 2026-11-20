@@ -1,0 +1,15 @@
+node_modules
+build
+dist
+.git
+.trae
+.log
+.figma
+.cursor
+New folder
+database
+sql
+Rules Files
+*.zip
+.env
+.env.*

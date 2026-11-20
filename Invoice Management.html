@@ -1,0 +1,609 @@
+<!doctype html>
+<html class="light" lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <title>Admin Panel - Time Task BD</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../supabase-client.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+    rel="stylesheet" />
+  <script>
+    (function () {
+      const savedTheme = localStorage.getItem("theme") || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+      if (savedTheme === "dark") {
+        document.documentElement.classList.add("dark");
+        document.documentElement.classList.remove("light");
+      } else {
+        document.documentElement.classList.add("light");
+        document.documentElement.classList.remove("dark");
+      }
+    })();
+  </script>
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            primary: "#13ec5b",
+            "background-light": "#f6f8f6",
+            "background-dark": "#0d1b12",
+            "sidebar-deep": "#102216",
+            "accent-green": "#13ec5b",
+          },
+          fontFamily: {
+            display: ["Manrope"],
+          },
+          borderRadius: {
+            DEFAULT: "0.25rem",
+            lg: "0.5rem",
+            xl: "0.75rem",
+            "2xl": "1rem",
+            full: "9999px",
+          },
+        },
+      },
+    };
+  </script>
+  <style type="text/tailwindcss">
+    @layer base {
+        body {
+          @apply font-display bg-background-light dark:bg-background-dark text-slate-900 dark:text-white;
+        }
+      }
+
+      /* Sidebar Transitions */
+      .sidebar-transition {
+        @apply transition-all duration-300 ease-in-out;
+      }
+
+      /* Active Tab Notch Logic */
+      .sidebar-item-active {
+        @apply bg-background-light text-sidebar-deep font-bold relative !important;
+        border-radius: 40px 0 0 40px;
+        margin-left: 10px;
+        width: calc(100% - 10px) !important;
+      }
+
+      .sidebar-item-active::before {
+        content: "";
+        position: absolute;
+        right: 0;
+        top: -40px;
+        width: 40px;
+        height: 40px;
+        background: transparent;
+        border-radius: 50%;
+        box-shadow: 20px 20px 0 0 #f6f8f6;
+        pointer-events: none;
+      }
+
+      .sidebar-item-active::after {
+        content: "";
+        position: absolute;
+        right: 0;
+        bottom: -40px;
+        width: 40px;
+        height: 40px;
+        background: transparent;
+        border-radius: 50%;
+        box-shadow: 20px -20px 0 0 #f6f8f6;
+        pointer-events: none;
+      }
+
+      .dark .sidebar-item-active::before { box-shadow: 20px 20px 0 0 #0d1b12; }
+      .dark .sidebar-item-active::after  { box-shadow: 20px -20px 0 0 #0d1b12; }
+      .dark .sidebar-item-active { @apply bg-background-dark text-white !important; }
+
+      .sidebar-item {
+        @apply flex items-center py-4 text-white/70 hover:text-white transition-all duration-200 cursor-pointer w-full relative;
+      }
+
+      .sidebar-item .material-symbols-outlined {
+        @apply font-light text-[24px];
+      }
+
+      .sidebar-item-active .material-symbols-outlined {
+        @apply text-sidebar-deep;
+      }
+
+      .dark .sidebar-item-active .material-symbols-outlined {
+        @apply text-primary;
+      }
+
+      /*.sidebar-item-active span {
+        @apply text-sidebar-deep;
+      }*/
+
+      /* Tooltip Logic - Show only when collapsed */
+      .nav-tooltip {
+        @apply invisible absolute left-full ml-4 px-2 py-1 bg-sidebar-deep text-white text-[10px] rounded whitespace-nowrap opacity-0 transition-opacity z-50 pointer-events-none;
+      }
+
+      /* Collapsed Sidebar States */
+      .sidebar-collapsed {
+        @apply w-20 pl-0;
+      }
+      .sidebar-collapsed .logo-text,
+      .sidebar-collapsed .item-text,
+      .sidebar-collapsed .menu-label,
+      .sidebar-collapsed .system-card-text {
+        @apply hidden;
+      }
+      .sidebar-collapsed .sidebar-item {
+        @apply justify-center px-0;
+      }
+      .sidebar-collapsed .sidebar-item:hover .nav-tooltip {
+        @apply visible opacity-100;
+      }
+      .sidebar-collapsed .sidebar-header {
+        @apply px-0 justify-center;
+      }
+
+      /* Custom Scrollbar */
+      .custom-scrollbar::-webkit-scrollbar {
+        width: 4px;
+      }
+      .custom-scrollbar::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+      }
+
+      .active-tab-nav {
+        @apply bg-primary text-white shadow-lg shadow-primary/20;
+      }
+    </style>
+</head>
+
+<body class="flex min-h-screen overflow-hidden">
+  <!-- Sidebar -->
+  <aside id="mainSidebar"
+    class="w-72 bg-sidebar-deep flex-shrink-0 flex flex-col h-screen sticky top-0 sidebar-transition pl-2">
+    <!-- Logo Section -->
+    <div class="sidebar-header p-6 pb-12 flex items-center gap-3 transition-all">
+      <div
+        class="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20 flex-shrink-0">
+        <span class="material-symbols-outlined text-sidebar-deep font-bold text-2xl">update</span>
+      </div>
+      <div class="flex flex-col logo-text overflow-hidden">
+        <span class="text-white font-extrabold text-lg leading-tight tracking-tight whitespace-nowrap">Time Task
+          BD</span>
+        <span class="text-primary/60 text-[10px] font-bold uppercase tracking-widest whitespace-nowrap">Admin
+          Control</span>
+      </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="flex-1">
+      <div class="px-8 mb-4 menu-label">
+        <p class="text-[10px] font-bold text-white/40 uppercase tracking-[0.2em]">
+          Main Menu
+        </p>
+      </div>
+
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Admin Index.html">
+        <span class="material-symbols-outlined">dashboard</span>
+        <span class="text-sm item-text ml-4">Dashboard</span>
+        <span class="nav-tooltip">Dashboard</span>
+      </a>
+
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/System Health.html">
+        <span class="material-symbols-outlined">monitor_heart</span>
+        <span class="text-sm item-text ml-4">System Monitoring</span>
+        <span class="nav-tooltip">Security & System Monitoring</span>
+      </a>
+
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/KYC Review.html">
+        <span class="material-symbols-outlined">manage_accounts</span>
+        <span class="text-sm item-text ml-4">Management</span>
+        <span class="nav-tooltip">User & Buyer Management</span>
+      </a>
+
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/User Analytics.html">
+        <span class="material-symbols-outlined">analytics</span>
+        <span class="text-sm item-text ml-4">Analytics Section</span>
+        <span class="nav-tooltip">Analytics Section</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/User Referral Tree.html">
+        <span class="material-symbols-outlined">hub</span>
+        <span class="text-sm item-text ml-4">Referral System</span>
+        <span class="nav-tooltip">Referral System</span>
+      </a>
+
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Market Asset Price.html">
+        <span class="material-symbols-outlined">trending_up</span>
+        <span class="text-sm item-text ml-4">Market Asset Prices</span>
+        <span class="nav-tooltip">Market Asset Prices</span>
+      </a>
+
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Live Support.html">
+        <span class="material-symbols-outlined">support_agent</span>
+        <span class="text-sm item-text ml-4">Live Support</span>
+        <span class="nav-tooltip">Live Support</span>
+      </a>
+
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Buyer Communication.html">
+        <span class="material-symbols-outlined">forum</span>
+        <span class="text-sm item-text ml-4">Communication</span>
+        <span class="nav-tooltip">Communication</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/System Announcemeeent.html">
+        <span class="material-symbols-outlined">forum</span>
+        <span class="text-sm item-text ml-4">System Announcement</span>
+        <span class="nav-tooltip">System Announcement</span>
+      </a>
+      <a class="sidebar-item sidebar-item-active px-8 group" href="/Admin Dashboard/Invoice Management.html">
+        <span class="material-symbols-outlined">description</span>
+        <span class="text-sm item-text ml-4">Invoice Management</span>
+        <span class="nav-tooltip">Invoice Management</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Create Content.html">
+        <span class="material-symbols-outlined">edit_note</span>
+        <span class="text-sm item-text ml-4">Content Management</span>
+        <span class="nav-tooltip">Content Management</span>
+      </a>
+    </nav>
+
+    <div class="px-6 py-8">
+      <button
+        class="w-full h-10 flex items-center justify-center bg-primary text-sidebar-deep font-bold text-xs rounded-lg hover:brightness-110 transition-all shadow-lg shadow-primary/10 group relative">
+        <span class="material-symbols-outlined text-[20px] system-icon">logout</span>
+        <span class="ml-2 system-card-text">Logout</span>
+        <span class="nav-tooltip !left-full !ml-6">Logout</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main Content wrapper -->
+  <div class="flex-1 flex flex-col h-screen overflow-hidden bg-background-light dark:bg-background-dark">
+    <!-- Header -->
+    <header
+      class="h-20 bg-white dark:bg-[#111f16] border-b border-slate-100 dark:border-white/10 px-6 flex items-center justify-between flex-shrink-0 z-40 transition-colors duration-300">
+      <div class="flex items-center gap-6">
+        <button id="sidebarToggle"
+          class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-white/70 hover:text-sidebar-deep dark:hover:text-primary hover:bg-primary/10 transition-all">
+          <span class="material-symbols-outlined">menu</span>
+        </button>
+        <div class="relative w-96 group">
+          <span
+            class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-sidebar-deep transition-colors">search</span>
+          <input
+            class="w-full bg-slate-100 dark:bg-white/5 border-none rounded-xl pl-10 pr-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 dark:text-white dark:placeholder:text-white/30 transition-all"
+            placeholder="Search system records..." type="text" />
+        </div>
+      </div>
+
+      <div class="flex items-center gap-6">
+        <div class="flex items-center gap-2">
+          <button
+            class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-white/70 hover:text-sidebar-deep dark:hover:text-primary hover:bg-primary/10 transition-all relative">
+            <span class="material-symbols-outlined">notifications</span>
+            <span
+              class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-[#111f16]"></span>
+          </button>
+          <button id="darkModeToggle"
+            class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-white/70 hover:text-sidebar-deep dark:hover:text-primary hover:bg-primary/10 transition-all">
+            <span id="darkIcon" class="material-symbols-outlined">light_mode</span>
+          </button>
+        </div>
+        <div class="h-10 w-px bg-slate-200 dark:bg-white/10"></div>
+        <div class="flex items-center gap-3 cursor-pointer group">
+          <div class="text-right">
+            <p class="text-sm font-bold text-slate-900 dark:text-white group-hover:text-primary transition-colors">
+              Super Admin
+            </p>
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
+              System Manager
+            </p>
+          </div>
+          <div
+            class="w-12 h-12 rounded-xl border-2 border-primary/20 p-0.5 overflow-hidden group-hover:border-primary transition-all">
+            <img alt="Admin Profile" class="w-full h-full object-cover rounded-lg"
+              src="https://lh3.googleusercontent.com/aida-public/AB6AXuDI3q59cS__AXyYcqFQtKZ2-e__roEJ3Cic28K7cd-6tYYxzLfpTArNsAJE3UypttzDIKS6SoNy85-jDLh0ZMbLqXr0NEEjrbCPSgoCJZyYc4W89P8djmlf34I_NEoa2vfl5IS3jHwLSZZ6lgtwguAje5Lv9h9RbZ2fJqb36M_tmZc-iJY-XxAXsCDxVyU1bONcO3AV5LZgB1o5wURKpB9w2XEN6iWAILVT7fIzOkl2pQ4lJb5WxYgkvuNIlKakHZWN1e4bzfo25zYy" />
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Dashboard Content -->
+    <main class="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-8 max-w-full">
+      <div class="max-w-[1600px] mx-auto w-full space-y-8">
+        <!-- Page Heading -->
+        <div class="mb-8">
+          <h1 class="text-3xl font-bold text-[#0d1b12] dark:text-white">
+            Invoice Management
+          </h1>
+          <p class="text-gray-500 dark:text-gray-400 mt-1">
+            Manage and generate professional invoices for bulk account orders
+            and track buyer payments.
+          </p>
+        </div>
+        <!-- Action Bar: Search & Create -->
+        <div class="flex flex-col md:flex-row gap-4 mb-8">
+          <div class="relative flex-grow">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <span class="material-symbols-outlined text-gray-400">search</span>
+            </div>
+            <input
+              class="block w-full pl-10 pr-3 py-3 bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-lg focus:ring-primary focus:border-primary text-sm dark:text-white dark:placeholder:text-white/30 transition-all"
+              placeholder="Search by Order ID or Buyer Name..." type="text" />
+          </div>
+          <button
+            class="inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-primary text-background-dark font-bold rounded-lg hover:opacity-90 transition-all shadow-sm">
+            <span class="material-symbols-outlined">add_circle</span>
+            Create Manual Invoice
+          </button>
+        </div>
+        <!-- Invoice Table Container -->
+        <div
+          class="bg-white dark:bg-[#111f16] rounded-xl shadow-sm border border-gray-100 dark:border-white/10 overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-gray-50 dark:bg-white/5 border-b border-gray-100 dark:border-white/10">
+                  <th class="px-6 py-4 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    Invoice ID
+                  </th>
+                  <th class="px-6 py-4 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    Date
+                  </th>
+                  <th class="px-6 py-4 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    Order ID
+                  </th>
+                  <th class="px-6 py-4 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    Buyer Name
+                  </th>
+                  <th class="px-6 py-4 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    Platform
+                  </th>
+                  <th
+                    class="px-6 py-4 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider text-center">
+                    Units
+                  </th>
+                  <th class="px-6 py-4 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    Amount (Tk)
+                  </th>
+                  <th class="px-6 py-4 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th
+                    class="px-6 py-4 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider text-right">
+                    Action
+                  </th>
+                </tr>
+              </thead>
+              <tbody id="invoice-tbody" class="divide-y divide-gray-100 dark:divide-white/10">
+                <tr id="invoice-loading-row">
+                  <td colspan="9" class="px-6 py-10 text-center text-sm text-gray-400">
+                    <span class="material-symbols-outlined animate-spin text-primary text-3xl">progress_activity</span>
+                    <p class="mt-2 font-medium">Loading invoices...</p>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <!-- Pagination Placeholder -->
+          <div
+            class="px-6 py-4 bg-gray-50 dark:bg-white/5 flex items-center justify-between border-t border-gray-100 dark:border-white/10">
+            <span class="text-sm text-gray-500 dark:text-gray-400">Showing 1 to 4 of 24 invoices</span>
+            <div class="flex gap-2">
+              <button
+                class="px-3 py-1 text-sm border border-gray-200 dark:border-white/10 rounded hover:bg-white dark:hover:bg-white/5 transition-colors dark:text-white/70">
+                Previous
+              </button>
+              <button class="px-3 py-1 text-sm border border-primary bg-primary/10 text-primary font-bold rounded">
+                1
+              </button>
+              <button
+                class="px-3 py-1 text-sm border border-gray-200 dark:border-white/10 rounded hover:bg-white dark:hover:bg-white/5 transition-colors dark:text-white/70">
+                2
+              </button>
+              <button
+                class="px-3 py-1 text-sm border border-gray-200 dark:border-white/10 rounded hover:bg-white dark:hover:bg-white/5 transition-colors dark:text-white/70">
+                Next
+              </button>
+            </div>
+          </div>
+        </div>
+        <footer class="pt-16 pb-8 border-t border-slate-200 dark:border-white/10 mt-12">
+          <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+            <div class="flex items-center gap-8 text-[11px] font-bold text-slate-400 uppercase tracking-widest">
+              <a class="hover:text-primary transition-colors" href="#">Privacy Policy</a>
+              <a class="hover:text-primary transition-colors" href="#">Terms of Service</a>
+              <a class="hover:text-primary transition-colors" href="#">Documentation</a>
+            </div>
+            <p class="text-[11px] font-bold text-slate-400">
+              © 2024 TIME TASK BD. ALL RIGHTS RESERVED.
+            </p>
+          </div>
+        </footer>
+      </div>
+    </main>
+  </div>
+
+  <!-- Script for Sidebar Functionality -->
+  <script>
+    const sidebar = document.getElementById("mainSidebar");
+    const toggleBtn = document.getElementById("sidebarToggle");
+    toggleBtn.addEventListener("click", () => {
+      sidebar.classList.toggle("sidebar-collapsed");
+    });
+
+    // ─── Dark Mode Toggle Logic ──────────────────────────────────────────────
+    const themeToggle = document.getElementById('darkModeToggle');
+    const darkIcon = document.getElementById('darkIcon');
+
+    function updateThemeUI(theme) {
+      if (theme === 'dark') {
+        document.documentElement.classList.add('dark');
+        document.documentElement.classList.remove('light');
+        darkIcon.textContent = 'dark_mode';
+      } else {
+        document.documentElement.classList.add('light');
+        document.documentElement.classList.remove('dark');
+        darkIcon.textContent = 'light_mode';
+      }
+    }
+
+    if (themeToggle) {
+      themeToggle.addEventListener('click', () => {
+        const isDark = document.documentElement.classList.contains('dark');
+        const newTheme = isDark ? 'light' : 'dark';
+        localStorage.setItem('theme', newTheme);
+        updateThemeUI(newTheme);
+      });
+    }
+
+    // Sync UI with current theme on load
+    const currentSavedTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    updateThemeUI(currentSavedTheme);
+  </script>
+
+  <!-- Invoice Management Logic -->
+  <script type="module">
+    const _supabase = window.supabaseClient;
+    const tbody = document.getElementById('invoice-tbody');
+    const searchInput = document.querySelector('input[placeholder="Search by Order ID or Buyer Name..."]');
+
+    let allInvoices = [];
+
+    // ── Helpers ──────────────────────────────────────────────────
+    function statusBadge(status) {
+      const map = {
+        completed: 'bg-primary text-background-dark',
+        processing: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
+        pending: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
+        cancelled: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300',
+      };
+      const cls = map[status] || 'bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-400';
+      return `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${cls} capitalize">${status}</span>`;
+    }
+
+    function renderRow(inv) {
+      const date = new Date(inv.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      const amount = parseFloat(inv.amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2 });
+
+      const sendBtnHtml = inv.sent_to_buyer
+        ? `<span class="inline-flex items-center gap-1 text-xs font-bold text-primary"><span class="material-symbols-outlined text-base">check_circle</span>Sent</span>`
+        : `<button data-id="${inv.id}" data-inv="${inv.invoice_id}" class="send-btn p-1.5 text-gray-400 hover:text-primary transition-colors" title="Send to Buyer"><span class="material-symbols-outlined">send</span></button>`;
+
+      return `
+        <tr class="hover:bg-gray-50 dark:hover:bg-white/10 transition-colors border-b border-gray-100 dark:border-white/10" data-invoice-id="${inv.id}">
+          <td class="px-6 py-4 text-sm font-semibold text-gray-900 dark:text-white">${inv.invoice_id}</td>
+          <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">${date}</td>
+          <td class="px-6 py-4 text-sm font-mono text-gray-500 dark:text-gray-500">${inv.order_id}</td>
+          <td class="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">${inv.buyer_name || '—'}</td>
+          <td class="px-6 py-4">
+            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-white/70">${inv.platform || '—'}</span>
+          </td>
+          <td class="px-6 py-4 text-sm text-center font-bold dark:text-white font-mono">${(inv.quantity || 0).toLocaleString()}</td>
+          <td class="px-6 py-4 text-sm font-bold text-gray-900 dark:text-primary">${amount}&nbsp;Tk</td>
+          <td class="px-6 py-4">${statusBadge(inv.status)}</td>
+          <td class="px-6 py-4 text-right">
+            <div class="flex justify-end items-center gap-3">
+              <button data-id="${inv.id}" data-inv="${inv.invoice_id}" class="pdf-btn p-1.5 text-gray-400 hover:text-primary transition-colors" title="Generate PDF">
+                <span class="material-symbols-outlined">picture_as_pdf</span>
+              </button>
+              ${sendBtnHtml}
+            </div>
+          </td>
+        </tr>`;
+    }
+
+    function renderTable(list) {
+      if (!list || list.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="9" class="px-6 py-12 text-center text-sm text-gray-400">No invoices found.</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = list.map(renderRow).join('');
+      attachRowListeners();
+    }
+
+    // ── Attach button listeners ───────────────────────────────────
+    function attachRowListeners() {
+      // PDF buttons
+      tbody.querySelectorAll('.pdf-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const invId = btn.dataset.inv;
+          const id = btn.dataset.id;
+          // Open invoice demo in a new tab for admin to print as PDF
+          window.open(`/Admin Dashboard/Invoice Demo.html?invoice_id=${invId}`, '_blank');
+          // Mark pdf_generated = true
+          await _supabase.from('invoices').update({ pdf_generated: true, updated_at: new Date().toISOString() }).eq('id', id);
+        });
+      });
+
+      // Send buttons
+      tbody.querySelectorAll('.send-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const id = btn.dataset.id;
+          const invId = btn.dataset.inv;
+          btn.disabled = true;
+          btn.innerHTML = `<span class="material-symbols-outlined animate-spin text-sm">progress_activity</span>`;
+
+          const { error } = await _supabase
+            .from('invoices')
+            .update({ sent_to_buyer: true, updated_at: new Date().toISOString() })
+            .eq('id', id);
+
+          if (error) {
+            alert('Error sending invoice: ' + error.message);
+            btn.disabled = false;
+            btn.innerHTML = `<span class="material-symbols-outlined">send</span>`;
+          } else {
+            // Update local cache and re-render
+            const inv = allInvoices.find(i => i.id === id);
+            if (inv) inv.sent_to_buyer = true;
+            const row = tbody.querySelector(`tr[data-invoice-id="${id}"]`);
+            if (row) {
+              const actionCell = row.querySelector('td:last-child div');
+              const sendSlot = actionCell.querySelector('.send-btn');
+              if (sendSlot) sendSlot.outerHTML = `<span class="inline-flex items-center gap-1 text-xs font-bold text-primary"><span class="material-symbols-outlined text-base">check_circle</span>Sent</span>`;
+            }
+          }
+        });
+      });
+    }
+
+    // ── Load invoices ─────────────────────────────────────────────
+    async function loadInvoices() {
+      const { data, error } = await _supabase
+        .from('invoices')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        tbody.innerHTML = `<tr><td colspan="9" class="px-6 py-10 text-center text-sm text-red-500">Error loading invoices: ${error.message}</td></tr>`;
+        return;
+      }
+      allInvoices = data || [];
+      renderTable(allInvoices);
+    }
+
+    // ── Search ───────────────────────────────────────────────────
+    if (searchInput) {
+      searchInput.addEventListener('input', () => {
+        const q = searchInput.value.toLowerCase().trim();
+        if (!q) { renderTable(allInvoices); return; }
+        const filtered = allInvoices.filter(inv =>
+          (inv.order_id || '').toLowerCase().includes(q) ||
+          (inv.invoice_id || '').toLowerCase().includes(q) ||
+          (inv.buyer_name || '').toLowerCase().includes(q)
+        );
+        renderTable(filtered);
+      });
+    }
+
+    loadInvoices();
+  </script>
+</body>
+
+</html>

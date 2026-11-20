@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <title>Buyer Order Invoice Receipt - Time Task BD</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&amp;display=swap" rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+    rel="stylesheet" />
+  <script id="tailwind-config">
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: "#13ec5b",
+            "primary-dark": "#0fc74d",
+            "background-light": "#f9fafb",
+            "text-main": "#000000",
+            "text-muted": "#4b5563",
+            "border-light": "#e5e7eb",
+          },
+          fontFamily: {
+            display: ["Manrope", "sans-serif"],
+          },
+          borderRadius: {
+            DEFAULT: "0.25rem",
+            lg: "0.5rem",
+            xl: "0.75rem",
+            full: "9999px",
+          },
+        },
+      },
+    };
+  </script>
+  <style type="text/tailwindcss">
+    .material-symbols-outlined {
+        font-variation-settings:
+          "FILL" 0,
+          "wght" 400,
+          "GRAD" 0,
+          "opsz" 24;
+      }
+      @media print {
+        .no-print {
+          display: none !important;
+        }
+        body {
+          background: white !important;
+          padding: 0 !important;
+        }
+        .invoice-card {
+          box-shadow: none !important;
+          border: 1px solid #e5e7eb !important;
+          width: 100% !important;
+          max-width: 100% !important;
+        }
+        main {
+          padding: 0 !important;
+        }
+      }
+    </style>
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../supabase-client.js"></script>
+</head>
+
+<body class="bg-background-light font-display text-text-main min-h-screen">
+  <div class="layout-container flex h-full grow flex-col">
+    <main class="flex-1 flex flex-col items-center py-10 px-4 sm:px-10 lg:px-40">
+
+      <!-- Print / Download Button (hidden on print) -->
+      <div class="no-print w-full max-w-[960px] flex justify-end mb-4 gap-3">
+        <button onclick="window.history.back()"
+          class="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 text-sm font-bold text-gray-600 hover:bg-gray-50 transition-all">
+          <span class="material-symbols-outlined text-[18px]">arrow_back</span>
+          Back
+        </button>
+        <button onclick="window.print()"
+          class="flex items-center gap-2 px-5 py-2 rounded-lg bg-primary text-black text-sm font-bold hover:opacity-90 shadow transition-all">
+          <span class="material-symbols-outlined text-[18px]">print</span>
+          Print / Save as PDF
+        </button>
+      </div>
+
+      <!-- Loading State -->
+      <div id="invoice-loading" class="w-full max-w-[960px] flex flex-col items-center justify-center py-20 gap-4">
+        <span class="material-symbols-outlined text-5xl text-primary animate-spin">progress_activity</span>
+        <p class="text-text-muted font-medium">Loading invoice data...</p>
+      </div>
+
+      <!-- Error State -->
+      <div id="invoice-error" class="hidden w-full max-w-[960px] text-center py-20">
+        <span class="material-symbols-outlined text-5xl text-red-400">error_outline</span>
+        <p id="invoice-error-msg" class="mt-3 text-red-500 font-semibold">Invoice not found.</p>
+      </div>
+
+      <!-- Invoice Card -->
+      <div id="invoice-card"
+        class="invoice-card hidden w-full max-w-[960px] bg-white shadow-xl rounded-xl overflow-hidden border border-border-light">
+        <div
+          class="p-8 md:p-12 border-b border-border-light flex flex-col md:flex-row justify-between items-start gap-6">
+          <div class="flex flex-col gap-4">
+            <div class="flex items-center gap-2">
+              <div
+                class="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20 flex-shrink-0">
+                <span class="material-symbols-outlined text-black font-bold text-3xl">update</span>
+              </div>
+              <span class="text-2xl font-black tracking-tighter uppercase text-black">Time Task BD</span>
+            </div>
+            <div class="text-text-muted text-sm font-medium leading-relaxed">
+              <p>Plot 12, Sector 07, Uttara</p>
+              <p>Dhaka 1230, Bangladesh</p>
+              <p>timetaskbd@gmail.com</p>
+            </div>
+          </div>
+          <div class="flex flex-col items-end gap-3">
+            <h1 class="text-4xl font-black text-black tracking-tight relative z-10">INVOICE</h1>
+            <div class="relative group mt-2">
+              <div
+                class="border-4 border-primary text-primary-dark px-6 py-1.5 rounded-lg font-black text-2xl rotate-[-8deg] flex items-center gap-2 uppercase select-none bg-primary/5">
+                <span class="material-symbols-outlined font-bold">verified</span>
+                Paid
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-0 border-b border-border-light">
+          <div class="p-8 md:px-12 md:py-10 border-b md:border-b-0 md:border-r border-border-light">
+            <h3 class="text-text-muted text-xs font-bold uppercase tracking-widest mb-4">Bill To</h3>
+            <div class="flex justify-between text-sm font-medium">
+              <span class="text-text-muted">Name:</span>
+              <span id="inv-buyer-name" class="text-black font-bold">—</span>
+            </div>
+            <div class="flex justify-between text-sm font-medium mt-1">
+              <span class="text-text-muted">Email:</span>
+              <span id="inv-buyer-email" class="text-black font-bold">—</span>
+            </div>
+          </div>
+          <div class="p-8 md:px-12 md:py-10 grid grid-cols-2 gap-y-6 gap-x-4">
+            <div>
+              <h3 class="text-text-muted text-xs font-bold uppercase tracking-widest mb-1">Invoice Number</h3>
+              <p id="inv-number" class="text-sm font-bold text-black">—</p>
+            </div>
+            <div>
+              <h3 class="text-text-muted text-xs font-bold uppercase tracking-widest mb-1">Date of Issue</h3>
+              <p id="inv-date" class="text-sm font-bold text-black">—</p>
+            </div>
+            <div>
+              <h3 class="text-text-muted text-xs font-bold uppercase tracking-widest mb-1">Payment Method</h3>
+              <div class="flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-primary"></span>
+                <p class="text-sm font-bold text-black">Wallet Balance</p>
+              </div>
+            </div>
+            <div>
+              <h3 class="text-text-muted text-xs font-bold uppercase tracking-widest mb-1">Order Ref</h3>
+              <p id="inv-order-ref" class="text-sm font-bold text-black">—</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Line items -->
+        <div class="p-8 md:px-12">
+          <div class="overflow-hidden rounded-xl border border-border-light">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-slate-50">
+                  <th class="px-6 py-4 text-xs font-bold uppercase tracking-widest text-text-muted">Service Description</th>
+                  <th class="px-6 py-4 text-xs font-bold uppercase tracking-widest text-text-muted text-center">Quantity</th>
+                  <th class="px-6 py-4 text-xs font-bold uppercase tracking-widest text-text-muted text-right">Unit Price</th>
+                  <th class="px-6 py-4 text-xs font-bold uppercase tracking-widest text-text-muted text-right">Subtotal</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-border-light">
+                <tr>
+                  <td id="inv-platform" class="px-6 py-6 font-bold text-black">—</td>
+                  <td id="inv-quantity" class="px-6 py-6 text-center font-semibold text-text-muted">—</td>
+                  <td id="inv-unit-price" class="px-6 py-6 text-right font-semibold text-text-muted">—</td>
+                  <td id="inv-subtotal" class="px-6 py-6 text-right font-bold text-black">—</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Totals -->
+        <div
+          class="p-8 md:px-12 bg-slate-50/50 border-t border-border-light flex flex-col md:flex-row justify-between items-start gap-8">
+          <div class="max-w-xs">
+            <p class="text-xs font-bold uppercase text-text-muted mb-2 tracking-wide">Terms &amp; Notes</p>
+            <p class="text-xs text-text-muted leading-relaxed font-medium">
+              This is a digitally generated invoice. Goods/services once sold
+              are non-refundable in most cases. Please contact support for
+              warranty claims within 24 hours of delivery.
+            </p>
+          </div>
+          <div class="w-full md:w-72 space-y-3">
+            <div class="flex justify-between text-sm font-medium">
+              <span class="text-text-muted">Subtotal</span>
+              <span id="inv-total-subtotal" class="text-black">—</span>
+            </div>
+            <div class="flex justify-between text-sm font-medium">
+              <span class="text-text-muted">Processing Fee</span>
+              <span class="text-black">0.00 Tk</span>
+            </div>
+            <div class="flex justify-between text-sm font-medium">
+              <span class="text-text-muted">VAT (0%)</span>
+              <span class="text-black">0.00 Tk</span>
+            </div>
+            <div class="h-px bg-border-light my-2"></div>
+            <div class="flex justify-between items-center pt-1">
+              <span class="text-lg font-bold text-black">Grand Total</span>
+              <span id="inv-grand-total" class="text-2xl font-black text-primary-dark">—</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="px-8 py-8 text-center border-t border-border-light bg-white">
+          <p class="text-sm font-bold text-text-muted">Thank you for your business with Time Task BD!</p>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <script type="module">
+    const _supabase = window.supabaseClient;
+
+    async function loadInvoice() {
+      const params = new URLSearchParams(window.location.search);
+      const invoiceId = params.get('invoice_id');
+
+      const loadingEl = document.getElementById('invoice-loading');
+      const errorEl   = document.getElementById('invoice-error');
+      const cardEl    = document.getElementById('invoice-card');
+      const errorMsg  = document.getElementById('invoice-error-msg');
+
+      if (!invoiceId) {
+        loadingEl.classList.add('hidden');
+        errorEl.classList.remove('hidden');
+        errorMsg.textContent = 'No invoice ID provided in the URL.';
+        return;
+      }
+
+      const { data: inv, error } = await _supabase
+        .from('invoices')
+        .select('*')
+        .eq('invoice_id', invoiceId)
+        .single();
+
+      loadingEl.classList.add('hidden');
+
+      if (error || !inv) {
+        errorEl.classList.remove('hidden');
+        errorMsg.textContent = `Invoice "${invoiceId}" not found.`;
+        return;
+      }
+
+      // Populate fields
+      const date   = new Date(inv.created_at).toLocaleDateString('en-US', { month:'long', day:'numeric', year:'numeric' });
+      const amount = parseFloat(inv.amount || 0);
+      const ppu    = parseFloat(inv.price_per_unit || 0);
+      const qty    = parseInt(inv.quantity || 0);
+      const fmt    = n => n.toLocaleString('en-US', { minimumFractionDigits: 2 });
+
+      document.getElementById('inv-buyer-name').textContent  = inv.buyer_name  || '—';
+      document.getElementById('inv-buyer-email').textContent = inv.buyer_email || '—';
+      document.getElementById('inv-number').textContent      = inv.invoice_id;
+      document.getElementById('inv-date').textContent        = date;
+      document.getElementById('inv-order-ref').textContent   = inv.order_id;
+      document.getElementById('inv-platform').textContent    = inv.platform || '—';
+      document.getElementById('inv-quantity').textContent    = `${qty.toLocaleString()} Unit`;
+      document.getElementById('inv-unit-price').textContent  = `${fmt(ppu)} Tk`;
+      document.getElementById('inv-subtotal').textContent    = `${fmt(amount)} Tk`;
+      document.getElementById('inv-total-subtotal').textContent = `${fmt(amount)} Tk`;
+      document.getElementById('inv-grand-total').textContent = `${fmt(amount)} Tk`;
+
+      document.title = `Invoice ${inv.invoice_id} - Time Task BD`;
+      cardEl.classList.remove('hidden');
+    }
+
+    loadInvoice();
+  </script>
+</body>
+
+</html>

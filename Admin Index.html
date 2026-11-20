@@ -1,0 +1,1130 @@
+<!doctype html>
+<html class="light" lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <title>Admin Panel - Time Task BD</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+    rel="stylesheet" />
+  <script>
+    (function () {
+      const savedTheme = localStorage.getItem("theme") || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+      if (savedTheme === "dark") {
+        document.documentElement.classList.add("dark");
+        document.documentElement.classList.remove("light");
+      } else {
+        document.documentElement.classList.add("light");
+        document.documentElement.classList.remove("dark");
+      }
+    })();
+  </script>
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            primary: "#13ec5b",
+            "background-light": "#f6f8f6",
+            "background-dark": "#0d1b12",
+            "sidebar-deep": "#102216",
+            "accent-green": "#13ec5b",
+          },
+          fontFamily: {
+            display: ["Manrope"],
+          },
+          borderRadius: {
+            DEFAULT: "0.25rem",
+            lg: "0.5rem",
+            xl: "0.75rem",
+            "2xl": "1rem",
+            full: "9999px",
+          },
+        },
+      },
+    };
+  </script>
+  <style type="text/tailwindcss">
+    @layer base {
+        body {
+          @apply font-display bg-background-light dark:bg-background-dark text-slate-900 dark:text-white;
+        }
+      }
+
+      /* Sidebar Transitions */
+      .sidebar-transition {
+        @apply transition-all duration-300 ease-in-out;
+      }
+
+      /* Active Tab Notch Logic */
+      .sidebar-item-active {
+        @apply bg-background-light text-sidebar-deep font-bold relative !important;
+        border-radius: 40px 0 0 40px;
+        margin-left: 10px;
+        width: calc(100% - 10px) !important;
+      }
+
+      .sidebar-item-active::before {
+        content: "";
+        position: absolute;
+        right: 0;
+        top: -40px;
+        width: 40px;
+        height: 40px;
+        background: transparent;
+        border-radius: 50%;
+        box-shadow: 20px 20px 0 0 #f6f8f6;
+        pointer-events: none;
+      }
+
+      .sidebar-item-active::after {
+        content: "";
+        position: absolute;
+        right: 0;
+        bottom: -40px;
+        width: 40px;
+        height: 40px;
+        background: transparent;
+        border-radius: 50%;
+        box-shadow: 20px -20px 0 0 #f6f8f6;
+        pointer-events: none;
+      }
+
+      .dark .sidebar-item-active::before { box-shadow: 20px 20px 0 0 #0d1b12; }
+      .dark .sidebar-item-active::after  { box-shadow: 20px -20px 0 0 #0d1b12; }
+      .dark .sidebar-item-active { @apply bg-background-dark text-white !important; }
+
+      .sidebar-item {
+        @apply flex items-center py-4 text-white/70 hover:text-white transition-all duration-200 cursor-pointer w-full relative;
+      }
+
+      .sidebar-item .material-symbols-outlined {
+        @apply font-light text-[24px];
+      }
+
+      .sidebar-item-active .material-symbols-outlined {
+        @apply text-sidebar-deep;
+      }
+
+      .dark .sidebar-item-active .material-symbols-outlined { @apply text-primary; }
+
+      /* Tooltip Logic - Show only when collapsed */
+      .nav-tooltip {
+        @apply invisible absolute left-full ml-4 px-2 py-1 bg-sidebar-deep text-white text-[10px] rounded whitespace-nowrap opacity-0 transition-opacity z-50 pointer-events-none;
+      }
+
+      /* Collapsed Sidebar States */
+      .sidebar-collapsed {
+        @apply w-20 pl-0;
+      }
+      .sidebar-collapsed .logo-text,
+      .sidebar-collapsed .item-text,
+      .sidebar-collapsed .menu-label,
+      .sidebar-collapsed .system-card-text {
+        @apply hidden;
+      }
+      .sidebar-collapsed .sidebar-item {
+        @apply justify-center px-0;
+      }
+      .sidebar-collapsed .sidebar-item:hover .nav-tooltip {
+        @apply visible opacity-100;
+      }
+      .sidebar-collapsed .sidebar-header {
+        @apply px-0 justify-center;
+      }
+
+      /* Custom Scrollbar */
+      .custom-scrollbar::-webkit-scrollbar {
+        width: 4px;
+      }
+      .custom-scrollbar::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+      }
+
+      .active-tab-nav {
+        @apply bg-primary text-slate-900 dark:text-sidebar-deep shadow-lg shadow-primary/20;
+      }
+
+      /* Skeleton loader */
+      .skeleton {
+        @apply bg-slate-200 dark:bg-white/10 rounded animate-pulse;
+      }
+    </style>
+</head>
+
+<body class="flex min-h-screen overflow-hidden">
+  <!-- Sidebar -->
+  <aside id="mainSidebar"
+    class="w-72 bg-sidebar-deep flex-shrink-0 flex flex-col h-screen sticky top-0 sidebar-transition pl-2">
+    <!-- Logo Section -->
+    <div class="sidebar-header p-6 pb-12 flex items-center gap-3 transition-all">
+      <div
+        class="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20 flex-shrink-0">
+        <span class="material-symbols-outlined text-sidebar-deep font-bold text-2xl">update</span>
+      </div>
+      <div class="flex flex-col logo-text overflow-hidden">
+        <span class="text-white font-extrabold text-lg leading-tight tracking-tight whitespace-nowrap">Time Task
+          BD</span>
+        <span class="text-primary/60 text-[10px] font-bold uppercase tracking-widest whitespace-nowrap">Admin
+          Control</span>
+      </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="flex-1">
+      <div class="px-8 mb-4 menu-label">
+        <p class="text-[10px] font-bold text-white/40 uppercase tracking-[0.2em]">
+          Main Menu
+        </p>
+      </div>
+
+      <a class="sidebar-item sidebar-item-active px-8 group" href="/Admin Dashboard/Admin Index.html">
+        <span class="material-symbols-outlined">dashboard</span>
+        <span class="text-sm item-text ml-4">Dashboard</span>
+        <span class="nav-tooltip">Dashboard</span>
+      </a>
+
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/System Health.html">
+        <span class="material-symbols-outlined">monitor_heart</span>
+        <span class="text-sm item-text ml-4">System Monitoring</span>
+        <span class="nav-tooltip">Security &amp; System Monitoring</span>
+      </a>
+
+      <a class="sidebar-item px-8 group relative" href="/Admin Dashboard/KYC Review.html">
+        <span class="material-symbols-outlined">manage_accounts</span>
+        <span class="text-sm item-text ml-4">Management</span>
+        <span id="kycBadge"
+          class="hidden item-text ml-auto mr-2 text-[10px] font-bold bg-red-500 text-white px-1.5 py-0.5 rounded-full"></span>
+        <span class="nav-tooltip">User &amp; Buyer Management</span>
+      </a>
+
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/User Analytics.html">
+        <span class="material-symbols-outlined">analytics</span>
+        <span class="text-sm item-text ml-4">Analytics Section</span>
+        <span class="nav-tooltip">Analytics Section</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/User Referral Tree.html">
+        <span class="material-symbols-outlined">hub</span>
+        <span class="text-sm item-text ml-4">Referral System</span>
+        <span class="nav-tooltip">Referral System</span>
+      </a>
+
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Market Asset Price.html">
+        <span class="material-symbols-outlined">trending_up</span>
+        <span class="text-sm item-text ml-4">Market Asset Prices</span>
+        <span class="nav-tooltip">Market Asset Prices</span>
+      </a>
+
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Live Support.html">
+        <span class="material-symbols-outlined">support_agent</span>
+        <span class="text-sm item-text ml-4">Live Support</span>
+        <span class="nav-tooltip">Live Support</span>
+      </a>
+
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Buyer Communication.html">
+        <span class="material-symbols-outlined">forum</span>
+        <span class="text-sm item-text ml-4">Communication</span>
+        <span class="nav-tooltip">Communication</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/System Announcemeeent.html">
+        <span class="material-symbols-outlined">campaign</span>
+        <span class="text-sm item-text ml-4">System Announcement</span>
+        <span class="nav-tooltip">System Announcement</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Invoice Management.html">
+        <span class="material-symbols-outlined">description</span>
+        <span class="text-sm item-text ml-4">Invoice Management</span>
+        <span class="nav-tooltip">Invoice Management</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Create Content.html">
+        <span class="material-symbols-outlined">edit_note</span>
+        <span class="text-sm item-text ml-4">Content Management</span>
+        <span class="nav-tooltip">Content Management</span>
+      </a>
+    </nav>
+
+    <div class="px-6 py-8">
+      <button id="logoutBtn"
+        class="w-full h-10 flex items-center justify-center bg-primary text-sidebar-deep font-bold text-xs rounded-lg hover:brightness-110 transition-all shadow-lg shadow-primary/10 group relative">
+        <span class="material-symbols-outlined text-[20px] system-icon">logout</span>
+        <span class="ml-2 system-card-text">Logout</span>
+        <span class="nav-tooltip !left-full !ml-6">Logout</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main Content wrapper -->
+  <div class="flex-1 flex flex-col h-screen overflow-hidden bg-background-light dark:bg-background-dark">
+    <!-- Header -->
+    <header
+      class="h-20 bg-white dark:bg-[#111f16] border-b border-slate-100 dark:border-white/10 px-6 flex items-center justify-between flex-shrink-0 z-40">
+      <div class="flex items-center gap-6">
+        <button id="sidebarToggle"
+          class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-white/70 hover:text-sidebar-deep dark:hover:text-primary hover:bg-primary/10 transition-all">
+          <span class="material-symbols-outlined">menu</span>
+        </button>
+        <div class="relative w-96 group">
+          <span
+            class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-sidebar-deep transition-colors">search</span>
+          <input
+            class="w-full bg-slate-100 dark:bg-white/5 dark:text-white border-none rounded-xl pl-10 pr-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 transition-all"
+            placeholder="Search system records..." type="text" />
+        </div>
+      </div>
+
+      <div class="flex items-center gap-6">
+        <div class="flex items-center gap-2">
+          <button
+            class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-white/70 hover:text-sidebar-deep dark:hover:text-primary hover:bg-primary/10 transition-all relative">
+            <span class="material-symbols-outlined">notifications</span>
+            <span id="pendingWithdrawalDot"
+              class="hidden absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-[#111f16]"></span>
+          </button>
+          <button id="darkModeToggle"
+            class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-white/70 hover:text-sidebar-deep dark:hover:text-primary hover:bg-primary/10 transition-all">
+            <span class="material-symbols-outlined" id="darkIcon">light_mode</span>
+          </button>
+        </div>
+        <div class="h-10 w-px bg-slate-200 dark:bg-white/10"></div>
+        <div class="flex items-center gap-3 cursor-pointer group">
+          <div class="text-right">
+            <p id="adminName"
+              class="text-sm font-bold text-slate-900 dark:text-white group-hover:text-primary transition-colors">
+              Super Admin
+            </p>
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
+              System Manager
+            </p>
+          </div>
+          <div
+            class="w-12 h-12 rounded-xl border-2 border-primary/20 p-0.5 overflow-hidden group-hover:border-primary transition-all">
+            <img id="adminAvatar" alt="Admin Profile" class="w-full h-full object-cover rounded-lg"
+              src="https://lh3.googleusercontent.com/aida-public/AB6AXuDI3q59cS__AXyYcqFQtKZ2-e__roEJ3Cic28K7cd-6tYYxzLfpTArNsAJE3UypttzDIKS6SoNy85-jDLh0ZMbLqXr0NEEjrbCPSgoCJZyYc4W89P8djmlf34I_NEoa2vfl5IS3jHwLSZZ6lgtwguAje5Lv9h9RbZ2fJqb36M_tmZc-iJY-XxAXsCDxVyU1bONcO3AV5LZgB1o5wURKpB9w2XEN6iWAILVT7fIzOkl2pQ4lJb5WxYgkvuNIlKakHZWN1e4bzfo25zYy" />
+          </div>
+        </div>
+      </div>
+    </header>
+    <!-- Main Dashboard Content -->
+    <main class="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-8 max-w-full">
+      <div class="max-w-[1600px] mx-auto w-full space-y-8">
+        <!-- Page Title -->
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-2xl font-extrabold text-slate-900 dark:text-white">Dashboard Overview</h2>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Live platform statistics — last refreshed <span
+                id="lastRefreshed" class="font-semibold text-slate-700 dark:text-slate-300"></span></p>
+          </div>
+          <button id="refreshBtn"
+            class="flex items-center gap-2 px-4 py-2 bg-primary/10 text-sidebar-deep dark:text-primary dark:bg-primary/10 font-bold text-sm rounded-xl hover:bg-primary/20 dark:hover:bg-primary/20 transition-all">
+            <span class="material-symbols-outlined text-[18px]">refresh</span>
+            <span>Refresh</span>
+          </button>
+        </div>
+
+        <!-- Top Stats Row -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+          <!-- Total Volume -->
+          <div class="bg-white dark:bg-[#1a2e1f] p-5 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm">
+            <p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              Total Volume
+            </p>
+            <div class="flex items-end justify-between mt-2">
+              <h3 id="stat-total-volume" class="text-2xl font-extrabold">—</h3>
+            </div>
+            <div class="mt-3 h-1 bg-primary/20 rounded-full overflow-hidden">
+              <div id="bar-total-volume" class="h-full bg-primary w-0 transition-all duration-700"></div>
+            </div>
+          </div>
+
+          <!-- Active Workers -->
+          <div class="bg-white dark:bg-[#1a2e1f] p-5 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm">
+            <p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              Active Workers
+            </p>
+            <div class="flex items-end justify-between mt-2">
+              <h3 id="stat-active-workers" class="text-2xl font-extrabold">—</h3>
+            </div>
+            <div class="mt-3 h-1 bg-primary/20 rounded-full overflow-hidden">
+              <div id="bar-active-workers" class="h-full bg-primary w-0 transition-all duration-700"></div>
+            </div>
+          </div>
+
+          <!-- Pending Payouts (Amount) -->
+          <div class="bg-white dark:bg-[#1a2e1f] p-5 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm">
+            <p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              Pending Payouts
+            </p>
+            <div class="flex items-end justify-between mt-2">
+              <h3 id="stat-pending-payouts" class="text-2xl font-extrabold">—</h3>
+            </div>
+            <div class="mt-3 h-1 bg-primary/20 rounded-full overflow-hidden">
+              <div id="bar-pending-payouts" class="h-full bg-primary w-0 transition-all duration-700"></div>
+            </div>
+          </div>
+
+          <!-- Active Payouts (Count) -->
+          <div class="bg-white dark:bg-[#1a2e1f] p-5 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm">
+            <p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              Active Payouts
+            </p>
+            <div class="flex items-end justify-between mt-2">
+              <h3 id="stat-active-payouts" class="text-2xl font-extrabold">—</h3>
+            </div>
+            <div class="mt-3 h-1 bg-primary/20 rounded-full overflow-hidden">
+              <div id="bar-active-payouts" class="h-full bg-primary w-0 transition-all duration-700"></div>
+            </div>
+          </div>
+
+          <!-- Today's Earning -->
+          <div class="bg-white dark:bg-[#1a2e1f] p-5 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm">
+            <p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              Today's Earning
+            </p>
+            <div class="flex items-end justify-between mt-2">
+              <h3 id="stat-today-earning" class="text-2xl font-extrabold">—</h3>
+            </div>
+            <div class="mt-3 h-1 bg-primary/20 rounded-full overflow-hidden">
+              <div id="bar-today-earning" class="h-full bg-primary w-0 transition-all duration-700"></div>
+            </div>
+          </div>
+
+          <!-- Total Users -->
+          <div class="bg-white dark:bg-[#1a2e1f] p-5 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm">
+            <p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              Total Users
+            </p>
+            <div class="flex items-end justify-between mt-2">
+              <h3 id="stat-total-users" class="text-2xl font-extrabold">—</h3>
+            </div>
+            <div class="mt-3 h-1 bg-primary/20 rounded-full overflow-hidden">
+              <div id="bar-total-users" class="h-full bg-primary w-0 transition-all duration-700"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <!-- Submission Trends (Chart.js) -->
+          <div
+            class="lg:col-span-2 bg-white dark:bg-[#1a2e1f] p-6 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm">
+            <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+              <div>
+                <h4 class="text-lg font-bold dark:text-white">Submission Trends</h4>
+                <p id="chartSubtitle" class="text-sm text-slate-500 dark:text-slate-400">
+                  Task submissions over the last 7 days
+                </p>
+              </div>
+              <div class="flex bg-slate-100 dark:bg-black/20 p-1 rounded-lg">
+                <button id="chartBtn1hr"
+                  class="px-3 py-1 text-xs font-bold rounded-md hover:bg-white dark:hover:bg-white/5 transition-all dark:text-white/60 text-slate-600"
+                  onclick="loadChart('1hr')">
+                  1h
+                </button>
+                <button id="chartBtn24hr"
+                  class="px-3 py-1 text-xs font-bold rounded-md hover:bg-white dark:hover:bg-white/5 transition-all dark:text-white/60 text-slate-600"
+                  onclick="loadChart('24hr')">
+                  24h
+                </button>
+                <button id="chartBtn7d"
+                  class="px-3 py-1 text-xs font-bold rounded-md bg-white dark:bg-white/10 shadow-sm text-slate-900 dark:text-white"
+                  onclick="loadChart('7d')">
+                  7d
+                </button>
+                <button id="chartBtn30d"
+                  class="px-3 py-1 text-xs font-bold rounded-md hover:bg-white dark:hover:bg-white/5 transition-all dark:text-white/60 text-slate-600"
+                  onclick="loadChart('30d')">
+                  30d
+                </button>
+              </div>
+            </div>
+            <div class="relative h-[300px] w-full">
+              <canvas id="submissionChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Activity Distribution -->
+          <div
+            class="bg-white dark:bg-[#1a2e1f] p-6 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm flex flex-col">
+            <h4 class="text-lg font-bold mb-1 dark:text-white">Activity Distribution</h4>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mb-6">
+              Orders by platform
+            </p>
+            <div class="flex-1 flex flex-col items-center justify-center">
+              <div class="relative w-48 h-48">
+                <canvas id="distributionChart"></canvas>
+                <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                  <p id="distCenter" class="text-3xl font-extrabold">—</p>
+                  <p class="text-[10px] font-bold text-slate-400 uppercase">Total Orders</p>
+                </div>
+              </div>
+              <div id="distLegend" class="grid grid-cols-2 gap-3 mt-8 w-full text-xs font-medium">
+                <!-- filled by JS -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Platform Summaries and Live Operations -->
+        <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+          <!-- Platform Summaries -->
+          <div id="platformSummaryGrid" class="xl:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <!-- filled by JS -->
+            <div
+              class="bg-white dark:bg-[#1a2e1f] p-6 rounded-xl border border-slate-200 dark:border-white/10 skeleton h-48">
+            </div>
+            <div
+              class="bg-white dark:bg-[#1a2e1f] p-6 rounded-xl border border-slate-200 dark:border-white/10 skeleton h-48">
+            </div>
+            <div
+              class="bg-white dark:bg-[#1a2e1f] p-6 rounded-xl border border-slate-200 dark:border-white/10 skeleton h-48">
+            </div>
+          </div>
+
+          <!-- Live Operation Rank -->
+          <div class="bg-white dark:bg-[#1a2e1f] p-6 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm">
+            <h4 class="text-lg font-bold mb-6 dark:text-white">Top Platforms by Orders</h4>
+            <div id="liveRankList" class="space-y-4">
+              <!-- filled by JS -->
+              <div class="h-12 skeleton rounded-lg"></div>
+              <div class="h-12 skeleton rounded-lg"></div>
+              <div class="h-12 skeleton rounded-lg"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- System Health Section -->
+        <div>
+          <h4 class="text-xl font-bold mb-6 flex items-center gap-2 dark:text-white">
+            <span class="material-symbols-outlined text-primary">health_metrics</span>
+            System Health Monitor
+          </h4>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <!-- KYC Pending -->
+            <div class="bg-white dark:bg-[#1a2e1f] p-5 rounded-xl border border-slate-200 dark:border-white/10">
+              <div class="flex items-center justify-between mb-4">
+                <p class="text-xs font-bold text-slate-400 uppercase">
+                  KYC Pending
+                </p>
+                <span class="material-symbols-outlined text-primary text-xl">badge</span>
+              </div>
+              <div class="flex items-center gap-4">
+                <div class="w-12 h-12 rounded-full border-4 border-primary border-r-transparent animate-pulse"></div>
+                <div>
+                  <h6 id="health-kyc" class="text-xl font-extrabold">—</h6>
+                  <p class="text-[10px] text-slate-500 font-bold uppercase">
+                    Awaiting Review
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Pending Withdrawals Count -->
+            <div class="bg-white dark:bg-[#1a2e1f] p-5 rounded-xl border border-slate-200 dark:border-white/10">
+              <div class="flex items-center justify-between mb-4">
+                <p class="text-xs font-bold text-slate-400 uppercase">
+                  Withdrawal Requests
+                </p>
+                <span class="material-symbols-outlined text-primary text-xl">payments</span>
+              </div>
+              <div class="flex items-center gap-4">
+                <div class="w-12 h-12 rounded-full border-4 border-primary"></div>
+                <div>
+                  <h6 id="health-withdrawals" class="text-xl font-extrabold">—</h6>
+                  <p class="text-[10px] text-slate-500 font-bold uppercase">
+                    Pending
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Pending Submissions -->
+            <div class="bg-white dark:bg-[#1a2e1f] p-5 rounded-xl border border-slate-200 dark:border-white/10">
+              <div class="flex items-center justify-between mb-4">
+                <p class="text-xs font-bold text-slate-400 uppercase">
+                  Task Submissions
+                </p>
+                <span class="material-symbols-outlined text-primary text-xl">fact_check</span>
+              </div>
+              <div class="flex items-center gap-4">
+                <div class="w-12 h-12 rounded-full border-4 border-primary border-b-transparent"></div>
+                <div>
+                  <h6 id="health-submissions" class="text-xl font-extrabold">—</h6>
+                  <p class="text-[10px] text-slate-500 font-bold uppercase">
+                    Pending Review
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Active Orders -->
+            <div class="bg-white dark:bg-[#1a2e1f] p-5 rounded-xl border border-slate-200 dark:border-white/10">
+              <div class="flex items-center justify-between mb-4">
+                <p class="text-xs font-bold text-slate-400 uppercase">
+                  Active Orders
+                </p>
+                <span class="material-symbols-outlined text-primary text-xl">shopping_cart</span>
+              </div>
+              <div class="flex items-center gap-4">
+                <div class="w-12 h-12 rounded-full border-4 border-primary"></div>
+                <div>
+                  <h6 id="health-orders" class="text-xl font-extrabold">—</h6>
+                  <p class="text-[10px] text-slate-500 font-bold uppercase">
+                    Processing
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <footer class="pt-16 pb-8 border-t border-slate-200 mt-12">
+          <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+            <div class="flex items-center gap-8 text-[11px] font-bold text-slate-400 uppercase tracking-widest">
+              <a class="hover:text-primary transition-colors" href="#">Privacy Policy</a>
+              <a class="hover:text-primary transition-colors" href="#">Terms of Service</a>
+              <a class="hover:text-primary transition-colors" href="#">Documentation</a>
+            </div>
+            <p class="text-[11px] font-bold text-slate-400">
+              © 2024 TIME TASK BD. ALL RIGHTS RESERVED.
+            </p>
+          </div>
+        </footer>
+      </div>
+    </main>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../supabase-client.js"></script>
+  <script>
+    // ─── Sidebar Toggle ─────────────────────────────────────────────────────
+    const sidebar = document.getElementById("mainSidebar");
+    const toggleBtn = document.getElementById("sidebarToggle");
+    toggleBtn.addEventListener("click", () => {
+      sidebar.classList.toggle("sidebar-collapsed");
+    });
+
+    // ─── Supabase Client ────────────────────────────────────────────────────
+    const _sb = window.supabaseClient || null;
+
+    // ─── Helpers ────────────────────────────────────────────────────────────
+    function fmt(n, currency = false) {
+      if (n === null || n === undefined) return "0";
+      const num = parseFloat(n) || 0;
+      if (currency) {
+        return "৳" + num.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+      }
+      return num.toLocaleString("en-US");
+    }
+    function escapeHtml(s) {
+      return String(s ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function setBar(id, pct) {
+      const el = document.getElementById(id);
+      if (el) el.style.width = Math.min(Math.max(pct, 4), 100) + "%";
+    }
+
+    // Chart.js instances
+    let submissionChartInst = null;
+    let distributionChartInst = null;
+
+    // Platform colours
+    const PLATFORM_COLORS = [
+      "#13ec5b", "#0ea5e9", "#f59e0b", "#8b5cf6",
+      "#ef4444", "#10b981", "#f97316", "#6366f1"
+    ];
+
+    // ─── Today's Date Helpers ───────────────────────────────────────────────
+    function todayISO() {
+      return new Date().toISOString().split("T")[0];
+    }
+    function daysAgoISO(n) {
+      const d = new Date();
+      d.setDate(d.getDate() - n);
+      return d.toISOString().split("T")[0];
+    }
+
+    // ─── Auth Guard + Admin Profile ─────────────────────────────────────────
+    async function checkAuth() {
+      if (!_sb) {
+        window.location.href = "Admin_Login.html";
+        return null;
+      }
+      const { data: { session } } = await _sb.auth.getSession();
+      if (!session) {
+        window.location.href = "Admin_Login.html";
+        return null;
+      }
+      const { data: profile } = await _sb
+        .from("profiles")
+        .select("role, full_name, avatar_url")
+        .eq("id", session.user.id)
+        .single();
+
+      const normalizedRole = String(profile?.role || '').trim().toLowerCase();
+      if (normalizedRole !== "Admin") {
+        alert("Access Denied: You are not an administrator.");
+        await _sb.auth.signOut();
+        window.location.href = "Admin_Login.html";
+        return null;
+      }
+      if (profile?.full_name) {
+        document.getElementById("adminName").textContent = profile.full_name;
+      }
+      if (profile?.avatar_url) {
+        document.getElementById("adminAvatar").src = profile.avatar_url;
+      }
+      return session;
+    }
+
+    // ─── Logout ─────────────────────────────────────────────────────────────
+    document.getElementById("logoutBtn").addEventListener("click", async () => {
+      await _sb.auth.signOut();
+      window.location.href = "Admin_Login.html";
+    });
+
+    // ─── Load All Stats ─────────────────────────────────────────────────────
+    async function loadStats() {
+      const today = todayISO();
+
+      // 1. Total Volume (SUM of all orders total_cost)
+      const { data: volData } = await _sb
+        .from("orders")
+        .select("total_cost");
+      const totalVolume = (volData || []).reduce((s, r) => s + (parseFloat(r.total_cost) || 0), 0);
+      document.getElementById("stat-total-volume").textContent = fmt(totalVolume, true);
+      setBar("bar-total-volume", totalVolume > 0 ? 75 : 4);
+
+      // 2. Active Workers (profiles with role=User and status=active)
+      const { count: workerCount } = await _sb
+        .from("profiles")
+        .select("id", { count: "exact", head: true })
+        .eq("role", "User")
+        .eq("status", "active");
+      document.getElementById("stat-active-workers").textContent = fmt(workerCount || 0);
+      setBar("bar-active-workers", Math.min((workerCount || 0) / 10, 100));
+
+      // 3. Pending Payouts Amount (withdrawals pending sum)
+      const { data: pendPayData } = await _sb
+        .from("withdrawals")
+        .select("amount")
+        .in("status", ["Pending", "pending"]);
+      const pendingPayoutsAmt = (pendPayData || []).reduce((s, r) => s + (parseFloat(r.amount) || 0), 0);
+      document.getElementById("stat-pending-payouts").textContent = fmt(pendingPayoutsAmt, true);
+      setBar("bar-pending-payouts", pendingPayoutsAmt > 0 ? 60 : 4);
+
+      // 4. Active Payouts Count (withdrawals pending count)
+      const { count: pendingPayoutsCount } = await _sb
+        .from("withdrawals")
+        .select("id", { count: "exact", head: true })
+        .in("status", ["Pending", "pending"]);
+      document.getElementById("stat-active-payouts").textContent = fmt(pendingPayoutsCount || 0);
+      setBar("bar-active-payouts", Math.min((pendingPayoutsCount || 0) * 10, 100));
+
+      // Show notification dot if pending withdrawals > 0
+      if ((pendingPayoutsCount || 0) > 0) {
+        document.getElementById("pendingWithdrawalDot").classList.remove("hidden");
+      }
+
+      // 5. Today's Earning (approved task_submissions today)
+      const { data: todayEarn } = await _sb
+        .from("task_submissions")
+        .select("payout_amount")
+        .eq("status", "approved")
+        .gte("submitted_at", today + "T00:00:00")
+        .lte("submitted_at", today + "T23:59:59");
+      const todayEarning = (todayEarn || []).reduce((s, r) => s + (parseFloat(r.payout_amount) || 0), 0);
+      document.getElementById("stat-today-earning").textContent = fmt(todayEarning, true);
+      setBar("bar-today-earning", todayEarning > 0 ? 85 : 4);
+
+      // 6. Total Users (all profiles)
+      const { count: totalUsers } = await _sb
+        .from("profiles")
+        .select("id", { count: "exact", head: true });
+      document.getElementById("stat-total-users").textContent = fmt(totalUsers || 0);
+      setBar("bar-total-users", Math.min((totalUsers || 0) / 10, 100));
+
+      // Health cards
+      const { count: kycPending } = await _sb
+        .from("kyc_verifications")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "pending");
+      document.getElementById("health-kyc").textContent = fmt(kycPending || 0);
+
+      // KYC badge on sidebar
+      if ((kycPending || 0) > 0) {
+        const badge = document.getElementById("kycBadge");
+        badge.textContent = kycPending;
+        badge.classList.remove("hidden");
+      }
+
+      document.getElementById("health-withdrawals").textContent = fmt(pendingPayoutsCount || 0);
+
+      const { count: pendSubmissions } = await _sb
+        .from("task_submissions")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "pending");
+      document.getElementById("health-submissions").textContent = fmt(pendSubmissions || 0);
+
+      const { count: activeOrders } = await _sb
+        .from("orders")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "processing");
+      document.getElementById("health-orders").textContent = fmt(activeOrders || 0);
+    }
+
+    // ─── Submission Trends Chart ─────────────────────────────────────────────
+    async function loadChart(mode = '7d') {
+      // Active button & subtitle map
+      const btnIds = ['chartBtn1hr', 'chartBtn24hr', 'chartBtn7d', 'chartBtn30d'];
+      const activeClass = 'px-3 py-1 text-xs font-bold rounded-md bg-white dark:bg-white/10 shadow-sm text-slate-900 dark:text-white';
+      const inactiveClass = 'px-3 py-1 text-xs font-bold rounded-md hover:bg-white dark:hover:bg-white/5 transition-all dark:text-white/60 text-slate-600';
+      const activeMap = { '1hr': 'chartBtn1hr', '24hr': 'chartBtn24hr', '7d': 'chartBtn7d', '30d': 'chartBtn30d' };
+      btnIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.className = (id === activeMap[mode]) ? activeClass : inactiveClass;
+      });
+      const subtitleMap = {
+        '1hr': 'Submissions per 5-minute window — last 1 hour',
+        '24hr': 'Submissions per hour — last 24 hours',
+        '7d': 'Task submissions over the last 7 days',
+        '30d': 'Task submissions over the last 30 days',
+      };
+      document.getElementById('chartSubtitle').textContent = subtitleMap[mode];
+
+      let labels = [], dataPoints = [];
+
+      if (mode === '1hr') {
+        // ── 1-hour view: 12 buckets of 5 minutes each ──────────────────────────
+        const now = new Date();
+        const sinceISO = new Date(now.getTime() - 60 * 60 * 1000).toISOString();
+        const { data: subs } = await _sb
+          .from('task_submissions')
+          .select('submitted_at')
+          .gte('submitted_at', sinceISO);
+
+        // Build 12 × 5-min buckets (oldest → newest)
+        const buckets = [];
+        for (let i = 11; i >= 0; i--) {
+          const start = new Date(now.getTime() - (i + 1) * 5 * 60 * 1000);
+          const end = new Date(now.getTime() - i * 5 * 60 * 1000);
+          const hh = String(start.getHours()).padStart(2, '0');
+          const mm = String(start.getMinutes()).padStart(2, '0');
+          buckets.push({ label: `${hh}:${mm}`, start, end, count: 0 });
+        }
+        (subs || []).forEach(r => {
+          const t = new Date(r.submitted_at);
+          buckets.forEach(b => { if (t >= b.start && t < b.end) b.count++; });
+        });
+        labels = buckets.map(b => b.label);
+        dataPoints = buckets.map(b => b.count);
+
+      } else if (mode === '24hr') {
+        // ── 24-hour view: 24 buckets of 1 hour each ───────────────────────────
+        const now = new Date();
+        const sinceISO = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();
+        const { data: subs } = await _sb
+          .from('task_submissions')
+          .select('submitted_at')
+          .gte('submitted_at', sinceISO);
+
+        const buckets = [];
+        for (let i = 23; i >= 0; i--) {
+          const start = new Date(now.getTime() - (i + 1) * 60 * 60 * 1000);
+          const end = new Date(now.getTime() - i * 60 * 60 * 1000);
+          const hh = String(start.getHours()).padStart(2, '0');
+          buckets.push({ label: `${hh}:00`, start, end, count: 0 });
+        }
+        (subs || []).forEach(r => {
+          const t = new Date(r.submitted_at);
+          buckets.forEach(b => { if (t >= b.start && t < b.end) b.count++; });
+        });
+        labels = buckets.map(b => b.label);
+        dataPoints = buckets.map(b => b.count);
+
+      } else {
+        // ── Day view: 7d or 30d ───────────────────────────────────────────────
+        const days = mode === '30d' ? 30 : 7;
+        const since = daysAgoISO(days);
+        const { data: subs } = await _sb
+          .from('task_submissions')
+          .select('submitted_at')
+          .gte('submitted_at', since + 'T00:00:00');
+
+        const countMap = {};
+        for (let i = days - 1; i >= 0; i--) {
+          const d = daysAgoISO(i);
+          countMap[d] = 0;
+          labels.push(d.slice(5)); // MM-DD
+        }
+        (subs || []).forEach(r => {
+          const day = r.submitted_at.split('T')[0];
+          if (countMap[day] !== undefined) countMap[day]++;
+        });
+        dataPoints = labels.map((_, i) => {
+          const key = daysAgoISO(days - 1 - i);
+          return countMap[key] || 0;
+        });
+      }
+
+      const ctx = document.getElementById('submissionChart').getContext('2d');
+      if (submissionChartInst) submissionChartInst.destroy();
+      submissionChartInst = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Submissions',
+            data: dataPoints,
+            borderColor: '#13ec5b',
+            backgroundColor: 'rgba(19,236,91,0.15)',
+            borderWidth: 3,
+            pointRadius: dataPoints.length <= 24 ? 4 : 2,
+            pointBackgroundColor: '#13ec5b',
+            tension: 0.4,
+            fill: true,
+          }],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: {
+              grid: { color: 'rgba(0,0,0,0.04)' },
+              ticks: {
+                font: { size: 10 },
+                maxRotation: 45,
+                maxTicksLimit: mode === '1hr' ? 12 : mode === '24hr' ? 12 : undefined,
+              }
+            },
+            y: {
+              beginAtZero: true,
+              grid: { color: 'rgba(0,0,0,0.04)' },
+              ticks: { font: { size: 10 }, precision: 0 }
+            },
+          },
+        },
+      });
+    }
+
+    // ─── Activity Distribution + Platform Summary ────────────────────────────
+    async function loadPlatformData() {
+      const { data: orders } = await _sb
+        .from("orders")
+        .select("platform, quantity, total_cost, completed_quantity, status");
+
+      if (!orders || orders.length === 0) {
+        document.getElementById("distCenter").textContent = "0";
+        document.getElementById("distLegend").innerHTML =
+          `<p class="col-span-2 text-center text-slate-400 text-sm">No order data yet</p>`;
+        document.getElementById("platformSummaryGrid").innerHTML =
+          `<p class="col-span-3 text-center text-slate-400 py-12">No orders found</p>`;
+        document.getElementById("liveRankList").innerHTML =
+          `<p class="text-center text-slate-400 text-sm">No data yet</p>`;
+        return;
+      }
+
+      // Aggregate by platform
+      const platformMap = {};
+      orders.forEach(o => {
+        const p = o.platform || "Unknown";
+        if (!platformMap[p]) {
+          platformMap[p] = { qty: 0, cost: 0, completed: 0, totalOrders: 0 };
+        }
+        platformMap[p].qty += parseInt(o.quantity) || 0;
+        platformMap[p].cost += parseFloat(o.total_cost) || 0;
+        platformMap[p].completed += parseInt(o.completed_quantity) || 0;
+        platformMap[p].totalOrders++;
+      });
+
+      const platforms = Object.keys(platformMap).sort((a, b) =>
+        platformMap[b].qty - platformMap[a].qty
+      );
+      const totalQty = platforms.reduce((s, p) => s + platformMap[p].qty, 0);
+
+      // ─ Distribution Donut Chart ───────────────────────────a─────────────────
+      document.getElementById("distCenter").textContent = fmt(totalQty);
+      const chartData = platforms.map(p => platformMap[p].qty);
+      const chartColors = platforms.map((_, i) => PLATFORM_COLORS[i % PLATFORM_COLORS.length]);
+
+      const dctx = document.getElementById("distributionChart").getContext("2d");
+      if (distributionChartInst) distributionChartInst.destroy();
+      distributionChartInst = new Chart(dctx, {
+        type: "doughnut",
+        data: {
+          labels: platforms,
+          datasets: [{
+            data: chartData,
+            backgroundColor: chartColors,
+            borderWidth: 3,
+            borderColor: "#fff",
+            hoverOffset: 6,
+          }],
+        },
+        options: {
+          responsive: true,
+          cutout: "72%",
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: ctx => {
+                  const pct = totalQty > 0 ? Math.round((ctx.parsed / totalQty) * 100) : 0;
+                  return ` ${ctx.label}: ${fmt(ctx.parsed)} units (${pct}%)`;
+                }
+              }
+            }
+          },
+        },
+      });
+
+      // Legend
+      const legend = platforms.map((p, i) => {
+        const pct = totalQty > 0 ? Math.round((platformMap[p].qty / totalQty) * 100) : 0;
+        return `<div class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full flex-shrink-0" style="background:${PLATFORM_COLORS[i % PLATFORM_COLORS.length]}"></span>
+            <span class="text-xs font-medium truncate">${escapeHtml(p)} (${pct}%)</span>
+          </div>`;
+      }).join("");
+      document.getElementById("distLegend").innerHTML = legend;
+
+      // ─ Platform Summary Cards ──────────────────────────────────────────────
+      const summaryHTML = platforms.map((p, i) => {
+        const d = platformMap[p];
+        const pct = d.qty > 0 ? Math.round((d.completed / d.qty) * 100) : 0;
+        const color = PLATFORM_COLORS[i % PLATFORM_COLORS.length];
+        return `
+          <div class="bg-white dark:bg-[#1a2e1f] p-6 rounded-xl border border-slate-200 dark:border-white/10">
+            <div class="flex items-center gap-3 mb-4">
+              <div class="w-8 h-8 rounded flex items-center justify-center" style="background:${color}20">
+                <span class="material-symbols-outlined text-base" style="color:${color}">storefront</span>
+              </div>
+                <h5 class="font-bold truncate dark:text-white">${escapeHtml(p)}</h5>
+            </div>
+            <div class="space-y-4">
+              <div>
+                <p class="text-xs font-bold text-slate-400 dark:text-white/40 uppercase">Tasks Given</p>
+                <h6 class="text-xl font-extrabold dark:text-white">${fmt(d.qty)}</h6>
+              </div>
+              <div>
+                <p class="text-xs font-bold text-slate-400 dark:text-white/40 uppercase">Order Volume</p>
+                <h6 class="text-xl font-extrabold" style="color:${color}">${fmt(d.cost, true)}</h6>
+              </div>
+              <div>
+                <div class="flex justify-between text-xs font-bold mb-1 dark:text-white">
+                  <span>Completion</span>
+                  <span>${pct}%</span>
+                </div>
+                <div class="h-1.5 bg-slate-100 dark:bg-white/10 rounded-full overflow-hidden">
+                  <div class="h-full rounded-full" style="width:${pct}%;background:${color}"></div>
+                </div>
+              </div>
+            </div>
+          </div>`;
+      }).join("");
+      document.getElementById("platformSummaryGrid").innerHTML = summaryHTML || `<p class="col-span-3 text-center text-slate-400 py-12">No platform data</p>`;
+
+      // ─ Live Rank List ──────────────────────────────────────────────────────
+      const rankHTML = platforms.slice(0, 5).map((p, i) => {
+        const d = platformMap[p];
+        const isTop = i === 0;
+        const demandLabels = ["High Demand", "Moderate", "Steady", "Growing", "Active"];
+        const demandColors = ["text-primary bg-primary/10", "text-yellow-500 bg-yellow-500/10", "text-slate-500 bg-slate-200", "text-blue-500 bg-blue-500/10", "text-purple-500 bg-purple-500/10"];
+        return `
+          <div class="flex items-center justify-between p-3 rounded-lg ${isTop ? "bg-slate-50 dark:bg-white/5" : "hover:bg-slate-50 dark:hover:bg-white/5"} transition-colors">
+            <div class="flex items-center gap-4">
+              <span class="text-lg font-extrabold text-slate-300 dark:text-white/20">#${i + 1}</span>
+              <div>
+                <p class="text-sm font-bold dark:text-white">${escapeHtml(p)}</p>
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded uppercase ${demandColors[i % demandColors.length]}">${demandLabels[i % demandLabels.length]}</span>
+              </div>
+            </div>
+            <div class="text-right">
+              <p class="text-sm font-bold dark:text-white">${fmt(d.qty)} Units</p>
+              <p class="text-[10px] text-slate-500 dark:text-white/40 font-medium">${d.totalOrders} Orders</p>
+            </div>
+          </div>`;
+      }).join("");
+      document.getElementById("liveRankList").innerHTML = rankHTML || `<p class="text-center text-slate-400 text-sm">No data yet</p>`;
+    }
+
+    // ─── Refresh Timestamp ──────────────────────────────────────────────────
+    function updateTimestamp() {
+      const now = new Date();
+      document.getElementById("lastRefreshed").textContent =
+        now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+    }
+
+    // ─── Full Dashboard Load ─────────────────────────────────────────────────
+    async function loadDashboard() {
+      try {
+        updateTimestamp();
+        await Promise.all([
+          loadStats(),
+          loadChart("7d"),
+          loadPlatformData(),
+        ]);
+      } catch (err) {
+        console.error("Dashboard load failed:", err);
+      }
+    }
+
+    // ─── Refresh Button ──────────────────────────────────────────────────────
+    document.getElementById("refreshBtn").addEventListener("click", loadDashboard);
+
+    // ─── Dark Mode Toggle ────────────────────────────────────────────────────
+    const darkToggle = document.getElementById('darkModeToggle');
+    const darkIconEl = document.getElementById('darkIcon');
+
+    function updateIcons(isDark) {
+      if (darkIconEl) {
+        darkIconEl.textContent = isDark ? 'dark_mode' : 'light_mode';
+      }
+      if (submissionChartInst) {
+        submissionChartInst.options.scales.x.ticks.color = isDark ? '#94a3b8' : '#64748b';
+        submissionChartInst.options.scales.y.ticks.color = isDark ? '#94a3b8' : '#64748b';
+        submissionChartInst.options.scales.x.grid.color = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)';
+        submissionChartInst.options.scales.y.grid.color = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)';
+        submissionChartInst.update();
+      }
+      if (distributionChartInst) {
+        distributionChartInst.update();
+      }
+    }
+
+    if (darkToggle) {
+      // Sync icon on load
+      updateIcons(document.documentElement.classList.contains('dark'));
+
+      darkToggle.addEventListener('click', () => {
+        const isDark = document.documentElement.classList.toggle('dark');
+        document.documentElement.classList.toggle('light', !isDark);
+        localStorage.setItem('theme', isDark ? 'dark' : 'light');
+        updateIcons(isDark);
+      });
+    }
+
+    // ─── Init ────────────────────────────────────────────────────────────────
+    document.addEventListener("DOMContentLoaded", async () => {
+      const session = await checkAuth();
+      if (session) await loadDashboard();
+    });
+  </script>
+</body>
+
+</html>

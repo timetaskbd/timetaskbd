@@ -1,0 +1,719 @@
+<!doctype html>
+<html class="light" lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <title>Time Task BD - Blog Post</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <!-- Supabase Client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../supabase-client.js"></script>
+  <script src="../navbar-auth.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400;500;600;700&amp;display=swap"
+    rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Noto+Sans:wght@400;500&amp;display=swap"
+    rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+    rel="stylesheet" />
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            primary: "#13ec5b",
+            "background-light": "#f6f8f6",
+            "background-dark": "#102216",
+            "footer-light": "#f0f2f0" /* Added from Header_Footer.html */,
+            "footer-dark": "#1a2e20"/* Added from Header_Footer.html */,
+            "brand-bg": "#f6f8f6",
+            "accent-green": "#13ec5b",
+            "accent-green-hover": "#0dbd49",
+            "accent-green-dim": "rgba(19, 236, 91, 0.1)", 
+          },
+          fontFamily: {
+            display: [
+              "Work Sans",
+              "sans-serif",
+            ] /* Changed to Work Sans for consistency */,
+            sans: [
+              "Plus Jakarta Sans",
+              "sans-serif",
+            ] /* Kept for article content */,
+          },
+          borderRadius: {
+            DEFAULT: "0.25rem",
+            lg: "0.5rem",
+            xl: "0.75rem",
+            full: "9999px",
+          },
+        },
+      },
+    };
+  </script>
+  <style type="text/tailwindcss">
+    /* Styles from Header_Footer.html */
+      body {
+        font-family:
+          "Work Sans", sans-serif; /* Changed for consistency with header/footer */
+      }
+      .material-symbols-outlined {
+        font-variation-settings:
+          "FILL" 0,
+          "wght" 400,
+          "GRAD" 0,
+          "opsz" 24;
+      }
+      .active-nav-link {
+        @apply text-[#0d1b12] dark:text-white font-bold relative;
+      }
+      .active-nav-link::after {
+        content: "";
+        @apply absolute -bottom-[31px] left-0 w-full h-[3px] bg-primary rounded-t-full;
+      }
+
+      /* Original Blog_Post_Page.html specific styles */
+      /* Note: Some of these might be redundant now due to shared font settings, but kept for specificity */
+      .prose h1,
+      .prose h2,
+      .prose h3,
+      .prose h4,
+      .prose h5,
+      .prose h6 {
+        font-family: "Plus Jakarta Sans", sans-serif;
+      }
+    </style>
+</head>
+
+<body class="bg-background-light dark:bg-background-dark text-[#0d1b12] dark:text-white min-h-screen flex flex-col">
+  <!-- Reading Progress Bar -->
+  <div class="fixed top-0 left-0 w-full h-1 z-50 bg-transparent">
+    <div class="h-full bg-primary" style="width: 0%"></div>
+  </div>
+
+  <!-- Universal Header from Header_Footer.html -->
+  <header
+    class="sticky top-0 z-50 w-full bg-white/95 dark:bg-background-dark/95 backdrop-blur-md border-b border-[#e7f3eb] dark:border-white/10">
+    <div class="max-w-[1280px] mx-auto h-20 flex items-center justify-between">
+      <div class="flex items-center shrink-0">
+        <a class="flex items-center gap-2 group" href="#">
+          <div class="size-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
+            <span class="material-symbols-outlined text-2xl">update</span>
+          </div>
+          <span class="text-xl font-bold tracking-tight text-[#0d1b12] dark:text-white ml-1">Time Task <span
+              class="text-primary">BD</span></span>
+        </a>
+      </div>
+      <div class="flex items-center justify-end flex-grow gap-5 ml-auto">
+        <nav class="hidden lg:flex items-center gap-10">
+          <a class="text-sm font-medium hover:text-primary transition-colors text-[#0d1b12] dark:text-gray-300"
+            href="Home_Page.html">Home</a>
+          <a class="text-sm active-nav-link transition-colors" href="Blog_Page.html">Blog</a>
+          <a class="text-sm font-medium hover:text-primary transition-colors text-[#0d1b12] dark:text-gray-300"
+            href="Video_Gallery_Page.html">Video Gallery
+          </a>
+          <a class="text-sm font-medium hover:text-primary transition-colors text-[#0d1b12] dark:text-gray-300"
+            href="About_Page.html">About Us</a>
+          <a class="text-sm font-medium hover:text-primary transition-colors text-[#0d1b12] dark:text-gray-300"
+            href="Contact_Page.html">Contact Us</a>
+          <a class="text-sm font-medium hover:text-primary transition-colors text-[#0d1b12] dark:text-gray-300"
+            href="Earning_Page.html">Earning Page</a>
+        </nav>
+        <div class="flex items-center gap-3">
+          <button
+            class="p-2.5 rounded-lg hover:bg-[#e7f3eb] dark:hover:bg-white/10 transition-colors text-[#0d1b12] dark:text-white flex items-center justify-center">
+            <span class="material-symbols-outlined text-[22px]">dark_mode</span>
+          </button>
+          <div class="h-8 w-[1px] bg-[#e7f3eb] dark:bg-white/10 mx-1"></div>
+          <button onclick="window.location.href = 'Login_Page.html'"
+            class="px-4 h-10 text-sm font-bold text-[#0d1b12] dark:text-white hover:text-primary transition-colors">
+            Login
+          </button>
+          <button onclick="window.location.href = 'Register_Page.html'"
+            class="bg-primary hover:bg-[#11d853] text-black px-6 h-10 rounded-lg text-sm font-bold tracking-wide transition-all shadow-sm">
+            Register
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Area - Original content from Blog_Post_Page.html -->
+  <main class="max-w-[1280px] mx-auto py-10">
+    <div class="flex flex-col lg:flex-row gap-12 max-w-[1280px] mx-auto">
+      <!-- Blog Article Column -->
+      <div class="flex-1 max-w-[820px] rounded-xl shadow-sm border border-[#e2e8e4] dark:border-[#2a3f30]">
+        <!-- Breadcrumbs -->
+        <div class="flex flex-wrap items-center gap-2 mb-6 px-4 pt-4">
+          <a class="text-[#4c9a66] text-sm font-medium hover:underline" href="Home_Page.html">Home</a>
+          <span class="text-[#4c9a66] text-sm font-medium">/</span>
+          <a class="text-[#4c9a66] text-sm font-medium hover:underline" href="Blog_Page.html">Blog</a>
+          <span class="text-[#4c9a66] text-sm font-medium">/</span>
+          <span id="breadcrumb-current" class="text-[#0d1b12] dark:text-gray-400 text-sm font-medium">Loading
+            post...</span>
+        </div>
+        <!-- Post Header -->
+        <h1 id="post-title"
+          class="text-[#0d1b12] dark:text-white tracking-tight text-[30px] md:text-[40px] font-extrabold leading-tight mb-6 px-4">
+          Loading Title...
+        </h1>
+        <!-- Author Info -->
+        <div
+          class="flex items-center gap-4 mx-4 bg-[#f8fcf9] dark:bg-[#102216] border border-[#e7f3eb] dark:border-[#1e3a29] rounded-xl px-4 min-h-[72px] py-2 mb-8 justify-between">
+          <div class="flex items-center gap-4">
+            <div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full h-12 w-12 border-2 border-primary"
+              data-alt="Portrait of a male author" style="
+                  background-image: url(&quot;https://lh3.googleusercontent.com/aida-public/AB6AXuAVolDDx5GHmU6jOqXeyateIO29vTl0rdvR4Msl0uLnoS-_sK5qPfGBA0jq3z7RZmBjTP6SzeX8zaytb7asrrIoLTRjFAWprWVIe47sPrM2OPS5CekjFYOCXTTv_daZMCoJvhsmuxeO8p4pZdXxsL96Y4LpZlHkiQ_KbXS9oOQ1phkSzgwb8QADv61ekfwDj9-zg6UgrL4IsRJjHYLz6JATBfaSVpf9Zf9bVX5Wok9ikAeND3PSRoOtNfDfejtqTI532SobP7LdoBf-&quot;);
+                "></div>
+            <div class="flex flex-col justify-center">
+              <p id="author-name" class="text-[#0d1b12] dark:text-white text-base font-bold leading-none mb-1">
+                Time Task BD
+              </p>
+              <p id="post-date" class="text-[#4c9a66] text-sm font-normal">
+                -
+              </p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 text-[#4c9a66]">
+            <span class="material-symbols-outlined text-sm">visibility</span>
+            <p id="view-count" class="text-[#0d1b12] dark:text-gray-300 text-sm font-medium">
+              0 views
+            </p>
+          </div>
+        </div>
+        <!-- Featured Image -->
+        <div class="w-full mb-4 overflow-hidden rounded-xl shadow-lg max-w-[785px] mx-4">
+          <img id="featured-image" class="w-full h-auto object-cover aspect-video"
+            src="https://via.placeholder.com/1200x675" />
+        </div>
+        <!-- Article Body -->
+        <article id="article-body"
+          class="prose prose-lg dark:prose-invert max-w-none text-[#0d1b12] dark:text-gray-200 px-4">
+          <!-- Content will be loaded here -->
+        </article>
+        <!-- Share Section -->
+        <div
+          class="border-y border-[#e7f3eb] dark:border-[#1e3a29] py-8 my-12 flex flex-col sm:flex-row items-center justify-between gap-6">
+          <h4 class="font-bold text-lg pl-4">Share this article:</h4>
+          <div class="flex gap-4 pr-4">
+            <button data-action="like"
+              class="w-auto px-4 h-12 rounded-full bg-primary/20 flex items-center justify-center gap-2 hover:bg-primary transition-colors text-primary hover:text-white font-bold">
+              <span class="material-symbols-outlined">thumb_up</span>
+              <span class="like-count">0</span>
+            </button>
+            <button data-action="copy-link"
+              class="px-6 h-12 rounded-full border border-primary text-primary font-bold hover:bg-primary hover:text-white transition-all flex items-center gap-2">
+              <span class="material-symbols-outlined text-base">link</span>
+              Copy Link
+            </button>
+          </div>
+        </div>
+        <!-- Comments Section -->
+        <section class="py-8 mx-4">
+          <h3 id="comments-heading" class="text-xl font-bold mb-6">0 Comments</h3>
+
+          <!-- YouTube-style Input Area -->
+          <div class="flex gap-4 mb-8 items-start">
+            <div
+              class="w-10 h-10 rounded-full bg-primary/20 flex-shrink-0 flex items-center justify-center text-primary font-bold mt-1">
+              U
+            </div>
+            <div class="flex-1">
+              <input id="comment-name"
+                class="bg-transparent border-0 border-b border-gray-300 dark:border-gray-600 focus:ring-0 focus:border-[#0d1b12] dark:focus:border-white px-0 py-2 w-full text-sm font-semibold mb-2 transition-colors placeholder:font-normal"
+                placeholder="Name (Optional)" type="text" />
+              <textarea id="comment-text"
+                class="w-full bg-transparent border-0 border-b border-gray-300 dark:border-gray-600 focus:ring-0 focus:border-[#0d1b12] dark:focus:border-white px-0 py-2 text-sm resize-none mb-2 transition-colors min-h-[40px] overflow-hidden"
+                placeholder="Add a comment..." rows="1"></textarea>
+              <div id="comment-actions" class="flex justify-end gap-3 hidden">
+                <button id="cancel-comment-btn"
+                  class="text-sm font-bold text-[#0d1b12] dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 px-4 py-2 rounded-full transition-colors">
+                  Cancel
+                </button>
+                <button id="submit-comment-btn" disabled
+                  class="text-sm font-bold bg-[#0d1b12] text-white dark:bg-primary dark:text-[#0d1b12] px-4 py-2 rounded-full hover:opacity-90 transition-opacity disabled:opacity-50 disabled:bg-gray-200 disabled:text-gray-500">
+                  Comment
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Comment List -->
+          <div id="comment-list" class="space-y-6">
+            <!-- Comments will be loaded here -->
+            <p class="text-sm text-gray-400">Loading comments...</p>
+          </div>
+        </section>
+      </div>
+      <!-- Sidebar -->
+      <aside class="w-full lg:w-[360px] flex flex-col gap-8">
+        <!-- Related Posts -->
+        <div class="bg-white dark:bg-[#102216] border border-[#e7f3eb] dark:border-[#1e3a29] rounded-xl p-6">
+          <h4 class="font-bold text-lg mb-6 border-b border-[#e7f3eb] dark:border-[#1e3a29] pb-2">
+            Related Articles
+          </h4>
+          <div id="related-posts" class="space-y-6">
+            <!-- Related posts will be loaded here -->
+          </div>
+        </div>
+        <!-- Newsletter Widget -->
+        <div class="bg-primary p-8 rounded-xl text-[#0d1b12]">
+          <h4 class="text-xl font-extrabold mb-2 leading-tight">
+            Master Your Day
+          </h4>
+          <p class="text-sm font-medium mb-6 opacity-90">
+            Join 5,000+ professionals getting weekly productivity hacks.
+          </p>
+          <input
+            class="w-full border-none rounded-lg text-sm p-3 mb-3 bg-white/20 placeholder:text-[#0d1b12]/60 focus:ring-0"
+            placeholder="Your best email" type="email" />
+          <button class="w-full bg-[#0d1b12] text-white font-bold py-3 rounded-lg hover:opacity-90">
+            Subscribe Free
+          </button>
+        </div>
+        <!-- Recent Updates Widget -->
+        <div class="bg-white dark:bg-[#102216] border border-[#e7f3eb] dark:border-[#1e3a29] rounded-xl p-6">
+          <h4 class="font-bold text-lg mb-4">Platform Updates</h4>
+          <div class="space-y-4">
+            <div class="border-l-2 border-primary pl-4">
+              <p class="text-sm font-bold">V2.4 Released</p>
+              <p class="text-xs text-gray-500">
+                Dark mode now available on mobile app.
+              </p>
+            </div>
+            <div class="border-l-2 border-primary pl-4">
+              <p class="text-sm font-bold">New Integration</p>
+              <p class="text-xs text-gray-500">
+                Connect directly with Google Calendar.
+              </p>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <!-- Universal Footer from Header_Footer.html -->
+  <footer class="bg-footer-light dark:bg-footer-dark pt-16 pb-8 border-t border-[#e7f3eb] dark:border-white/5">
+    <div class="max-w-[1280px] mx-auto">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
+        <div class="space-y-6">
+          <div class="flex items-center gap-3">
+            <div class="size-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
+              <span class="material-symbols-outlined text-2xl">update</span>
+            </div>
+            <span class="text-xl font-bold tracking-tight text-[#0d1b12] dark:text-white">Time Task <span
+                class="text-primary">BD</span></span>
+          </div>
+          <p class="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">
+            Empowering your digital productivity through innovative task
+            management and streamlined earning opportunities.
+          </p>
+          <div class="flex gap-4">
+            <a class="size-10 rounded-xl border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-black transition-all"
+              href="#">
+              <span class="material-symbols-outlined text-[20px]">public</span>
+            </a>
+            <a class="size-10 rounded-xl border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-black transition-all"
+              href="#">
+              <span class="material-symbols-outlined text-[20px]">share</span>
+            </a>
+            <a class="size-10 rounded-xl border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-black transition-all"
+              href="#">
+              <span class="material-symbols-outlined text-[20px]">alternate_email</span>
+            </a>
+          </div>
+        </div>
+        <div>
+          <h4 class="text-sm font-bold uppercase tracking-widest mb-6 text-[#0d1b12] dark:text-white">
+            Quick Links
+          </h4>
+          <ul class="space-y-4">
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="Home_Page.html">Home</a>
+            </li>
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="Blog_Page.html">Our Blog</a>
+            </li>
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="About_Page.html">About Us</a>
+            </li>
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="Contact_Page.html">Contact Us</a>
+            </li>
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="Help_and_FAQ_Page.html">FAQ Support</a>
+            </li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="text-sm font-bold uppercase tracking-widest mb-6 text-[#0d1b12] dark:text-white">
+            Services &amp; Legal
+          </h4>
+          <ul class="space-y-4">
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="About_Page.html">About Us</a>
+            </li>
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="Privacy_Policy_Page.html">Privacy Policy</a>
+            </li>
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="Terms_of_Service_Page.html">Terms of Service</a>
+            </li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="text-sm font-bold uppercase tracking-widest mb-6 text-[#0d1b12] dark:text-white">
+            Contact Info
+          </h4>
+          <ul class="space-y-4">
+            <li class="flex items-start gap-3">
+              <span class="material-symbols-outlined text-primary text-[20px]">mail</span>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary"
+                href="mailto:support@timetaskbd.com">support@timetaskbd.com</a>
+            </li>
+            <li class="flex items-start gap-3">
+              <span class="material-symbols-outlined text-primary text-[20px]">call</span>
+              <span class="text-sm text-gray-600 dark:text-gray-400">+880 1234 567890</span>
+            </li>
+            <li class="flex items-start gap-3">
+              <span class="material-symbols-outlined text-primary text-[20px]">location_on</span>
+              <span class="text-sm text-gray-600 dark:text-gray-400">Dhaka, Bangladesh</span>
+            </li>
+          </ul>
+          <div class="mt-8 pt-8 border-t border-[#e7f3eb] dark:border-white/5">
+            <p class="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-4">
+              Social Media
+            </p>
+            <div class="flex gap-4">
+              <a class="text-[#4c9a66] hover:text-primary transition-colors" href="#">
+                <svg class="size-6" fill="currentColor" viewBox="0 0 24 24">
+                  <path
+                    d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z">
+                  </path>
+                </svg>
+              </a>
+              <a class="text-[#4c9a66] hover:text-primary transition-colors" href="#">
+                <svg class="size-6" fill="currentColor" viewBox="0 0 24 24">
+                  <path
+                    d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.84 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z">
+                  </path>
+                </svg>
+              </a>
+              <a class="text-[#4c9a66] hover:text-primary transition-colors" href="#">
+                <svg class="size-6" fill="currentColor" viewBox="0 0 24 24">
+                  <path
+                    d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z">
+                  </path>
+                </svg>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div
+        class="pt-8 border-t border-[#e7f3eb] dark:border-white/5 flex flex-col md:flex-row items-center justify-between gap-4">
+        <p class="text-sm text-gray-500 dark:text-gray-400">
+          Copyright © 2024
+          <span class="text-[#0d1b12] dark:text-white font-semibold">Time Task BD</span>. All rights reserved.
+        </p>
+        <p class="text-sm text-gray-500 dark:text-gray-400">
+          Developed with <span class="text-primary font-bold">★</span> by
+          <a class="text-primary font-medium hover:underline" href="#">Digital Dynamics Agency</a>
+        </p>
+      </div>
+    </div>
+  </footer>
+  <script type="module">
+    const supabaseClient = window.supabaseClient;
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const postId = urlParams.get('id');
+
+    if (!postId) {
+      window.location.href = 'Blog_Page.html';
+    }
+
+    // --- Dynamic Reading Progress Bar ---
+    const progressBar = document.querySelector('.fixed.top-0 .h-full.bg-primary');
+    window.addEventListener('scroll', () => {
+      const article = document.getElementById('article-body');
+      if (!article || !progressBar) return;
+      const articleTop = article.getBoundingClientRect().top + window.scrollY;
+      const articleHeight = article.offsetHeight;
+      const scrolled = window.scrollY - articleTop + window.innerHeight;
+      const progress = Math.min(Math.max((scrolled / articleHeight) * 100, 0), 100);
+      progressBar.style.width = progress + '%';
+    });
+
+    async function loadPost() {
+      // 1. Fetch Post Data
+      const { data: post, error } = await supabaseClient
+        .from('contents')
+        .select('*')
+        .eq('id', postId)
+        .single();
+
+      if (error || !post) {
+        console.error('Post not found:', error);
+        document.getElementById('post-title').innerText = 'Post Not Found';
+        return;
+      }
+
+      // 2. Increment Views
+      await supabaseClient.rpc('increment_views', { item_id: postId });
+
+      // 3. Render Data
+      document.title = `${post.title} - Time Task BD`;
+      document.getElementById('post-title').innerText = post.title;
+      document.getElementById('breadcrumb-current').innerText = post.title;
+      document.getElementById('post-date').innerText = new Date(post.created_at).toLocaleDateString('en-US', {
+        month: 'long', day: 'numeric', year: 'numeric'
+      });
+      document.getElementById('view-count').innerText = `${(post.views_count || 0) + 1} views`;
+      document.getElementById('featured-image').src = post.featured_image || 'https://via.placeholder.com/1200x675';
+
+      // Simple content rendering
+      document.getElementById('article-body').innerHTML = post.content_body?.replace(/\n/g, '<br>') || 'No content.';
+
+      // 4. Wire Like Button (localStorage guard)
+      const likeKey = `liked_${postId}`;
+      const likeBtn = document.querySelector('[data-action="like"]');
+      if (likeBtn) {
+        const isLiked = localStorage.getItem(likeKey);
+        if (isLiked) {
+          likeBtn.disabled = true;
+          likeBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        }
+        likeBtn.querySelector('span.like-count').innerText = post.likes_count || 0;
+        likeBtn.addEventListener('click', async () => {
+          if (localStorage.getItem(likeKey)) return;
+          await supabaseClient.rpc('increment_likes', { item_id: postId });
+          localStorage.setItem(likeKey, 'true');
+          likeBtn.disabled = true;
+          likeBtn.classList.add('opacity-50', 'cursor-not-allowed');
+          const current = parseInt(likeBtn.querySelector('span.like-count').innerText) || 0;
+          likeBtn.querySelector('span.like-count').innerText = current + 1;
+        });
+      }
+
+      // 5. Wire Share/Copy Link button
+      const copyBtn = document.querySelector('[data-action="copy-link"]');
+      if (copyBtn) {
+        copyBtn.addEventListener('click', async () => {
+          await navigator.clipboard.writeText(window.location.href);
+          await supabaseClient.rpc('increment_shares', { item_id: postId });
+          copyBtn.innerHTML = '<span class="material-symbols-outlined text-base">check_circle</span> Copied!';
+          setTimeout(() => {
+            copyBtn.innerHTML = '<span class="material-symbols-outlined text-base">link</span> Copy Link';
+          }, 2500);
+        });
+      }
+
+      // 6. Load Related Posts
+      loadRelated(post.category, post.id);
+    }
+
+    async function loadRelated(category, currentId) {
+      const { data: related, error } = await supabaseClient
+        .from('contents')
+        .select('id, title, featured_image, created_at')
+        .eq('type', 'blog')
+        .eq('category', category)
+        .neq('id', currentId)
+        .limit(3);
+
+      if (error || !related) return;
+
+      const container = document.getElementById('related-posts');
+      container.innerHTML = '';
+
+      related.forEach(item => {
+        const thumb = item.featured_image || 'https://via.placeholder.com/200x200';
+        const link = document.createElement('a');
+        link.className = "group flex gap-3";
+        link.href = `Blog_Post_Page.html?id=${item.id}`;
+        link.innerHTML = `
+            <div class="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0">
+              <img class="w-full h-full object-cover group-hover:scale-110 transition-transform" src="${thumb}" />
+            </div>
+            <div>
+              <p class="text-sm font-bold leading-tight group-hover:text-primary transition-colors">${item.title}</p>
+              <p class="text-xs text-[#4c9a66] mt-1">${new Date(item.created_at).toLocaleDateString()}</p>
+            </div>
+          `;
+        container.appendChild(link);
+      });
+    }
+
+    // ===== COMMENTS =====
+    async function loadComments() {
+      const { data, error } = await supabaseClient
+        .from('content_comments')
+        .select('*')
+        .eq('content_id', postId)
+        .order('created_at', { ascending: false });
+
+      const list = document.getElementById('comment-list');
+      const heading = document.getElementById('comments-heading');
+
+      if (error || !data) {
+        list.innerHTML = '<p class="text-sm text-gray-400">Could not load comments.</p>';
+        return;
+      }
+
+      heading.textContent = `${data.length} Comments`;
+
+      if (!data.length) {
+        list.innerHTML = '<p class="text-sm text-[#4c9a66]">No comments yet. Be the first to comment!</p>';
+        return;
+      }
+
+      list.innerHTML = data.map(c => `
+      <div class="flex gap-4">
+        <div class="w-10 h-10 rounded-full bg-primary/20 flex-shrink-0 flex items-center justify-center text-primary font-bold mt-1">
+          ${(c.user_name || 'A')[0].toUpperCase()}
+        </div>
+        <div class="flex-1">
+          <div class="flex items-center gap-2 mb-1">
+            <p class="text-[13px] font-bold text-[#0d1b12] dark:text-white">@${c.user_name || 'Anonymous'}</p>
+            <span class="text-[12px] text-gray-500">${new Date(c.created_at).toLocaleDateString()}</span>
+          </div>
+          <p class="text-sm text-[#0d1b12] dark:text-gray-200 mb-2 whitespace-pre-wrap leading-relaxed">${c.comment_text}</p>
+          <div class="flex items-center gap-4 text-gray-500">
+            <button onclick="this.classList.toggle('text-[#0d1b12]'); this.classList.toggle('dark:text-white'); this.querySelector('span').classList.toggle('material-symbols-outlined-filled'); if(this.nextElementSibling.classList.contains('text-[#0d1b12]')) this.nextElementSibling.click();" class="flex items-center gap-1 hover:text-[#0d1b12] dark:hover:text-white transition-colors">
+              <span class="material-symbols-outlined text-[18px]">thumb_up</span>
+            </button>
+            <button onclick="this.classList.toggle('text-[#0d1b12]'); this.classList.toggle('dark:text-white'); this.querySelector('span').classList.toggle('material-symbols-outlined-filled'); if(this.previousElementSibling.classList.contains('text-[#0d1b12]')) this.previousElementSibling.click();" class="flex items-center gap-1 hover:text-[#0d1b12] dark:hover:text-white transition-colors">
+              <span class="material-symbols-outlined text-[18px]">thumb_down</span>
+            </button>
+            <button onclick="this.parentElement.nextElementSibling.classList.toggle('hidden');" class="text-xs font-bold hover:bg-gray-100 dark:hover:bg-white/10 px-3 py-1.5 rounded-full transition-colors">Reply</button>
+          </div>
+          <!-- Inline Reply Box (Hidden by default) -->
+          <div class="hidden mt-4 pl-2 border-l-2 border-gray-200 dark:border-gray-700">
+            <div class="flex gap-3 items-start">
+              <div class="w-8 h-8 rounded-full bg-primary/20 flex-shrink-0 flex items-center justify-center text-primary font-bold text-xs mt-1">U</div>
+              <div class="flex-1">
+                <input class="reply-name bg-transparent border-0 border-b border-gray-300 dark:border-gray-600 focus:ring-0 focus:border-[#0d1b12] dark:focus:border-white px-0 py-1 w-full text-xs font-semibold mb-2 transition-colors placeholder:font-normal" placeholder="Name (Optional)" type="text" />
+                <textarea class="reply-text w-full bg-transparent border-0 border-b border-gray-300 dark:border-gray-600 focus:ring-0 focus:border-[#0d1b12] dark:focus:border-white px-0 py-1 text-xs resize-none mb-2 transition-colors min-h-[30px] overflow-hidden" placeholder="Add a reply..." rows="1" onfocus="this.nextElementSibling.classList.remove('hidden')" oninput="this.style.height='auto'; this.style.height=(this.scrollHeight)+'px'; const btn=this.nextElementSibling.querySelector('button.submit-reply'); if(this.value.trim().length>0){btn.disabled=false; btn.classList.remove('disabled:bg-gray-200','disabled:text-gray-500');}else{btn.disabled=true; btn.classList.add('disabled:bg-gray-200','disabled:text-gray-500');}">@${c.user_name || 'Anonymous'} </textarea>
+                <div class="flex justify-end gap-2 hidden">
+                  <button onclick="this.closest('.hidden').classList.add('hidden');" class="text-xs font-bold text-[#0d1b12] dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 px-3 py-1.5 rounded-full transition-colors">Cancel</button>
+                  <button onclick="submitInlineReply(this, '@${c.user_name || 'Anonymous'}')" class="submit-reply text-xs font-bold bg-[#0d1b12] text-white dark:bg-primary dark:text-[#0d1b12] px-3 py-1.5 rounded-full hover:opacity-90 transition-opacity disabled:opacity-50 disabled:bg-gray-200 disabled:text-gray-500" disabled>Reply</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>`).join('');
+    }
+
+    // Function to handle inline replies
+    window.submitInlineReply = async (btn, replyTo) => {
+      const container = btn.closest('.flex-1');
+      const textInput = container.querySelector('.reply-text');
+      const nameInput = container.querySelector('.reply-name');
+
+      const text = textInput.value.trim();
+      const name = nameInput.value.trim() || 'Anonymous';
+      if (!text) return;
+
+      btn.disabled = true;
+      btn.textContent = '...';
+
+      const { error } = await window.supabaseClient.from('content_comments').insert([{
+        content_id: new URLSearchParams(window.location.search).get('id'), // get current post id
+        user_name: name,
+        comment_text: text
+      }]);
+
+      if (!error) {
+        window.loadComments(); // Re-render all comments
+      } else {
+        console.error('Error posting reply:', error);
+        btn.disabled = false;
+        btn.textContent = 'Reply';
+      }
+    };
+
+    // Input area behavior
+    const commentInput = document.getElementById('comment-text');
+    const commentActions = document.getElementById('comment-actions');
+    const submitBtn = document.getElementById('submit-comment-btn');
+    const cancelBtn = document.getElementById('cancel-comment-btn');
+
+    commentInput.addEventListener('focus', () => {
+      commentActions.classList.remove('hidden');
+    });
+
+    commentInput.addEventListener('input', () => {
+      // Auto-resize
+      commentInput.style.height = 'auto';
+      commentInput.style.height = (commentInput.scrollHeight) + 'px';
+
+      if (commentInput.value.trim().length > 0) {
+        submitBtn.disabled = false;
+        submitBtn.classList.remove('disabled:bg-gray-200', 'disabled:text-gray-500');
+      } else {
+        submitBtn.disabled = true;
+        submitBtn.classList.add('disabled:bg-gray-200', 'disabled:text-gray-500');
+      }
+    });
+
+    cancelBtn.addEventListener('click', () => {
+      document.getElementById('comment-text').value = '';
+      document.getElementById('comment-text').style.height = 'auto';
+      document.getElementById('comment-name').value = '';
+      commentActions.classList.add('hidden');
+      submitBtn.disabled = true;
+    });
+
+    document.getElementById('submit-comment-btn').addEventListener('click', async () => {
+      const text = document.getElementById('comment-text').value.trim();
+      const name = document.getElementById('comment-name').value.trim() || 'Anonymous';
+      if (!text) return;
+
+      const btn = document.getElementById('submit-comment-btn');
+      btn.disabled = true;
+      btn.textContent = 'Posting...';
+
+      const { error } = await supabaseClient.from('content_comments').insert([{
+        content_id: postId,
+        user_name: name,
+        comment_text: text
+      }]);
+
+      btn.disabled = false;
+      btn.textContent = 'Post Comment';
+
+      if (!error) {
+        document.getElementById('comment-text').value = '';
+        document.getElementById('comment-text').style.height = 'auto';
+        document.getElementById('comment-name').value = '';
+        commentActions.classList.add('hidden');
+        submitBtn.disabled = true;
+        loadComments();
+      } else {
+        console.error('Error posting comment:', error);
+      }
+    });
+
+    loadPost();
+    loadComments();
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../supabase-client.js"></script>
+  <script src="../auth-guard.js"></script>
+</body>
+
+</html>

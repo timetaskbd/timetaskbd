@@ -1,0 +1,1694 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <script>
+    (function () {
+      const theme = localStorage.getItem('theme') || 'light';
+      if (theme === 'dark') {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    })();
+  </script>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <title>Time Task BD - User</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <!-- Supabase & Auth -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../supabase-client.js"></script>
+  <script src="../auth-helpers.js"></script>
+  <script src="../auth-guard.js"></script>
+  <script src="../navbar-auth.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400;500;600;700&amp;display=swap"
+    rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+    rel="stylesheet" />
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            primary: "#13ec5b",
+            "background-light": "#f6f8f6",
+            "background-dark": "#102216",
+            "footer-light": "#f0f2f0",
+            "footer-dark": "#1a2e20",
+            "brand-bg": "#f6f8f6",
+            "card-bg": "#ffffff",
+            "card-border": "#e2e8f0",
+            "accent-green": "#13ec5b",
+            "accent-green-hover": "#0dbd49",
+            "accent-green-dim": "rgba(19, 236, 91, 0.1)",
+            "primary-text": "#1a1c1e",
+            "secondary-text": "#64748b",
+            "input-bg": "#f8fafc",
+            "deep-navy": "#f1f5f9",
+            "sidebar-deep": "#102216",
+            "sidebar-light": "#f6f8f6",
+          },
+          fontFamily: {
+            display: ["Manrope", "sans-serif"],
+          },
+          borderRadius: {
+            DEFAULT: "0.25rem",
+            lg: "0.5rem",
+            xl: "0.75rem",
+            "2xl": "1rem",
+            "3xl": "1.5rem",
+            full: "9999px",
+          },
+        },
+      },
+    };
+  </script>
+  <style type="text/tailwindcss">
+    :root {
+        --brand-bg: #f6f8f6;
+        --card-bg: #ffffff;
+        --card-border: rgba(226, 232, 240, 0.8);
+        --accent-green: #13ec5b;
+        --accent-glow: rgba(19, 236, 91, 0.15);
+        --glass-bg: rgba(255, 255, 255, 0.8);
+        --glass-border: rgba(19, 236, 91, 0.3);
+      }
+      .dark {
+        --brand-bg: #102216;
+        --card-bg: #162c1d;
+        --card-border: rgba(255, 255, 255, 0.1);
+        --glass-bg: rgba(22, 44, 29, 0.8);
+        --glass-border: rgba(19, 236, 91, 0.2);
+      }
+      .material-symbols-outlined {
+        font-variation-settings:
+          "FILL" 0,
+          "wght" 400,
+          "GRAD" 0,
+          "opsz" 24;
+      }
+      body {
+        font-family: "Manrope", sans-serif;
+      }
+      .no-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+      .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+      .premium-card {
+        background-color: var(--card-bg);
+        border: 1px solid var(--card-border);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow:
+          0 4px 6px -1px rgba(0, 0, 0, 0.05),
+          0 2px 4px -1px rgba(0, 0, 0, 0.03);
+      }
+      .premium-card:hover {
+        border-color: rgba(19, 236, 91, 0.4);
+        box-shadow:
+          0 20px 25px -5px rgba(0, 0, 0, 0.05),
+          0 10px 10px -5px rgba(0, 0, 0, 0.02);
+      }
+      .btn-primary {
+        background: linear-gradient(135deg, #13ec5b 0%, #0dbd49 100%);
+        transition: all 0.3s ease;
+        color: #ffffff;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+      }
+      .btn-primary:hover {
+        filter: brightness(1.05);
+        box-shadow: 0 10px 15px -3px rgba(19, 236, 91, 0.3);
+      }
+      .gateway-card-glass {
+        background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(19, 236, 91, 0.2);
+        position: relative;
+        overflow: hidden;
+      }
+      .dark .gateway-card-glass {
+        background: linear-gradient(145deg, rgba(22, 44, 29, 0.9) 0%, rgba(16, 34, 22, 0.95) 100%);
+      }
+      #gateway-1:checked ~ .carousel-track {
+        transform: translateX(0%);
+      }
+      #gateway-2:checked ~ .carousel-track {
+        transform: translateX(-100%);
+      }
+      #gateway-3:checked ~ .carousel-track {
+        transform: translateX(-200%);
+      }
+      #gateway-4:checked ~ .carousel-track {
+        transform: translateX(-300%);
+      }
+      #gateway-5:checked ~ .carousel-track {
+        transform: translateX(-400%);
+      }
+      #gateway-6:checked ~ .carousel-track {
+        transform: translateX(-500%);
+      }
+      #tab-task:checked ~ .table-container #task-history-table {
+        display: block;
+      }
+      #tab-task:checked ~ .table-container #payout-history-table {
+        display: none;
+      }
+      #tab-payout:checked ~ .table-container #task-history-table {
+        display: none;
+      }
+      #tab-payout:checked ~ .table-container #payout-history-table {
+        display: block;
+      }
+      #tab-task:checked ~ .tab-nav #label-task {
+        color: #13ec5b;
+        border-bottom: 2px solid #13ec5b;
+      }
+      #tab-payout:checked ~ .tab-nav #label-payout {
+        color: #13ec5b;
+        border-bottom: 2px solid #13ec5b;
+      }
+      .active-nav-link {
+        @apply text-[#0d1b12] dark:text-white font-bold relative;
+      }
+      .active-nav-link::after {
+        content: "";
+        @apply absolute -bottom-[31px] left-0 w-full h-[3px] bg-primary rounded-t-full;
+      }
+
+      /* Modal specific styles - ensure these are added */
+      .modal-overlay {
+        background-color: rgba(16, 34, 22, 0.4);
+        backdrop-filter: blur(4px);
+      }
+      .modal-hidden {
+        display: none;
+      }
+
+      /* New modal specific styles */
+      #gatewayConfigModal {
+        background-color: rgba(0, 0, 0, 0.4);
+        backdrop-filter: blur(4px);
+      }
+    </style>
+</head>
+
+<body class="bg-background-light dark:bg-background-dark text-[#0d1b12] dark:text-white min-h-screen flex flex-col">
+  <header
+    class="sticky top-0 z-50 w-full bg-white/95 dark:bg-background-dark/95 backdrop-blur-md border-b border-[#e7f3eb] dark:border-white/10">
+    <div class="max-w-[1280px] mx-auto h-20 flex items-center justify-between">
+      <div class="flex items-center shrink-0">
+        <a class="flex items-center gap-2 group" href="#">
+          <div class="size-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
+            <span class="material-symbols-outlined text-2xl">update</span>
+          </div>
+          <span class="text-xl font-bold tracking-tight text-[#0d1b12] dark:text-white ml-1">Time Task <span
+              class="text-primary">BD</span></span>
+        </a>
+      </div>
+      <div class="flex items-center justify-end flex-grow gap-5 ml-auto">
+        <nav class="hidden lg:flex items-center gap-10">
+          <a class="text-sm font-medium hover:text-primary transition-colors text-[#0d1b12] dark:text-gray-300"
+            href="/Web Dashboard/Home_Page.html">Home</a>
+          <a class="text-sm font-medium hover:text-primary transition-colors text-[#0d1b12] dark:text-gray-300"
+            href="/Web Dashboard/Blog_Page.html">Blog</a>
+          <a class="text-sm font-medium hover:text-primary transition-colors text-[#0d1b12] dark:text-gray-300"
+            href="Video_Gallery_Page.html">Video Gallery
+          </a>
+          <a class="text-sm font-medium hover:text-primary transition-colors text-[#0d1b12] dark:text-gray-300"
+            href="/Web Dashboard/About_Page.html">About Us</a>
+          <a class="text-sm font-medium hover:text-primary transition-colors text-[#0d1b12] dark:text-gray-300"
+            href="/Web Dashboard/Contact_Page.html">Contact Us</a>
+          <a class="text-sm font-medium hover:text-primary transition-colors text-[#0d1b12] dark:text-gray-300"
+            href="/Web Dashboard/Earning_Page.html">Earning Page</a>
+        </nav>
+        <!-- Auth Container (Targeted by navbar-auth.js) -->
+        <div class="flex items-center gap-3" id="navbar-auth-container">
+          <!-- navbar-auth.js will inject Dark Mode and Profile here -->
+        </div>
+      </div>
+    </div>
+  </header>
+  <main class="max-w-[1280px] mx-auto flex-1 px-6 py-10 space-y-10 bg-brand-bg dark:bg-background-dark">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
+      <div class="premium-card flex items-center gap-4 rounded-2xl p-4 group">
+        <div class="size-12 rounded-xl bg-accent-green/10 flex items-center justify-center text-accent-green">
+          <span class="material-symbols-outlined">show_chart</span>
+        </div>
+        <div>
+          <p class="text-[10px] font-bold text-secondary-text dark:text-gray-400 uppercase tracking-widest mb-1">
+            Total Earned
+          </p>
+          <p id="kpi-total-earned" class="text-xl font-extrabold tracking-tight text-primary-text dark:text-white">—</p>
+        </div>
+      </div>
+      <div class="premium-card flex items-center gap-4 rounded-2xl p-4 group">
+        <div
+          class="size-12 rounded-xl bg-amber-50 dark:bg-amber-500/10 flex items-center justify-center text-amber-500">
+          <span class="material-symbols-outlined">schedule</span>
+        </div>
+        <div>
+          <p class="text-[10px] font-bold text-secondary-text dark:text-gray-400 uppercase tracking-widest mb-1">
+            Pending Review
+          </p>
+          <p id="kpi-pending-review" class="text-xl font-extrabold tracking-tight text-primary-text dark:text-white">—</p>
+        </div>
+      </div>
+      <div class="premium-card flex items-center gap-4 rounded-2xl p-4 group">
+        <div
+          class="size-12 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center text-indigo-500">
+          <span class="material-symbols-outlined">today</span>
+        </div>
+        <div>
+          <p class="text-[10px] font-bold text-secondary-text dark:text-gray-400 uppercase tracking-widest mb-1">
+            Today Earning
+          </p>
+          <p id="kpi-today-earning" class="text-xl font-extrabold tracking-tight text-primary-text dark:text-white">—</p>
+        </div>
+      </div>
+      <div class="premium-card flex items-center gap-4 rounded-2xl p-4 group">
+        <div class="size-12 rounded-xl bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center text-blue-500">
+          <span class="material-symbols-outlined">arrow_downward</span>
+        </div>
+        <div>
+          <p class="text-[10px] font-bold text-secondary-text dark:text-gray-400 uppercase tracking-widest mb-1">
+            Total Withdrawn
+          </p>
+          <p id="kpi-total-withdrawn" class="text-xl font-extrabold tracking-tight text-primary-text dark:text-white">—</p>
+        </div>
+      </div>
+      <div
+        class="flex items-center gap-4 rounded-2xl p-4 bg-accent-green border border-accent-green/20 shadow-xl shadow-accent-green/10 group hover:scale-[1.02] transition-transform">
+        <div class="size-12 rounded-xl bg-white/20 flex items-center justify-center text-white">
+          <span class="material-symbols-outlined">account_balance_wallet</span>
+        </div>
+        <div>
+          <p class="text-[10px] font-bold text-white/80 uppercase tracking-widest mb-1">
+            Available Balance
+          </p>
+          <p id="kpi-available-balance" class="text-xl font-extrabold tracking-tight text-white">—</p>
+        </div>
+      </div>
+    </div>
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      <div class="lg:col-span-7">
+        <section
+          class="bg-white dark:bg-background-dark rounded-2xl border border-slate-200 dark:border-white/10 shadow-xl p-8 flex flex-col min-h-[640px]">
+          <div class="flex justify-between items-center mb-8">
+            <div class="flex items-center gap-4">
+              <div class="size-10 bg-accent-green/10 rounded-xl flex items-center justify-center text-accent-green">
+                <span class="material-symbols-outlined">outbound</span>
+              </div>
+              <div>
+                <h3 class="text-xl font-extrabold tracking-tight text-primary-text dark:text-white">
+                  Withdraw Funds
+                </h3>
+                <p class="text-[10px] text-secondary-text dark:text-gray-400 uppercase tracking-widest">
+                  Global Payout Gateway
+                </p>
+              </div>
+            </div>
+            <div
+              class="px-4 py-1.5 rounded-full border border-slate-200 dark:border-white/10 text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 bg-slate-50 dark:bg-white/5 text-secondary-text dark:text-gray-400 shadow-sm">
+              <span class="material-symbols-outlined text-xs text-accent-green">verified_user</span>
+              SECURED
+            </div>
+          </div>
+          <div class="flex-1 space-y-8">
+            <div class="space-y-4">
+              <div class="flex justify-between items-center">
+                <h4 class="text-[11px] font-bold uppercase tracking-widest text-secondary-text dark:text-gray-400">
+                  Select Payment Gateway
+                </h4>
+                <button id="openPinModalButton"
+                  class="flex items-center gap-2 text-[10px] font-bold text-accent-green hover:text-accent-green-hover transition-all uppercase border border-accent-green/20 px-4 py-2 rounded-xl hover:bg-accent-green/5 bg-white dark:bg-white/5">
+                  <span class="material-symbols-outlined text-sm">key</span>
+                  SET PIN
+                </button>
+              </div>
+              <div
+                class="relative group/carousel-area overflow-hidden px-[4px] py-[8px] rounded-[30px] border border-slate-200 dark:border-white/10">
+                <input checked="" class="hidden" id="gateway-1" name="gateway-selector" type="radio" />
+                <input class="hidden" id="gateway-2" name="gateway-selector" type="radio" />
+                <input class="hidden" id="gateway-3" name="gateway-selector" type="radio" />
+                <input class="hidden" id="gateway-4" name="gateway-selector" type="radio" />
+                <input class="hidden" id="gateway-5" name="gateway-selector" type="radio" />
+                <input class="hidden" id="gateway-6" name="gateway-selector" type="radio" />
+                <div
+                  class="absolute inset-y-0 left-0 flex items-center z-20 opacity-0 group-hover/carousel-area:opacity-100 transition-opacity">
+                  <label
+                    class="hidden cursor-pointer size-11 rounded-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 items-center justify-center text-secondary-text dark:text-gray-400 hover:text-white hover:bg-accent-green transition-all shadow-xl active:scale-95 gateway-1-prev"
+                    for="gateway-1"><span class="material-symbols-outlined">chevron_left</span></label>
+                  <label
+                    class="hidden cursor-pointer size-11 rounded-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 items-center justify-center text-secondary-text dark:text-gray-400 hover:text-white hover:bg-accent-green transition-all shadow-xl active:scale-95 gateway-2-prev"
+                    for="gateway-1"><span class="material-symbols-outlined">chevron_left</span></label>
+                  <label
+                    class="hidden cursor-pointer size-11 rounded-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 items-center justify-center text-secondary-text dark:text-gray-400 hover:text-white hover:bg-accent-green transition-all shadow-xl active:scale-95 gateway-3-prev"
+                    for="gateway-2"><span class="material-symbols-outlined">chevron_left</span></label>
+                  <label
+                    class="hidden cursor-pointer size-11 rounded-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 items-center justify-center text-secondary-text dark:text-gray-400 hover:text-white hover:bg-accent-green transition-all shadow-xl active:scale-95 gateway-4-prev"
+                    for="gateway-3"><span class="material-symbols-outlined">chevron_left</span></label>
+                  <label
+                    class="hidden cursor-pointer size-11 rounded-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 items-center justify-center text-secondary-text dark:text-gray-400 hover:text-white hover:bg-accent-green transition-all shadow-xl active:scale-95 gateway-5-prev"
+                    for="gateway-4"><span class="material-symbols-outlined">chevron_left</span></label>
+                </div>
+                <div
+                  class="absolute inset-y-0 right-0 flex items-center z-20 opacity-0 group-hover/carousel-area:opacity-100 transition-opacity">
+                  <label
+                    class="hidden cursor-pointer size-11 rounded-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 items-center justify-center text-secondary-text dark:text-gray-400 hover:text-white hover:bg-accent-green transition-all shadow-xl active:scale-95 gateway-1-next"
+                    for="gateway-2"><span class="material-symbols-outlined">chevron_right</span></label>
+                  <label
+                    class="hidden cursor-pointer size-11 rounded-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 items-center justify-center text-secondary-text dark:text-gray-400 hover:text-white hover:bg-accent-green transition-all shadow-xl active:scale-95 gateway-2-next"
+                    for="gateway-3"><span class="material-symbols-outlined">chevron_right</span></label>
+                  <label
+                    class="hidden cursor-pointer size-11 rounded-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 items-center justify-center text-secondary-text dark:text-gray-400 hover:text-white hover:bg-accent-green transition-all shadow-xl active:scale-95 gateway-3-next"
+                    for="gateway-4"><span class="material-symbols-outlined">chevron_right</span></label>
+                  <label
+                    class="hidden cursor-pointer size-11 rounded-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 items-center justify-center text-secondary-text dark:text-gray-400 hover:text-white hover:bg-accent-green transition-all shadow-xl active:scale-95 gateway-4-next"
+                    for="gateway-5"><span class="material-symbols-outlined">chevron_right</span></label>
+                  <label
+                    class="hidden cursor-pointer size-11 rounded-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 items-center justify-center text-secondary-text dark:text-gray-400 hover:text-white hover:bg-accent-green transition-all shadow-xl active:scale-95 gateway-5-next"
+                    for="gateway-6"><span class="material-symbols-outlined">chevron_right</span></label>
+                </div>
+                <style>
+                  #gateway-1:checked~div label.gateway-1-next {
+                    display: flex;
+                  }
+
+                  #gateway-2:checked~div label.gateway-2-next {
+                    display: flex;
+                  }
+
+                  #gateway-2:checked~div label.gateway-1-prev {
+                    display: flex;
+                  }
+
+                  #gateway-3:checked~div label.gateway-3-next {
+                    display: flex;
+                  }
+
+                  #gateway-3:checked~div label.gateway-2-prev {
+                    display: flex;
+                  }
+
+                  #gateway-4:checked~div label.gateway-4-next {
+                    display: flex;
+                  }
+
+                  #gateway-4:checked~div label.gateway-3-prev {
+                    display: flex;
+                  }
+
+                  #gateway-5:checked~div label.gateway-5-next {
+                    display: flex;
+                  }
+
+                  #gateway-5:checked~div label.gateway-4-prev {
+                    display: flex;
+                  }
+
+                  #gateway-6:checked~div label.gateway-6-next {
+                    display: flex;
+                  }
+
+                  #gateway-6:checked~div label.gateway-5-prev {
+                    display: flex;
+                  }
+                </style>
+                <div class="carousel-track flex transition-transform duration-500 ease-in-out">
+                  <div class="min-w-full px-1">
+                    <div
+                      class="gateway-card-glass rounded-3xl p-7 relative ring-1 ring-slate-100 dark:ring-white/5 shadow-lg group/card transition-all duration-500 hover:ring-[#d41d55]/40">
+                      <div class="absolute top-6 right-6 z-10">
+                        <button
+                          class="size-9 rounded-xl bg-slate-50 dark:bg-white/5 flex items-center justify-center text-secondary-text dark:text-gray-400 hover:text-[#d41d55] hover:bg-white dark:hover:bg-white/10 transition-all border border-slate-200 dark:border-white/10"
+                          data-gateway-name="Bkash"
+                          data-gateway-logo="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEimCOQgZJBvc6UiuEsuTvbecFMItg6JYJ8XIPG27mNMsYeI8bvAPyeue-Bl_yQVg2MDxv8V5XWcoLQ76NUwUat21zXVon5lFbC_OZkNsJvwrDe1e3xGqGP3dH-2cWIw1CvWOHfP9G3hHyJ6YO99ZdF1RCof8l8RBGWz0CR903JnTAKIqBqYULVRCC3mfsU/s1600/Bkash.png"
+                          data-gateway-color="#d41d55" data-account-name="Bikash Bowmick"
+                          data-account-number="01862978128" onclick="openGatewayConfigModal(this)">
+                          <span class="material-symbols-outlined text-lg">settings</span>
+                        </button>
+                      </div>
+                      <div class="flex items-center gap-5 mb-8">
+                        <img
+                          class="size-14 rounded-2xl flex items-center justify-center border border-[#d41d55]/20 dark:border-white/10"
+                          src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEimCOQgZJBvc6UiuEsuTvbecFMItg6JYJ8XIPG27mNMsYeI8bvAPyeue-Bl_yQVg2MDxv8V5XWcoLQ76NUwUat21zXVon5lFbC_OZkNsJvwrDe1e3xGqGP3dH-2cWIw1CvWOHfP9G3hHyJ6YO99ZdF1RCof8l8RBGWz0CR903JnTAKIqBqYULVRCC3mfsU/s1600/Bkash.png"
+                          alt="Bkash-Logo">
+                        <div class="space-y-1">
+                          <h4
+                            class="text-2xl font-extrabold tracking-tight uppercase leading-none text-primary-text dark:text-white">
+                            Bkash
+                          </h4>
+                          <div class="flex items-center gap-2">
+                            <span class="flex size-1.5 rounded-full bg-accent-green"></span>
+                            <p class="text-[10px] text-accent-green font-bold uppercase tracking-widest">
+                              Instant Transfer Active
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                      <div
+                        class="flex justify-between items-end bg-slate-50/80 dark:bg-white/5 rounded-2xl p-6 border border-slate-100 dark:border-white/10">
+                        <div class="space-y-2">
+                          <p
+                            class="text-[9px] text-secondary-text dark:text-gray-400 uppercase tracking-widest font-semibold">
+                            Payout Account
+                          </p>
+                          <p class="text-2xl font-bold tracking-widest text-[#0d1b12] dark:text-white font-display">
+                            01862 978 128
+                          </p>
+                          <div class="flex items-center gap-2">
+                            <span
+                              class="material-symbols-outlined text-xs text-secondary-text dark:text-gray-400">person</span>
+                            <p
+                              class="text-[11px] text-secondary-text dark:text-gray-400 font-bold uppercase tracking-wide">
+                              Bikash Bowmick
+                            </p>
+                          </div>
+                        </div>
+                        <div
+                          class="flex items-center gap-2 text-[10px] font-black text-accent-green bg-white dark:bg-white/5 px-4 py-2.5 rounded-full uppercase tracking-widest border border-accent-green/20 shadow-sm">
+                          <span class="relative flex h-2 w-2">
+                            <span
+                              class="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent-green opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-2 w-2 bg-accent-green"></span>
+                          </span>
+                          Linked
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="min-w-full px-1">
+                    <div
+                      class="gateway-card-glass rounded-3xl p-7 relative ring-1 ring-slate-100 dark:ring-white/5 shadow-lg group/card transition-all duration-500 hover:ring-[#ea2227]/40">
+                      <div class="absolute top-6 right-6 z-10">
+                        <button
+                          class="size-9 rounded-xl bg-slate-50 dark:bg-white/5 flex items-center justify-center text-secondary-text dark:text-gray-400 hover:text-[#ea2227] hover:bg-white dark:hover:bg-white/10 transition-all border border-slate-200 dark:border-white/10"
+                          data-gateway-name="Nagad"
+                          data-gateway-logo="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj59Cd3bbTJ6gBg5Ryw4uyF4j5RkOSZNPoiNPHcXKZ6AUXVQXA6IBhcDyjhXKMgQgUGIQ_i1FLebAdU9s7bzNYof8Ao5RHaw-SUu7VMNw3oxIyn6czS0F1EonpigS_M8RxuMcJpBAqToClurO1S6BQfXmbF58UnYLWjB2ta5PGajPVOrI1AzoNLk1tAWo8/s1600/Nagad.png"
+                          data-gateway-color="#ea2227" data-account-name="Not Setup" data-account-number=""
+                          onclick="openGatewayConfigModal(this)">
+                          <span class="material-symbols-outlined text-lg">settings</span>
+                        </button>
+                      </div>
+                      <div class="flex items-center gap-5 mb-8">
+                        <img class="size-14  rounded-2xl flex items-center justify-center border border-[#ea2227]/20"
+                          src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj59Cd3bbTJ6gBg5Ryw4uyF4j5RkOSZNPoiNPHcXKZ6AUXVQXA6IBhcDyjhXKMgQgUGIQ_i1FLebAdU9s7bzNYof8Ao5RHaw-SUu7VMNw3oxIyn6czS0F1EonpigS_M8RxuMcJpBAqToClurO1S6BQfXmbF58UnYLWjB2ta5PGajPVOrI1AzoNLk1tAWo8/s1600/Nagad.png"
+                          alt="Nagad-Logo">
+                        <div class="space-y-1">
+                          <h4
+                            class="text-2xl font-extrabold tracking-tight uppercase leading-none text-primary-text dark:text-white">
+                            Nagad
+                          </h4>
+                          <div class="flex items-center gap-2">
+                            <span class="flex size-1.5 rounded-full bg-slate-300 dark:bg-gray-600"></span>
+                            <p
+                              class="text-[10px] text-secondary-text dark:text-gray-400 font-bold uppercase tracking-widest">
+                              Configuration Required
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                      <div
+                        class="flex justify-between items-end bg-slate-50/80 dark:bg-white/5 rounded-2xl p-6 border border-slate-100 dark:border-white/10">
+                        <div class="space-y-2">
+                          <p
+                            class="text-[9px] text-secondary-text dark:text-gray-400 uppercase tracking-widest font-semibold">
+                            Payout Account
+                          </p>
+                          <p class="text-2xl font-bold tracking-widest text-slate-300 dark:text-gray-600 font-display">
+                            XXXXX XXXXXX
+                          </p>
+                          <div class="flex items-center gap-2">
+                            <span
+                              class="material-symbols-outlined text-xs text-secondary-text dark:text-gray-400">person</span>
+                            <p
+                              class="text-[11px] text-secondary-text dark:text-gray-400 font-bold uppercase tracking-wide">
+                              Not Setup
+                            </p>
+                          </div>
+                        </div>
+                        <div
+                          class="flex items-center gap-2 text-[10px] font-black text-slate-400 dark:text-gray-500 bg-white dark:bg-white/5 px-4 py-2.5 rounded-full uppercase tracking-widest border border-slate-200 dark:border-white/10 shadow-sm">
+                          Not Configured
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="min-w-full px-1">
+                    <div
+                      class="gateway-card-glass rounded-3xl p-7 relative ring-1 ring-slate-100 dark:ring-white/5 shadow-lg group/card transition-all duration-500 hover:ring-[#8c3093]/40">
+                      <div class="absolute top-6 right-6 z-10">
+                        <button
+                          class="size-9 rounded-xl bg-slate-50 dark:bg-white/5 flex items-center justify-center text-secondary-text dark:text-gray-400 hover:text-[#8c3093] hover:bg-white dark:hover:bg-white/10 transition-all border border-slate-200 dark:border-white/10"
+                          data-gateway-name="Rocket"
+                          data-gateway-logo="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEh0qDcIRA8QQ7EE4lUABcmM9FZaMMpxprzBnmb7VBt71V5Z4Fcb_oKTH9lH5OxzYuBo01kfX0eyTNgyVwg6ze8utXuTVB-aTGZoZ3CC0F-JjO0L9Jys8M2EGYSRO55CrOBdKuas1yrv1QveH9xqvRLoScWTEqK8GknRK4UdoT8dWJE-btOPIyaLUGAb7kk/s1600/Rocket.png"
+                          data-gateway-color="#8c3093" data-account-name="Not Setup" data-account-number=""
+                          onclick="openGatewayConfigModal(this)">
+                          <span class="material-symbols-outlined text-lg">settings</span>
+                        </button>
+                      </div>
+                      <div class="flex items-center gap-5 mb-8">
+                        <img class="size-14 rounded-2xl flex items-center justify-center border border-[#8c3093]/20"
+                          src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEh0qDcIRA8QQ7EE4lUABcmM9FZaMMpxprzBnmb7VBt71V5Z4Fcb_oKTH9lH5OxzYuBo01kfX0eyTNgyVwg6ze8utXuTVB-aTGZoZ3CC0F-JjO0L9Jys8M2EGYSRO55CrOBdKuas1yrv1QveH9xqvRLoScWTEqK8GknRK4UdoT8dWJE-btOPIyaLUGAb7kk/s1600/Rocket.png"
+                          alt="Rocket-Logo">
+                        <div class="space-y-1">
+                          <h4
+                            class="text-2xl font-extrabold tracking-tight uppercase leading-none text-primary-text dark:text-white">
+                            Rocket
+                          </h4>
+                          <div class="flex items-center gap-2">
+                            <span class="flex size-1.5 rounded-full bg-slate-300 dark:bg-gray-600"></span>
+                            <p
+                              class="text-[10px] text-secondary-text dark:text-gray-400 font-bold uppercase tracking-widest">
+                              Available Gateway
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                      <div
+                        class="flex justify-between items-end bg-slate-50/80 dark:bg-white/5 rounded-2xl p-6 border border-slate-100 dark:border-white/10">
+                        <div class="space-y-2">
+                          <p
+                            class="text-[9px] text-secondary-text dark:text-gray-400 uppercase tracking-widest font-semibold">
+                            Payout Account
+                          </p>
+                          <p class="text-2xl font-bold tracking-widest text-slate-300 dark:text-gray-600 font-display">
+                            XXXXX XXXXXX
+                          </p>
+                          <div class="flex items-center gap-2">
+                            <span
+                              class="material-symbols-outlined text-xs text-secondary-text dark:text-gray-400">person</span>
+                            <p
+                              class="text-[11px] text-secondary-text dark:text-gray-400 font-bold uppercase tracking-wide">
+                              Not Setup
+                            </p>
+                          </div>
+                        </div>
+                        <div
+                          class="flex items-center gap-2 text-[10px] font-black text-slate-400 dark:text-gray-500 bg-white dark:bg-white/5 px-4 py-2.5 rounded-full uppercase tracking-widest border border-slate-200 dark:border-white/10 shadow-sm">
+                          Not Configured
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="min-w-full px-1">
+                    <div
+                      class="gateway-card-glass rounded-3xl p-7 relative ring-1 ring-slate-100 dark:ring-white/5 shadow-lg group/card transition-all duration-500 hover:ring-[#0e56a3]/40">
+                      <div class="absolute top-6 right-6 z-10">
+                        <button
+                          class="size-9 rounded-xl bg-slate-50 dark:bg-white/5 flex items-center justify-center text-secondary-text dark:text-gray-400 hover:text-[#0e56a3] hover:bg-white dark:hover:bg-white/10 transition-all border border-slate-200 dark:border-white/10"
+                          data-gateway-name="Upay"
+                          data-gateway-logo="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhzCOwJJ3xLNmGGCXEhuH6GjILufxPxrhOHTDT8oOjTVEZUq2Zc_Lz3VZilC6gmFG7LrkWI4fyexZBHcgeyA3-wVjFYj3BZ7kI_795Cozt5rW7qclBv0_T2K0nXfUS1JXth_02vI3RYRYroE29UP4QJ4uXn9kMkM3Ee3SrEF30laZFh6Cfmjpad0Y-Goaw/s1600/Upay.png"
+                          data-gateway-color="#0e56a3" data-account-name="Not Setup" data-account-number=""
+                          onclick="openGatewayConfigModal(this)">
+                          <span class="material-symbols-outlined text-lg">settings</span>
+                        </button>
+                      </div>
+                      <div class="flex items-center gap-5 mb-8">
+                        <img class="size-14 rounded-2xl flex items-center justify-center border border-[#0e56a3]/20"
+                          src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhzCOwJJ3xLNmGGCXEhuH6GjILufxPxrhOHTDT8oOjTVEZUq2Zc_Lz3VZilC6gmFG7LrkWI4fyexZBHcgeyA3-wVjFYj3BZ7kI_795Cozt5rW7qclBv0_T2K0nXfUS1JXth_02vI3RYRYroE29UP4QJ4uXn9kMkM3Ee3SrEF30laZFh6Cfmjpad0Y-Goaw/s1600/Upay.png"
+                          alt="Upay-Logo">
+                        <div class="space-y-1">
+                          <h4
+                            class="text-2xl font-extrabold tracking-tight uppercase leading-none text-primary-text dark:text-white">
+                            Upay
+                          </h4>
+                          <div class="flex items-center gap-2">
+                            <span class="flex size-1.5 rounded-full bg-slate-300 dark:bg-gray-600"></span>
+                            <p
+                              class="text-[10px] text-secondary-text dark:text-gray-400 font-bold uppercase tracking-widest">
+                              Standard Processing
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                      <div
+                        class="flex justify-between items-end bg-slate-50/80 dark:bg-white/5 rounded-2xl p-6 border border-slate-100 dark:border-white/10">
+                        <div class="space-y-2">
+                          <p
+                            class="text-[9px] text-secondary-text dark:text-gray-400 uppercase tracking-widest font-semibold">
+                            Payout Account
+                          </p>
+                          <p class="text-2xl font-bold tracking-widest text-slate-300 dark:text-gray-600 font-display">
+                            XXXXX XXXXXX
+                          </p>
+                          <div class="flex items-center gap-2">
+                            <span
+                              class="material-symbols-outlined text-xs text-secondary-text dark:text-gray-400">person</span>
+                            <p
+                              class="text-[11px] text-secondary-text dark:text-gray-400 font-bold uppercase tracking-wide">
+                              Not Setup
+                            </p>
+                          </div>
+                        </div>
+                        <div
+                          class="flex items-center gap-2 text-[10px] font-black text-slate-400 dark:text-gray-500 bg-white dark:bg-white/5 px-4 py-2.5 rounded-full uppercase tracking-widest border border-slate-200 dark:border-white/10 shadow-sm">
+                          Not Configured
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="min-w-full px-1">
+                    <div
+                      class="gateway-card-glass rounded-3xl p-7 relative ring-1 ring-slate-100 dark:ring-white/5 shadow-lg group/card transition-all duration-500 hover:ring-[#088444]/40">
+                      <div class="absolute top-6 right-6 z-10">
+                        <button
+                          class="size-9 rounded-xl bg-slate-50 dark:bg-white/5 flex items-center justify-center text-secondary-text dark:text-gray-400 hover:text-[#088444] hover:bg-white dark:hover:bg-white/10 transition-all border border-slate-200 dark:border-white/10"
+                          data-gateway-name="CellFin"
+                          data-gateway-logo="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgUTCXWwya3rMl4kozAPuf29A6KjdqlZouXLRiXqhAzAh_FZ3KIoW37dqc2UTtB5Bsnthm6qMoLBFdWTqse-QHA-JfiplF6bpf4D1zNzSxy4rhW9PWONnQo-qI8zxO_SEc7ypur3dn-19AdDxCSn5_RbhtZVGmXvYcjQmkCOnO4OAKb2i1ZqNNuPrlXl4/s1600/CellFin.png"
+                          data-gateway-color="#088444" data-account-name="Not Setup" data-account-number=""
+                          onclick="openGatewayConfigModal(this)">
+                          <span class="material-symbols-outlined text-lg">settings</span>
+                        </button>
+                      </div>
+                      <div class="flex items-center gap-5 mb-8">
+                        <img class="size-14 rounded-2xl flex items-center justify-center border border-[#088444]/20"
+                          src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgUTCXWwya3rMl4kozAPuf29A6KjdqlZouXLRiXqhAzAh_FZ3KIoW37dqc2UTtB5Bsnthm6qMoLBFdWTqse-QHA-JfiplF6bpf4D1zNzSxy4rhW9PWONnQo-qI8zxO_SEc7ypur3dn-19AdDxCSn5_RbhtZVGmXvYcjQmkCOnO4OAKb2i1ZqNNuPrlXl4/s1600/CellFin.png"
+                          alt="CellFin-Logo">
+                        <div class="space-y-1">
+                          <h4
+                            class="text-2xl font-extrabold tracking-tight uppercase leading-none text-primary-text dark:text-white">
+                            CellFin
+                          </h4>
+                          <div class="flex items-center gap-2">
+                            <span class="flex size-1.5 rounded-full bg-slate-300 dark:bg-gray-600"></span>
+                            <p
+                              class="text-[10px] text-secondary-text dark:text-gray-400 font-bold uppercase tracking-widest">
+                              Bank Payout Enabled
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                      <div
+                        class="flex justify-between items-end bg-slate-50/80 dark:bg-white/5 rounded-2xl p-6 border border-slate-100 dark:border-white/10">
+                        <div class="space-y-2">
+                          <p
+                            class="text-[9px] text-secondary-text dark:text-gray-400 uppercase tracking-widest font-semibold">
+                            Payout Account
+                          </p>
+                          <p class="text-2xl font-bold tracking-widest text-slate-300 dark:text-gray-600 font-display">
+                            XXXXX XXXXXX
+                          </p>
+                          <div class="flex items-center gap-2">
+                            <span
+                              class="material-symbols-outlined text-xs text-secondary-text dark:text-gray-400">person</span>
+                            <p
+                              class="text-[11px] text-secondary-text dark:text-gray-400 font-bold uppercase tracking-wide">
+                              Not Setup
+                            </p>
+                          </div>
+                        </div>
+                        <div
+                          class="flex items-center gap-2 text-[10px] font-black text-slate-400 dark:text-gray-500 bg-white dark:bg-white/5 px-4 py-2.5 rounded-full uppercase tracking-widest border border-slate-200 dark:border-white/10 shadow-sm">
+                          Not Configured
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="min-w-full px-1">
+                    <div
+                      class="gateway-card-glass rounded-3xl p-7 relative ring-1 ring-slate-100 dark:ring-white/5 shadow-lg group/card transition-all duration-500 hover:ring-[#f2ba2f]/40">
+                      <div class="absolute top-6 right-6 z-10">
+                        <button
+                          class="size-9 rounded-xl bg-slate-50 dark:bg-white/5 flex items-center justify-center text-secondary-text dark:text-gray-400 hover:text-[#f2ba2f] hover:bg-white dark:hover:bg-white/10 transition-all border border-slate-200 dark:border-white/10"
+                          data-gateway-name="Binance"
+                          data-gateway-logo="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgdT_Iz7sSapceBc3Sgshj6Gm7OkdXYkx7dwXHAwXk9N-a6zwgcElkCLteQ1vYfywPAy7dRg73CHY6wr9Rlkocq1Jx79ze34rImQF2ClB6-JblHJ71YjLiZd3YsJfKShvHF31fK0agmzAWYA1hazsR91pAaskVOXU-owKQscEUkGAx4dWtI6U2kMju6xvE/s1600/Binance.png"
+                          data-gateway-color="#f2ba2f" data-account-name="Not Setup" data-account-number=""
+                          onclick="openGatewayConfigModal(this)">
+                          <span class="material-symbols-outlined text-lg">settings</span>
+                        </button>
+                      </div>
+                      <div class="flex items-center gap-5 mb-8">
+                        <img class="size-14 rounded-2xl flex items-center justify-center border border-[#f2ba2f]/20"
+                          src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgdT_Iz7sSapceBc3Sgshj6Gm7OkdXYkx7dwXHAwXk9N-a6zwgcElkCLteQ1vYfywPAy7dRg73CHY6wr9Rlkocq1Jx79ze34rImQF2ClB6-JblHJ71YjLiZd3YsJfKShvHF31fK0agmzAWYA1hazsR91pAaskVOXU-owKQscEUkGAx4dWtI6U2kMju6xvE/s1600/Binance.png"
+                          alt="Binance-Logo">
+                        <div class="space-y-1">
+                          <h4
+                            class="text-2xl font-extrabold tracking-tight uppercase leading-none text-primary-text dark:text-white">
+                            Binance
+                          </h4>
+                          <div class="flex items-center gap-2">
+                            <span class="flex size-1.5 rounded-full bg-slate-300 dark:bg-gray-600"></span>
+                            <p
+                              class="text-[10px] text-secondary-text dark:text-gray-400 font-bold uppercase tracking-widest">
+                              Crypto Payout Enabled
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                      <div
+                        class="flex justify-between items-end bg-slate-50/80 dark:bg-white/5 rounded-2xl p-6 border border-slate-100 dark:border-white/10">
+                        <div class="space-y-2">
+                          <p
+                            class="text-[9px] text-secondary-text dark:text-gray-400 uppercase tracking-widest font-semibold">
+                            Payout Account
+                          </p>
+                          <p class="text-2xl font-bold tracking-widest text-slate-300 dark:text-gray-600 font-display">
+                            XXXXX XXXXXX
+                          </p>
+                          <div class="flex items-center gap-2">
+                            <span
+                              class="material-symbols-outlined text-xs text-secondary-text dark:text-gray-400">person</span>
+                            <p
+                              class="text-[11px] text-secondary-text dark:text-gray-400 font-bold uppercase tracking-wide">
+                              Not Setup
+                            </p>
+                          </div>
+                        </div>
+                        <div
+                          class="flex items-center gap-2 text-[10px] font-black text-slate-400 dark:text-gray-500 bg-white dark:bg-white/5 px-4 py-2.5 rounded-full uppercase tracking-widest border border-slate-200 dark:border-white/10 shadow-sm">
+                          Not Configured
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div
+              class="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-5 flex items-center gap-6 shadow-sm">
+              <div
+                class="size-12 rounded-xl bg-accent-green/10 flex items-center justify-center text-accent-green shrink-0">
+                <span class="material-symbols-outlined text-2xl">shield_locked</span>
+              </div>
+              <div class="grid grid-cols-2 gap-10 flex-1">
+                <div>
+                  <p
+                    class="text-[10px] font-bold text-secondary-text dark:text-gray-400 uppercase tracking-widest mb-1">
+                    Minimum Payout
+                  </p>
+                  <p class="text-lg font-extrabold text-primary-text dark:text-white">
+                    ৳100.00
+                  </p>
+                </div>
+                <div>
+                  <p
+                    class="text-[10px] font-bold text-secondary-text dark:text-gray-400 uppercase tracking-widest mb-1">
+                    Maximum Limit
+                  </p>
+                  <p class="text-lg font-extrabold text-primary-text dark:text-white">
+                    ৳25,000.00
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div class="space-y-6">
+              <div class="space-y-3">
+                <div class="flex justify-between items-center">
+                  <label
+                    class="text-[11px] font-bold text-secondary-text dark:text-gray-400 uppercase tracking-widest">Enter
+                    Payout
+                    Amount</label>
+                  <div class="flex gap-2">
+                    <button
+                      class="px-4 py-1.5 rounded-lg bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-[10px] font-black hover:bg-accent-green hover:border-accent-green hover:text-white transition-all text-secondary-text dark:text-gray-400">
+                      50%
+                    </button>
+                    <button
+                      class="px-4 py-1.5 rounded-lg bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-[10px] font-black hover:bg-accent-green hover:border-accent-green hover:text-white transition-all text-secondary-text dark:text-gray-400">
+                      100%
+                    </button>
+                  </div>
+                </div>
+                <div class="relative group">
+                  <span
+                    class="absolute left-6 top-1/2 -translate-y-1/2 text-2xl font-black text-slate-300 dark:text-gray-600 group-focus-within:text-accent-green transition-colors">৳</span>
+                  <input id="withdrawal-amount"
+                    class="w-full h-16 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 focus:border-accent-green focus:ring-4 focus:ring-accent-green/10 rounded-2xl pl-12 pr-6 text-2xl font-black tracking-tight text-primary-text dark:text-white transition-all"
+                    placeholder="0.00" type="number" />
+                </div>
+              </div>
+              <div class="space-y-3">
+                <label
+                  class="text-[11px] font-bold text-secondary-text dark:text-gray-400 uppercase tracking-widest">Verify
+                  Security
+                  PIN</label>
+                <div class="relative group">
+                  <span
+                    class="absolute left-6 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-300 dark:text-gray-600 group-focus-within:text-accent-green transition-colors">lock</span>
+                  <input id="withdrawal-pin"
+                    class="w-full h-16 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 focus:border-accent-green focus:ring-4 focus:ring-accent-green/10 rounded-2xl px-14 text-2xl font-black tracking-[1.5rem] text-primary-text dark:text-white transition-all"
+                    maxlength="6" placeholder="······" type="password" />
+                </div>
+              </div>
+            </div>
+            <button id="confirm-withdrawal-btn"
+              class="btn-primary w-full h-16 text-white font-black rounded-2xl shadow-xl shadow-accent-green/20 flex items-center justify-center gap-4 text-lg">
+              <span class="material-symbols-outlined">bolt</span>
+              Confirm Withdrawal
+            </button>
+          </div>
+        </section>
+      </div>
+      <div class="lg:col-span-5 space-y-8">
+        <section class="premium-card rounded-2xl p-8">
+          <div class="flex items-center gap-4 mb-8">
+            <div class="size-10 bg-accent-green/10 rounded-xl flex items-center justify-center text-accent-green">
+              <span class="material-symbols-outlined">rocket_launch</span>
+            </div>
+            <h3 class="text-xl font-extrabold tracking-tight text-primary-text dark:text-white">
+              Submit Asset Batch
+            </h3>
+          </div>
+          <div class="space-y-6">
+            <div class="space-y-2">
+              <label
+                class="text-[10px] font-bold text-secondary-text dark:text-gray-400 uppercase tracking-widest px-1">Order
+                ID</label>
+              <div class="relative group">
+                <span
+                  class="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-sm text-slate-400 dark:text-gray-500 group-focus-within:text-accent-green transition-colors">tag</span>
+                <input id="submit-order-id"
+                  class="w-full h-12 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 focus:border-accent-green focus:ring-4 focus:ring-accent-green/10 rounded-xl pl-10 pr-4 text-sm font-bold text-primary-text dark:text-white transition-all"
+                  placeholder="Enter 4-digit Order ID (e.g., OID-4829)" type="text" />
+              </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div class="space-y-2">
+                <label
+                  class="text-[10px] font-bold text-secondary-text dark:text-gray-400 uppercase tracking-widest px-1">Asset
+                  Category</label>
+                <select id="submit-category"
+                  class="w-full h-12 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 focus:border-accent-green focus:ring-4 focus:ring-accent-green/10 rounded-xl px-4 text-sm font-bold text-primary-text dark:text-white appearance-none transition-all">
+                  <option class="dark:bg-[#102216]" value="Facebook">Facebook</option>
+                  <option class="dark:bg-[#102216]" value="Instagram">Instagram</option>
+                  <option class="dark:bg-[#102216]" value="YouTube">YouTube</option>
+                  <option class="dark:bg-[#102216]" value="TikTok">TikTok</option>
+                  <option class="dark:bg-[#102216]" value="Twitter">Twitter</option>
+                  <option class="dark:bg-[#102216]" value="Telegram">Telegram</option>
+                  <option class="dark:bg-[#102216]" value="Linkedin">Linkedin</option>
+                </select>
+              </div>
+              <div class="space-y-2">
+                <label
+                  class="text-[10px] font-bold text-secondary-text dark:text-gray-400 uppercase tracking-widest px-1">Quantity
+                  (Units)</label>
+                <input id="submit-quantity"
+                  class="w-full h-12 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 focus:border-accent-green focus:ring-4 focus:ring-accent-green/10 rounded-xl px-4 text-sm font-bold text-primary-text dark:text-white transition-all"
+                  type="number" value="1" min="1" max="100" />
+              </div>
+            </div>
+            <div class="space-y-2">
+              <label
+                class="text-[10px] font-bold text-secondary-text dark:text-gray-400 uppercase tracking-widest px-1">Google
+                Sheet
+                Link</label>
+              <div class="relative">
+                <span
+                  class="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-sm text-slate-400 dark:text-gray-500">link</span>
+                <input id="submit-link"
+                  class="w-full h-12 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 focus:border-accent-green focus:ring-4 focus:ring-accent-green/10 rounded-xl pl-10 pr-4 text-sm text-primary-text dark:text-white transition-all"
+                  placeholder="https://docs.google.com/spreadsheets/d/..." type="url" />
+              </div>
+            </div>
+            <button id="submit-btn"
+              class="btn-primary w-full h-14 font-bold rounded-xl shadow-lg shadow-accent-green/10 flex items-center justify-center gap-3">
+              <span class="material-symbols-outlined">check_circle</span>
+              Start Verification
+            </button>
+          </div>
+        </section>
+        <section class="premium-card rounded-2xl p-8">
+          <div class="flex items-center gap-4 mb-6">
+            <div
+              class="size-10 bg-amber-50 dark:bg-amber-500/10 rounded-xl flex items-center justify-center text-amber-500">
+              <span class="material-symbols-outlined">stars</span>
+            </div>
+            <div>
+              <h3 class="text-xl font-extrabold tracking-tight text-primary-text dark:text-white">
+                Rate Your Experience
+              </h3>
+              <p class="text-[10px] text-secondary-text dark:text-gray-400 uppercase tracking-widest">
+                Global Community Rating
+              </p>
+            </div>
+          </div>
+          <div id="star-rating-row" class="flex justify-between items-center mb-6 px-10">
+            <span
+              class="material-symbols-outlined text-3xl text-slate-200 dark:text-gray-700 cursor-pointer hover:text-amber-400 transition-colors"
+              data-star="1">star</span>
+            <span
+              class="material-symbols-outlined text-3xl text-slate-200 dark:text-gray-700 cursor-pointer hover:text-amber-400 transition-colors"
+              data-star="2">star</span>
+            <span
+              class="material-symbols-outlined text-3xl text-slate-200 dark:text-gray-700 cursor-pointer hover:text-amber-400 transition-colors"
+              data-star="3">star</span>
+            <span
+              class="material-symbols-outlined text-3xl text-slate-200 dark:text-gray-700 cursor-pointer hover:text-amber-400 transition-colors"
+              data-star="4">star</span>
+            <span
+              class="material-symbols-outlined text-3xl text-slate-200 dark:text-gray-700 cursor-pointer hover:text-amber-400 transition-colors"
+              data-star="5">star</span>
+          </div>
+          <input type="hidden" id="exp-rating-value" value="0" />
+          <div class="space-y-6">
+            <div class="relative">
+              <span
+                class="absolute left-4 top-4 material-symbols-outlined text-slate-300 dark:text-gray-600 text-lg">chat_bubble</span>
+              <textarea id="exp-comment"
+                class="w-full min-h-[150px] bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 focus:border-accent-green focus:ring-4 focus:ring-accent-green/10 rounded-2xl p-6 pt-[17px] pl-12 text-sm resize-none text-primary-text dark:text-white transition-all"
+                placeholder="Share your experience selling with us..."></textarea>
+            </div>
+            <button id="exp-submit-btn"
+              class="w-full h-14 bg-white dark:bg-white/5 border border-accent-green text-accent-green font-bold rounded-xl hover:bg-accent-green hover:text-white transition-all uppercase tracking-widest text-xs">
+              SUBMIT PLATFORM REVIEW
+            </button>
+            <div id="exp-feedback" class="hidden px-4 py-3 rounded-xl text-sm font-bold text-center"></div>
+          </div>
+        </section>
+      </div>
+    </div>
+    <section
+      class="bg-white dark:bg-background-dark rounded-3xl border border-slate-200 dark:border-white/10 overflow-hidden shadow-xl">
+      <input class="hidden" id="tab-payout" name="history-tabs" type="radio" />
+      <input checked="" class="hidden" id="tab-task" name="history-tabs" type="radio" />
+      <div
+        class="tab-nav flex flex-col sm:flex-row justify-between items-center px-8 py-6 border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/5 gap-6 sm:gap-0">
+        <div class="flex gap-8 md:gap-10">
+          <label
+            class="relative py-2 text-[11px] font-black uppercase tracking-widest text-secondary-text dark:text-gray-400 hover:text-accent-green cursor-pointer flex items-center gap-2 transition-all"
+            for="tab-task" id="label-task">
+            <span class="material-symbols-outlined text-lg">list_alt</span>
+            Task History
+          </label>
+          <label
+            class="relative py-2 text-[11px] font-black uppercase tracking-widest text-secondary-text dark:text-gray-400 hover:text-accent-green cursor-pointer flex items-center gap-2 transition-all"
+            for="tab-payout" id="label-payout">
+            <span class="material-symbols-outlined text-lg">history</span>
+            Payout History
+          </label>
+        </div>
+        <div
+          class="px-4 py-1.5 bg-white dark:bg-white/5 rounded-full border border-slate-200 dark:border-white/10 text-[9px] font-black uppercase tracking-widest text-secondary-text dark:text-gray-400">
+          ACTIVITY LOG UPDATED
+        </div>
+      </div>
+      <div class="table-container overflow-x-auto no-scrollbar">
+        <div id="task-history-table">
+          <table class="w-full text-left">
+            <thead>
+              <tr
+                class="bg-slate-50/80 dark:bg-white/5 text-[10px] font-bold text-secondary-text dark:text-gray-400 uppercase border-b border-slate-100 dark:border-white/5">
+                <th class="px-8 py-5">Date</th>
+                <th class="px-8 py-5">Order ID</th>
+                <th class="px-8 py-5">Platform</th>
+                <th class="px-8 py-5">Sheet Link</th>
+                <th class="px-8 py-5">Batch</th>
+                <th class="px-8 py-5">Valid</th>
+                <th class="px-8 py-5">Fail</th>
+                <th class="px-8 py-5">Payout</th>
+                <th class="px-8 py-5">Status</th>
+              </tr>
+            </thead>
+            <tbody id="task-history-body" class="divide-y divide-slate-50 dark:divide-white/5">
+            </tbody>
+          </table>
+        </div>
+        <div id="payout-history-table">
+          <table class="w-full text-left">
+            <thead>
+              <tr
+                class="bg-slate-50/80 dark:bg-white/5 text-[10px] font-bold text-secondary-text dark:text-gray-400 uppercase tracking-widest border-b border-slate-100 dark:border-white/5">
+                <th class="px-8 py-5">Date</th>
+                <th class="px-8 py-5">Amount</th>
+                <th class="px-8 py-5">Gateway</th>
+                <th class="px-8 py-5">Transaction ID</th>
+                <th class="px-8 py-5">Status</th>
+                <th class="px-8 py-5">Action</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-50 dark:divide-white/5">
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div
+        class="px-8 py-6 bg-slate-50/50 dark:bg-white/5 border-t border-slate-100 dark:border-white/5 flex justify-between items-center">
+        <p class="text-[10px] font-bold text-secondary-text dark:text-gray-400 uppercase tracking-widest">
+          Page 1 of 12
+        </p>
+        <div class="flex gap-4">
+          <button
+            class="px-4 py-2 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-[10px] font-bold uppercase rounded-lg opacity-50 cursor-not-allowed text-secondary-text dark:text-gray-400">
+            Previous
+          </button>
+          <button
+            class="px-4 py-2 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-[10px] font-bold uppercase rounded-lg hover:bg-accent-green hover:border-accent-green hover:text-white transition-all text-secondary-text dark:text-gray-400">
+            Next
+          </button>
+        </div>
+      </div>
+    </section>
+  </main>
+  <footer class="bg-footer-light dark:bg-footer-dark pt-16 pb-8 border-t border-[#e7f3eb] dark:border-white/5">
+    <div class="max-w-[1280px] mx-auto px-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
+        <div class="space-y-6">
+          <div class="flex items-center gap-3">
+            <div class="size-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
+              <span class="material-symbols-outlined text-2xl">update</span>
+            </div>
+            <span class="text-xl font-bold tracking-tight text-[#0d1b12] dark:text-white">Time Task <span
+                class="text-primary">BD</span></span>
+          </div>
+          <p class="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">
+            Empowering your digital productivity through innovative task
+            management and streamlined earning opportunities.
+          </p>
+          <div class="flex gap-4">
+            <a class="size-10 rounded-xl border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-black transition-all"
+              href="#">
+              <span class="material-symbols-outlined text-[20px]">public</span>
+            </a>
+            <a class="size-10 rounded-xl border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-black transition-all"
+              href="#">
+              <span class="material-symbols-outlined text-[20px]">share</span>
+            </a>
+            <a class="size-10 rounded-xl border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-black transition-all"
+              href="#">
+              <span class="material-symbols-outlined text-[20px]">alternate_email</span>
+            </a>
+          </div>
+        </div>
+        <div>
+          <h4 class="text-sm font-bold uppercase tracking-widest mb-6 text-[#0d1b12] dark:text-white">
+            Quick Links
+          </h4>
+          <ul class="space-y-4">
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="/Web Dashboard/Home_Page.html">Home</a>
+            </li>
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="/Web Dashboard/Blog_Page.html">Our Blog</a>
+            </li>
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="/Web Dashboard/About_Page.html">About Us</a>
+            </li>
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="/Web Dashboard/Contact_Page.html">Contact</a>
+            </li>
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="/Web Dashboard/Help_and_FAQ_Page.html">FAQ Support</a>
+            </li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="text-sm font-bold uppercase tracking-widest mb-6 text-[#0d1b12] dark:text-white">
+            Services &amp; Legal
+          </h4>
+          <ul class="space-y-4">
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="/Web Dashboard/About_Page.html">About Us</a>
+            </li>
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="/Web Dashboard/Privacy_Policy_Page.html">Privacy Policy</a>
+            </li>
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="/Web Dashboard/Terms_of_Service_Page.html">Terms of Service</a>
+            </li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="text-sm font-bold uppercase tracking-widest mb-6 text-[#0d1b12] dark:text-white">
+            Contact Info
+          </h4>
+          <ul class="space-y-4">
+            <li class="flex items-start gap-3">
+              <span class="material-symbols-outlined text-primary text-[20px]">mail</span>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary"
+                href="mailto:support@timetaskbd.com">support@timetaskbd.com</a>
+            </li>
+            <li class="flex items-start gap-3">
+              <span class="material-symbols-outlined text-primary text-[20px]">call</span>
+              <span class="text-sm text-gray-600 dark:text-gray-400">+880 1234 567890</span>
+            </li>
+            <li class="flex items-start gap-3">
+              <span class="material-symbols-outlined text-primary text-[20px]">location_on</span>
+              <span class="text-sm text-gray-600 dark:text-gray-400">Dhaka, Bangladesh</span>
+            </li>
+          </ul>
+          <div class="mt-8 pt-8 border-t border-[#e7f3eb] dark:border-white/5">
+            <p class="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-4">
+              Social Media
+            </p>
+            <div class="flex gap-4">
+              <a class="text-[#4c9a66] hover:text-primary transition-colors" href="#">
+                <svg class="size-6" fill="currentColor" viewBox="0 0 24 24">
+                  <path
+                    d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z">
+                  </path>
+                </svg>
+              </a>
+              <a class="text-[#4c9a66] hover:text-primary transition-colors" href="#">
+                <svg class="size-6" fill="currentColor" viewBox="0 0 24 24">
+                  <path
+                    d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.84 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z">
+                  </path>
+                </svg>
+              </a>
+              <a class="text-[#4c9a66] hover:text-primary transition-colors" href="#">
+                <svg class="size-6" fill="currentColor" viewBox="0 0 24 24">
+                  <path
+                    d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z">
+                  </path>
+                </svg>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div
+        class="pt-8 border-t border-[#e7f3eb] dark:border-white/5 flex flex-col md:flex-row items-center justify-between gap-4">
+        <p class="text-sm text-gray-500 dark:text-gray-400">
+          Copyright © 2024
+          <span class="text-[#0d1b12] dark:text-white font-semibold">Time Task BD</span>. All rights reserved.
+        </p>
+        <p class="text-sm text-gray-500 dark:text-gray-400">
+          Developed with <span class="text-primary font-bold">★</span> by
+          <a class="text-primary font-medium hover:underline" href="#">Digital Dynamics Agency</a>
+        </p>
+      </div>
+    </div>
+  </footer> <!-- Gateway Configuration Modal -->
+  <div id="gatewayConfigModal"
+    class="fixed inset-0 z-[100] flex items-center justify-center p-4 modal-hidden transition-all duration-300">
+    <div
+      class="bg-white dark:bg-[#102216] w-full max-w-md rounded-3xl shadow-2xl border border-slate-200 dark:border-white/10 overflow-hidden transform transition-all scale-95 opacity-0"
+      id="modalContainer">
+      <div class="p-8 space-y-6">
+        <div class="flex justify-between items-center">
+          <div class="flex items-center gap-4">
+            <div id="modalGatewayLogo"
+              class="size-12 rounded-xl bg-slate-100 dark:bg-white/5 flex items-center justify-center border border-slate-200 dark:border-white/10 overflow-hidden">
+              <img src="" alt="Gateway" class="size-8 object-contain">
+            </div>
+            <div>
+              <h3 id="modalGatewayName" class="text-xl font-extrabold text-[#0d1b12] dark:text-white">Configure
+                Gateway</h3>
+              <p class="text-[10px] text-secondary-text dark:text-gray-400 font-bold uppercase tracking-widest">Payout
+                Account Setup</p>
+            </div>
+          </div>
+          <button onclick="closeGatewayConfigModal()"
+            class="size-10 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 transition-colors flex items-center justify-center text-slate-400">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+
+        <div class="space-y-4">
+          <div class="space-y-2">
+            <label
+              class="text-[10px] font-bold text-secondary-text dark:text-gray-400 uppercase tracking-widest px-1">Account
+              Name</label>
+            <div class="relative group">
+              <span
+                class="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-sm text-slate-400 group-focus-within:text-primary transition-colors">person</span>
+              <input id="configAccountName"
+                class="w-full h-12 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 focus:border-primary focus:ring-4 focus:ring-primary/10 rounded-xl pl-10 pr-4 text-sm font-bold text-[#0d1b12] dark:text-white transition-all capitalize"
+                placeholder="Enter Full Name" type="text" />
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <label
+              class="text-[10px] font-bold text-secondary-text dark:text-gray-400 uppercase tracking-widest px-1">Account
+              Number</label>
+            <div class="relative group">
+              <span
+                class="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-sm text-slate-400 group-focus-within:text-primary transition-colors">phone_iphone</span>
+              <input id="configAccountNumber"
+                class="w-full h-12 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 focus:border-primary focus:ring-4 focus:ring-primary/10 rounded-xl pl-10 pr-4 text-sm font-bold text-[#0d1b12] dark:text-white transition-all"
+                placeholder="01XXX XXXXXX" type="text" />
+            </div>
+          </div>
+        </div>
+
+        <div class="flex gap-4 pt-2">
+          <button onclick="closeGatewayConfigModal()"
+            class="flex-1 h-12 rounded-xl text-sm font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5 transition-all">Cancel</button>
+          <button id="saveGatewayBtn"
+            class="flex-[2] h-12 bg-primary text-[#0d1b12] font-black rounded-xl hover:scale-[1.02] active:scale-95 transition-all shadow-lg shadow-primary/20">Save
+            Settings</button>
+        </div>
+      </div>
+  <script type="module">
+    import {
+      requireAuth,
+      signOut,
+      injectNavbar
+    } from '../auth_backend_logic.js';
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      const authData = await requireAuth('USER');
+      if (!authData) return;
+
+      const _supabase = window.supabaseClient; // Keep using global object if needed by other legacy functions, or we could import supabase from module. Since it's using the CDN, we can use the window object or the imported client. Actually, the module exposes it if needed, but the original code relies on window.supabaseClient in loadUserPaymentMethods. We'll ensure it works. 
+      // It's better to just use window.supabaseClient for now if it's initialized by the script tags, but we should import supabase from the module.
+      
+      const { session, profile } = authData;
+      const user = session.user;
+      const fullName = profile?.full_name || user.user_metadata?.full_name || 'User';
+      const firstName = fullName.split(' ')[0];
+
+      // Inject the navbar profile UI
+      injectNavbar(fullName);
+
+      // Update Profile UI
+      document.querySelectorAll('p.font-extrabold.truncate').forEach(card => {
+        card.textContent = fullName;
+      });
+      document.querySelectorAll('.bg-accent-green.text-white.shadow-lg').forEach(avatar => {
+        if (avatar.textContent.trim() === '') {
+          avatar.textContent = firstName.charAt(0).toUpperCase();
+        }
+      });
+
+      // --- 2. KPI & DASHBOARD LOGIC ---
+      async function updateKPICards() {
+        // 1. Total Earned
+        const { data: earnedData } = await _supabase.from('task_submissions').select('payout_amount').eq('user_id', user.id).eq('status', 'approved');
+        const totalEarned = earnedData ? earnedData.reduce((sum, item) => sum + (item.payout_amount || 0), 0) : 0;
+
+        // 2. Pending Review
+        const { data: pendingAmounts } = await _supabase.from('task_submissions').select('quantity_submitted, tasks(rate_per_unit)').eq('user_id', user.id).eq('status', 'pending');
+        let pendingValue = 0;
+        if (pendingAmounts) {
+          pendingAmounts.forEach(sub => {
+            const rate = sub.tasks?.rate_per_unit || 0;
+            pendingValue += (sub.quantity_submitted * rate);
+          });
+        }
+
+        // 3. Today Earning
+        const today = new Date().toISOString().split('T')[0];
+        const { data: todayData } = await _supabase.from('task_submissions').select('payout_amount').eq('user_id', user.id).eq('status', 'approved').gte('submitted_at', today + 'T00:00:00').lte('submitted_at', today + 'T23:59:59');
+        const todayEarned = todayData ? todayData.reduce((sum, item) => sum + (item.payout_amount || 0), 0) : 0;
+
+        // 4. Withdrawal Stats
+        const { data: withdrawals } = await _supabase.from('withdrawals').select('amount, status').eq('user_id', user.id);
+        const totalWithdrawn = withdrawals ? withdrawals.filter(w => w.status === 'paid').reduce((sum, w) => sum + (w.amount || 0), 0) : 0;
+        const pendingWithdrawalAmount = withdrawals ? withdrawals.filter(w => w.status === 'pending').reduce((sum, w) => sum + (w.amount || 0), 0) : 0;
+
+        // 5. Balance
+        const availableBalance = totalEarned - (totalWithdrawn + pendingWithdrawalAmount);
+
+        // UI Update (stable IDs)
+        const totalEarnedEl = document.getElementById('kpi-total-earned');
+        if (totalEarnedEl) totalEarnedEl.textContent = `৳${totalEarned.toFixed(2)}`;
+        const pendingEl = document.getElementById('kpi-pending-review');
+        if (pendingEl) pendingEl.textContent = `৳${pendingValue.toFixed(2)}`;
+        const todayEl = document.getElementById('kpi-today-earning');
+        if (todayEl) todayEl.textContent = `৳${todayEarned.toFixed(2)}`;
+        const withdrawnEl = document.getElementById('kpi-total-withdrawn');
+        if (withdrawnEl) withdrawnEl.textContent = `৳${totalWithdrawn.toFixed(2)}`;
+        const balanceEl = document.getElementById('kpi-available-balance');
+        if (balanceEl) balanceEl.textContent = `৳${availableBalance.toFixed(2)}`;
+
+        return availableBalance;
+      }
+
+      // --- 3. PAYOUT & TASK HISTORY ---
+      async function loadPayoutHistory() {
+        const container = document.querySelector('#payout-history-table tbody');
+        if (!container) return;
+
+        const { data: withdrawals, error } = await _supabase.from('withdrawals').select('*').eq('user_id', user.id).order('created_at', { ascending: false });
+
+        if (error) {
+          container.innerHTML = `<tr><td colspan="6" class="px-8 py-8 text-center text-red-500">Error loading history.</td></tr>`;
+          return;
+        }
+
+        if (withdrawals && withdrawals.length > 0) {
+          container.innerHTML = "";
+          withdrawals.forEach(item => {
+            const dateVal = item.created_at || item.requested_at || new Date().toISOString();
+            const dateObj = new Date(dateVal);
+            const dateStr = dateObj.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+            const timeStr = dateObj.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+            const gwName = item.method || 'Bank/Wallet';
+            const gwColor = gwName.toLowerCase() === 'bkash' ? '#e2136e' : gwName.toLowerCase() === 'nagad' ? '#ea2227' : '#0e56a3';
+            const statusStyles = {
+              'pending': 'bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-100 dark:border-amber-500/20',
+              'paid': 'bg-accent-green/10 dark:bg-accent-green/10 text-accent-green dark:text-accent-green border-accent-green/10 dark:border-accent-green/20',
+              'cancelled': 'bg-red-50 dark:bg-red-500/10 text-red-500 dark:text-red-400 border-red-100 dark:border-red-500/20'
+            };
+            const statusClass = statusStyles[item.status?.toLowerCase()] || 'bg-slate-50 dark:bg-white/5 text-slate-500 dark:text-gray-400 border-slate-200 dark:border-white/10';
+
+            container.insertAdjacentHTML('beforeend', `
+            <tr class="hover:bg-accent-green/[0.02] transition-colors group">
+              <td class="px-8 py-6 text-sm font-semibold text-slate-500 dark:text-gray-400">${dateStr}<span class="block text-[10px] text-slate-400 dark:text-gray-500">${timeStr}</span></td>
+              <td class="px-8 py-6 text-sm font-black text-primary-text dark:text-white">৳${item.amount}</td>
+              <td class="px-8 py-6"><div class="flex items-center gap-3"><div class="size-8 rounded-lg flex items-center justify-center text-white text-[10px] font-black" style="background-color: ${gwColor}">${gwName.charAt(0)}</div><span class="text-sm font-bold text-primary-text dark:text-white">${gwName}</span></div></td>
+              <td class="px-8 py-6 text-sm font-mono text-slate-500 dark:text-gray-400 uppercase tracking-tight">${item.transaction_id || 'Waiting...'}</td>
+              <td class="px-8 py-6"><span class="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${statusClass}">${item.status}</span></td>
+              <td class="px-8 py-6 text-center">${item.status === 'paid' ? `<button onclick="alert('Downloading Receipt: ${item.id}')" class="text-accent-green hover:text-white border border-accent-green/20 px-3 py-1.5 rounded-lg hover:bg-accent-green transition-all mx-auto flex gap-1 items-center text-[10px] font-bold uppercase"><span class="material-symbols-outlined text-sm">download</span> Receipt</button>` : '-'}</td>
+            </tr>
+          `);
+          });
+        } else {
+          container.innerHTML = `<tr><td colspan="6" class="px-8 py-8 text-center text-slate-400 font-medium">No withdrawal history found yet.</td></tr>`;
+        }
+      }
+
+      async function loadTaskHistory() {
+        const tbody = document.querySelector('#task-history-table tbody');
+        if (!tbody) return;
+        const { data: history } = await _supabase.from('task_submissions').select('*').eq('user_id', user.id).order('submitted_at', { ascending: false });
+
+        if (history && history.length > 0) {
+          tbody.innerHTML = "";
+          history.forEach(item => {
+            const statusColors = {
+              'pending': 'text-amber-500 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 border border-amber-100 dark:border-amber-500/20',
+              'approved': 'text-accent-green dark:text-accent-green bg-accent-green/10 dark:bg-accent-green/10 border border-accent-green/20 dark:border-accent-green/20',
+              'rejected': 'text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-500/10 border border-red-100 dark:border-red-500/20'
+            };
+            tbody.insertAdjacentHTML('beforeend', `
+            <tr class="hover:bg-accent-green/[0.02] transition-colors group border-b border-slate-50 dark:border-white/5 last:border-0">
+              <td class="px-8 py-6 text-sm font-semibold text-slate-500 dark:text-gray-400">${new Date(item.submitted_at).toLocaleDateString('en-GB')}</td>
+              <td class="px-8 py-6 text-sm font-bold text-slate-600 dark:text-gray-300">${item.order_id}</td>
+              <td class="px-8 py-6 text-sm font-bold text-primary-text dark:text-white">${item.platform}</td>
+              <td class="px-8 py-6"><a class="text-accent-green text-xs font-bold flex items-center gap-1" href="${item.sheet_link}" target="_blank"><span class="material-symbols-outlined text-xs">link</span> View</a></td>
+              <td class="px-8 py-6 text-sm font-bold text-slate-600 dark:text-gray-300">${item.quantity_submitted}</td>
+              <td class="px-8 py-6 text-sm font-bold text-accent-green">${item.valid_count || 0}</td>
+              <td class="px-8 py-6 text-sm font-bold text-red-500 dark:text-red-400">${item.fail_count || 0}</td>
+              <td class="px-8 py-6 text-sm font-extrabold text-primary-text dark:text-white">৳${item.payout_amount || '0.00'}</td>
+              <td class="px-8 py-6"><span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${statusColors[item.status] || ''}">${item.status}</span></td>
+            </tr>
+          `);
+          });
+        } else {
+          tbody.innerHTML = `<tr><td colspan="9" class="px-8 py-8 text-center text-slate-400">No submission history found.</td></tr>`;
+        }
+      }
+
+      // --- 4. TASK SUBMISSION LOGIC ---
+      const submitBtn = document.getElementById('submit-btn');
+      if (submitBtn) {
+        submitBtn.addEventListener('click', async () => {
+          const orderId = document.getElementById('submit-order-id').value.trim();
+          const category = document.getElementById('submit-category').value;
+          const quantity = parseInt(document.getElementById('submit-quantity').value);
+          const link = document.getElementById('submit-link').value.trim();
+
+          if (!orderId || !link || !Number.isFinite(quantity) || quantity <= 0) { alert("Please fill all fields correctly."); return; }
+          if (quantity > 100) { alert("Maximum limit is 100 units per order."); return; }
+
+          const { data: task, error: taskError } = await _supabase.from('tasks').select('id, rate_per_unit, platform').eq('order_id', orderId).single();
+          if (taskError || !task) { alert("Invalid Order ID."); return; }
+          if (task.platform.toLowerCase() !== category.toLowerCase()) { alert(`Platform mismatch: Task is ${task.platform}`); return; }
+
+          const { data: activeTask } = await _supabase.from('user_active_tasks').select('id, status').eq('user_id', user.id).eq('task_id', task.id).single();
+          if (!activeTask || activeTask.status !== 'in_progress') { alert("You must 'Start Working' on this task first."); return; }
+
+          submitBtn.disabled = true;
+          submitBtn.textContent = "Submitting...";
+
+          const { error: submitError } = await _supabase.from('task_submissions').insert([{ user_id: user.id, task_id: task.id, order_id: orderId, platform: task.platform, sheet_link: link, quantity_submitted: quantity, status: 'pending' }]);
+
+          if (submitError) {
+            alert("Submission failed: " + submitError.message);
+            submitBtn.disabled = false;
+          } else {
+            await _supabase.from('user_active_tasks').update({ status: 'processing' }).eq('id', activeTask.id);
+            alert("Task submitted successfully!");
+            location.reload();
+          }
+        });
+      }
+
+      // --- 5. WITHDRAWAL LOGIC ---
+      const withdrawConfirmBtn = document.getElementById('confirm-withdrawal-btn');
+      if (withdrawConfirmBtn) {
+        withdrawConfirmBtn.addEventListener('click', async () => {
+          const amount = parseFloat(document.querySelector('input[placeholder="0.00"]').value);
+          const pin = document.querySelector('input[placeholder="······"]').value.trim();
+          const selectedRadio = document.querySelector('input[name="gateway-selector"]:checked');
+
+          if (!amount || amount < 100) { alert("Min withdrawal ৳100"); return; }
+          if (pin.length !== 6) { alert("Enter 6-digit PIN"); return; }
+          if (!selectedRadio) { alert("Select a gateway"); return; }
+
+          const currentBalance = await updateKPICards();
+          if (amount > currentBalance) { alert("Insufficient balance"); return; }
+
+          withdrawConfirmBtn.disabled = true;
+          const originalText = withdrawConfirmBtn.innerHTML;
+          withdrawConfirmBtn.textContent = "Processing...";
+
+          const { data: withdrawalId, error } = await _supabase.rpc('request_withdrawal', {
+            p_amount: amount,
+            p_pin: pin,
+            p_gateway: selectedRadio.dataset.gatewayName,
+            p_payment_method_id: selectedRadio.dataset.methodId || null
+          });
+
+          if (error) {
+            alert(error.message || "Withdrawal failed");
+            withdrawConfirmBtn.disabled = false;
+            withdrawConfirmBtn.innerHTML = originalText;
+          } else {
+            alert("Withdrawal requested successfully!");
+            location.reload();
+          }
+        });
+      }
+
+      // --- 6. RATE YOUR EXPERIENCE (REVIEW SYSTEM) ---
+      (function initReviewSystem() {
+        const stars = document.querySelectorAll('#star-rating-row [data-star]');
+        const ratingIn = document.getElementById('exp-rating-value');
+        const commentEl = document.getElementById('exp-comment');
+        const revSubmitBtn = document.getElementById('exp-submit-btn');
+        const feedback = document.getElementById('exp-feedback');
+        let currentRating = 0;
+
+        if (!revSubmitBtn) return;
+
+        function paintStars(n) {
+          stars.forEach(s => {
+            const v = parseInt(s.dataset.star);
+            s.classList.toggle('text-amber-400', v <= n);
+            s.classList.toggle('dark:text-amber-400', v <= n);
+            s.classList.toggle('text-slate-200', v > n);
+            s.classList.toggle('dark:text-gray-700', v > n);
+          });
+        }
+
+        stars.forEach(s => {
+          s.addEventListener('mouseenter', () => paintStars(parseInt(s.dataset.star)));
+          s.addEventListener('mouseleave', () => paintStars(currentRating));
+          s.addEventListener('click', () => {
+            currentRating = parseInt(s.dataset.star);
+            ratingIn.value = currentRating;
+            paintStars(currentRating);
+          });
+        });
+
+        revSubmitBtn.addEventListener('click', async () => {
+          const rating = parseInt(ratingIn.value);
+          const comment = commentEl.value.trim();
+          if (!rating) { alert('Please select stars.'); return; }
+          if (comment.length < 10) { alert('Comment too short (min 10 chars).'); return; }
+
+          revSubmitBtn.disabled = true;
+          const { error } = await _supabase.from('reviews').insert([{ user_id: user.id, rating, comment, is_approved: false }]);
+
+          if (error) alert(error.message);
+          else {
+            alert('✓ Review submitted successfully!');
+            commentEl.value = '';
+            currentRating = 0; paintStars(0);
+          }
+          revSubmitBtn.disabled = false;
+        });
+      })();
+
+      // --- 7. INITIAL DATA LOAD ---
+      updateKPICards();
+      loadTaskHistory();
+      loadPayoutHistory();
+      loadUserPaymentMethods(user.id);
+
+      // Real-time Update
+      _supabase.channel('public:task_submissions').on('postgres_changes', { event: '*', schema: 'public', table: 'task_submissions', filter: `user_id=eq.${user.id}` }, () => {
+        updateKPICards();
+        loadTaskHistory();
+      }).subscribe();
+    });
+
+    // --- 8. PAYMENT METHOD CAROUSEL & EDIT MODAL (GLOBAL FUNCTIONS) ---
+    async function loadUserPaymentMethods(userId) {
+      const _supabase = window.supabaseClient;
+      const { data: methods } = await _supabase.from("user_payment_methods").select("*").eq("user_id", userId).order("created_at", { ascending: true });
+      const track = document.querySelector(".carousel-track");
+      if (!track) return;
+      track.innerHTML = "";
+
+      // Remove any old gateway radios to avoid duplicate IDs / broken selection
+      document.querySelectorAll('input[name="gateway-selector"]').forEach(r => r.remove());
+
+      if (!methods || methods.length === 0) {
+        track.innerHTML = `<div class="min-w-full h-[275px] flex items-center justify-center text-center p-10 font-bold text-secondary-text dark:text-gray-400">No payment methods found.</div>`;
+        return;
+      }
+
+      const logos = {
+        "Bkash": "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEimCOQgZJBvc6UiuEsuTvbecFMItg6JYJ8XIPG27mNMsYeI8bvAPyeue-Bl_yQVg2MDxv8V5XWcoLQ76NUwUat21zXVon5lFbC_OZkNsJvwrDe1e3xGqGP3dH-2cWIw1CvWOHfP9G3hHyJ6YO99ZdF1RCof8l8RBGWz0CR903JnTAKIqBqYULVRCC3mfsU/s1600/Bkash.png",
+        "Nagad": "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj59Cd3bbTJ6gBg5Ryw4uyF4j5RkOSZNPoiNPHcXKZ6AUXVQXA6IBhcDyjhXKMgQgUGIQ_i1FLebAdU9s7bzNYof8Ao5RHaw-SUu7VMNw3oxIyn6czS0F1EonpigS_M8RxuMcJpBAqToClurO1S6BQfXmbF58UnYLWjB2ta5PGajPVOrI1AzoNLk1tAWo8/s1600/Nagad.png",
+        "Rocket": "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEh0qDcIRA8QQ7EE4lUABcmM9FZaMMpxprzBnmb7VBt71V5Z4Fcb_oKTH9lH5OxzYuBo01kfX0eyTNgyVwg6ze8utXuTVB-aTGZoZ3CC0F-JjO0L9Jys8M2EGYSRO55CrOBdKuas1yrv1QveH9xqvRLoScWTEqK8GknRK4UdoT8dWJE-btOPIyaLUGAb7kk/s1600/Rocket.png",
+        "Upay": "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhzCOwJJ3xLNmGGCXEhuH6GjILufxPxrhOHTDT8oOjTVEZUq2Zc_Lz3VZilC6gmFG7LrkWI4fyexZBHcgeyA3-wVjFYj3BZ7kI_795Cozt5rW7qclBv0_T2K0nXfUS1JXth_02vI3RYRYroE29UP4QJ4uXn9kMkM3Ee3SrEF30laZFh6Cfmjpad0Y-Goaw/s1600/Upay.png",
+        "CellFin": "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgUTCXWwya3rMl4kozAPuf29A6KjdqlZouXLRiXqhAzAh_FZ3KIoW37dqc2UTtB5Bsnthm6qMoLBFdWTqse-QHAe-JfiplF6bpf4D1zNzSxy4rhW9PWONnQo-qI8zxO_SEc7ypur3dn-19AdDxCSn5_RbhtZVGmXvYcjQmkCOnO4OAKb2i1ZqNNuPrlXl4/s1600/CellFin.png",
+        "Binance": "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgdT_Iz7sSapceBc3Sgshj6Gm7OkdXYkx7dwXHAwXk9N-a6zwgcElkCLteQ1vYfywPAy7dRg73CHY6wr9Rlkocq1Jx79ze34rImQF2ClB6-JblHJ71YjLiZd3YsJfKShvHF31fK0agmzAWYA1hazsR91pAaskVOXU-owKQscEUkGAx4dWtI6U2kMju6xvE/s1600/Binance.png"
+      };
+
+      const colors = { "Bkash": "#d41d55", "Nagad": "#ea2227", "Rocket": "#8c3093", "Upay": "#0e56a3", "CellFin": "#088444", "Binance": "#f2ba2f" };
+
+      methods.forEach((m, i) => {
+        const radio = document.createElement("input");
+        radio.type = "radio"; radio.name = "gateway-selector"; radio.id = `gateway-${i + 1}`;
+        radio.className = "hidden";
+        radio.dataset.methodId = m.id;
+        radio.dataset.gatewayName = m.gateway_name;
+        if (i === 0) radio.checked = true;
+        track.parentElement.prepend(radio);
+
+        const gatewayColor = colors[m.gateway_name] || "#13ec5b";
+
+        track.insertAdjacentHTML('beforeend', `
+        <div class="min-w-full px-1">
+          <div class="gateway-card-glass rounded-3xl p-7 relative ring-1 ring-slate-100 dark:ring-white/5 shadow-lg group/card transition-all duration-500 hover:ring-[${gatewayColor}]/40">
+             <div class="absolute top-6 right-6 z-10">
+                <button
+                  class="size-9 rounded-xl bg-slate-50 dark:bg-white/5 flex items-center justify-center text-secondary-text dark:text-gray-400 hover:text-[${gatewayColor}] hover:bg-white dark:hover:bg-white/10 transition-all border border-slate-200 dark:border-white/10"
+                  data-gateway-name="${m.gateway_name}"
+                  data-gateway-logo="${logos[m.gateway_name] || ''}"
+                  data-gateway-color="${gatewayColor}"
+                  data-account-name="${m.account_name || 'Not Setup'}"
+                  data-account-number="${m.account_number || ''}"
+                  onclick="openGatewayConfigModal(this)">
+                  <span class="material-symbols-outlined text-lg">settings</span>
+                </button>
+              </div>
+             <div class="flex items-center gap-5 mb-8">
+               <img class="size-14 rounded-2xl border border-[${gatewayColor}]/20" src="${logos[m.gateway_name] || ''}" alt="logo">
+               <div class="space-y-1">
+                 <h4 class="text-2xl font-extrabold tracking-tight uppercase leading-none text-primary-text dark:text-white">${m.gateway_name}</h4>
+                 <div class="flex items-center gap-2">
+                    <span class="flex size-1.5 rounded-full bg-accent-green"></span>
+                    <p class="text-[10px] text-accent-green font-bold uppercase tracking-widest">${m.account_type || 'Linked Account'}</p>
+                 </div>
+               </div>
+             </div>
+             <div class="flex justify-between items-end bg-slate-50/80 dark:bg-white/5 rounded-2xl p-6 border border-slate-100 dark:border-white/10">
+               <div class="space-y-2">
+                 <p class="text-[9px] text-secondary-text dark:text-gray-400 uppercase tracking-widest font-semibold">Payout Account</p>
+                 <p class="text-2xl font-bold tracking-widest text-[#0d1b12] dark:text-white font-display">${m.account_number}</p>
+                 <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-xs text-secondary-text dark:text-gray-400">person</span>
+                    <p class="text-[11px] text-secondary-text dark:text-gray-400 font-bold uppercase tracking-wide">${m.account_name}</p>
+                 </div>
+               </div>
+               <div class="flex items-center gap-2 text-[10px] font-black text-accent-green bg-white dark:bg-white/5 px-4 py-2.5 rounded-full uppercase tracking-widest border border-accent-green/20 shadow-sm">
+                  <span class="relative flex h-2 w-2">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent-green opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-2 w-2 bg-accent-green"></span>
+                  </span>
+                  Linked
+                </div>
+             </div>
+          </div>
+        </div>
+      `);
+      });
+    }
+
+    window.openGatewayConfigModal = (button) => {
+      const modal = document.getElementById("gatewayConfigModal");
+      if (!modal) return;
+
+      const name = button.dataset.gatewayName;
+      const logo = button.dataset.gatewayLogo;
+      const color = button.dataset.gatewayColor;
+      const accName = button.dataset.accountName;
+      const accNum = button.dataset.accountNumber;
+
+      document.getElementById("modalGatewayName").textContent = `Configure ${name}`;
+      document.getElementById("modalGatewayLogo").querySelector("img").src = logo;
+      document.getElementById("configAccountName").value = accName === "Not Setup" ? "" : accName;
+      document.getElementById("configAccountNumber").value = accNum;
+
+      // Update button color
+      const saveBtn = document.getElementById("saveGatewayBtn");
+      saveBtn.style.backgroundColor = color;
+      saveBtn.dataset.gatewayName = name;
+
+      modal.classList.remove("modal-hidden");
+      setTimeout(() => {
+        document.getElementById("modalContainer").classList.remove("scale-95", "opacity-0");
+      }, 10);
+    };
+
+    window.closeGatewayConfigModal = () => {
+      const modal = document.getElementById("gatewayConfigModal");
+      const container = document.getElementById("modalContainer");
+      if (!modal || !container) return;
+
+      container.classList.add("scale-95", "opacity-0");
+      setTimeout(() => {
+        modal.classList.add("modal-hidden");
+      }, 300);
+    };
+
+    document.getElementById("saveGatewayBtn")?.addEventListener("click", async () => {
+      const _supabase = window.supabaseClient;
+      const { data: { session } } = await _supabase.auth.getSession();
+      const user = session.user;
+
+      const accName = document.getElementById("configAccountName").value.trim();
+      const accNum = document.getElementById("configAccountNumber").value.trim();
+      const gatewayName = document.getElementById("saveGatewayBtn").dataset.gatewayName;
+
+      if (!accName || !accNum) {
+        alert("Please fill all fields.");
+        return;
+      }
+
+      const saveBtn = document.getElementById("saveGatewayBtn");
+      saveBtn.disabled = true;
+      saveBtn.textContent = "Saving...";
+
+      const { error } = await _supabase.from("user_payment_methods").upsert({
+        user_id: user.id,
+        gateway_name: gatewayName,
+        account_name: accName,
+        account_number: accNum,
+        account_type: 'Personal account'
+      }, { onConflict: ['user_id', 'gateway_name'] });
+
+      if (error) {
+        alert("Error saving settings: " + error.message);
+      } else {
+        alert("Settings saved successfully!");
+        location.reload();
+      }
+      saveBtn.disabled = false;
+      saveBtn.textContent = "Save Settings";
+    });
+  </script>
+</body>
+</html>

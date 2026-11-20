@@ -1,0 +1,1056 @@
+<!doctype html>
+<html class="light" lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <title>Admin Panel - Time Task BD</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+    rel="stylesheet" />
+  <script id="tailwind-config">
+    // Immediately apply theme to avoid flash
+    (function () {
+      const theme = localStorage.getItem("theme");
+      if (
+        theme === "dark" ||
+        (!theme && window.matchMedia("(prefers-color-scheme: dark)").matches)
+      ) {
+        document.documentElement.classList.add("dark");
+      } else {
+        document.documentElement.classList.remove("dark");
+      }
+    })();
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            primary: "#13ec5b",
+            "background-light": "#f6f8f6",
+            "background-dark": "#0d1b12",
+            "sidebar-deep": "#102216",
+            "accent-green": "#13ec5b",
+          },
+          fontFamily: {
+            display: ["Manrope"],
+          },
+          borderRadius: {
+            DEFAULT: "0.25rem",
+            lg: "0.5rem",
+            xl: "0.75rem",
+            "2xl": "1rem",
+            full: "9999px",
+          },
+        },
+      },
+    };
+  </script>
+  <style type="text/tailwindcss">
+    @layer base {
+        body {
+          @apply font-display bg-background-light dark:bg-background-dark text-slate-900 dark:text-white;
+        }
+      }
+
+      /* Sidebar Transitions */
+      .sidebar-transition {
+        @apply transition-all duration-300 ease-in-out;
+      }
+
+      /* Active Tab Notch Logic */
+      .sidebar-item-active {
+        @apply bg-background-light dark:bg-background-dark text-sidebar-deep dark:text-primary font-bold relative !important;
+        border-radius: 40px 0 0 40px;
+        margin-left: 10px;
+        width: calc(100% - 10px) !important;
+      }
+
+      .sidebar-item-active::before {
+        content: "";
+        position: absolute;
+        right: 0;
+        top: -40px;
+        width: 40px;
+        height: 40px;
+        background: transparent;
+        border-radius: 50%;
+        box-shadow: 20px 20px 0 0 #f6f8f6;
+        pointer-events: none;
+      }
+      .dark .sidebar-item-active::before {
+        box-shadow: 20px 20px 0 0 #0d1b12;
+      }
+
+      .sidebar-item-active::after {
+        content: "";
+        position: absolute;
+        right: 0;
+        bottom: -40px;
+        width: 40px;
+        height: 40px;
+        background: transparent;
+        border-radius: 50%;
+        box-shadow: 20px -20px 0 0 #f6f8f6;
+        pointer-events: none;
+      }
+
+      .dark .sidebar-item-active::before { box-shadow: 20px 20px 0 0 #0d1b12; }
+      .dark .sidebar-item-active::after  { box-shadow: 20px -20px 0 0 #0d1b12; }
+      .dark .sidebar-item-active { @apply bg-background-dark text-white !important; }
+
+      .sidebar-item {
+        @apply flex items-center py-4 text-white/70 hover:text-white transition-all duration-200 cursor-pointer w-full relative;
+      }
+
+      .sidebar-item .material-symbols-outlined {
+        @apply font-light text-[24px];
+      }
+
+      .sidebar-item-active .material-symbols-outlined {
+        @apply text-sidebar-deep;
+      }
+
+      .dark .sidebar-item-active .material-symbols-outlined { @apply text-primary; }
+
+      /* Tooltip Logic - Show only when collapsed */
+      .nav-tooltip {
+        @apply invisible absolute left-full ml-4 px-2 py-1 bg-sidebar-deep text-white text-[10px] rounded whitespace-nowrap opacity-0 transition-opacity z-50 pointer-events-none;
+      }
+
+      /* Collapsed Sidebar States */
+      .sidebar-collapsed {
+        @apply w-20 pl-0;
+      }
+      .sidebar-collapsed .logo-text,
+      .sidebar-collapsed .item-text,
+      .sidebar-collapsed .menu-label,
+      .sidebar-collapsed .system-card-text {
+        @apply hidden;
+      }
+      .sidebar-collapsed .sidebar-item {
+        @apply justify-center px-0;
+      }
+      .sidebar-collapsed .sidebar-item:hover .nav-tooltip {
+        @apply visible opacity-100;
+      }
+      .sidebar-collapsed .sidebar-header {
+        @apply px-0 justify-center;
+      }
+
+      /* Custom Scrollbar */
+      .custom-scrollbar::-webkit-scrollbar {
+        width: 4px;
+      }
+      .custom-scrollbar::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+      }
+
+      .active-tab-nav {
+        @apply bg-primary text-slate-900 dark:text-white shadow-lg shadow-primary/20;
+      }
+    </style>
+</head>
+
+<body class="flex min-h-screen overflow-hidden">
+  <!-- Sidebar -->
+  <aside id="mainSidebar"
+    class="w-72 bg-sidebar-deep flex-shrink-0 flex flex-col h-screen sticky top-0 sidebar-transition pl-2">
+    <!-- Logo Section -->
+    <div class="sidebar-header p-6 pb-12 flex items-center gap-3 transition-all">
+      <div
+        class="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20 flex-shrink-0">
+        <span class="material-symbols-outlined text-sidebar-deep font-bold text-2xl">update</span>
+      </div>
+      <div class="flex flex-col logo-text overflow-hidden">
+        <span class="text-white font-extrabold text-lg leading-tight tracking-tight whitespace-nowrap">Time Task
+          BD</span>
+        <span class="text-primary/60 text-[10px] font-bold uppercase tracking-widest whitespace-nowrap">Admin
+          Control</span>
+      </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="flex-1">
+      <div class="px-8 mb-4 menu-label">
+        <p class="text-[10px] font-bold text-white/40 uppercase tracking-[0.2em]">
+          Main Menu
+        </p>
+      </div>
+
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Admin Index.html">
+        <span class="material-symbols-outlined">dashboard</span>
+        <span class="text-sm item-text ml-4">Dashboard</span>
+        <span class="nav-tooltip">Dashboard</span>
+      </a>
+
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/System Health.html">
+        <span class="material-symbols-outlined">monitor_heart</span>
+        <span class="text-sm item-text ml-4">System Monitoring</span>
+        <span class="nav-tooltip">Security & System Monitoring</span>
+      </a>
+
+      <a class="sidebar-item sidebar-item-active px-8 group" href="/Admin Dashboard/KYC Review.html">
+        <span class="material-symbols-outlined">manage_accounts</span>
+        <span class="text-sm item-text ml-4">Management</span>
+        <span class="nav-tooltip">User & Buyer Management</span>
+      </a>
+
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/User Analytics.html">
+        <span class="material-symbols-outlined">analytics</span>
+        <span class="text-sm item-text ml-4">Analytics Section</span>
+        <span class="nav-tooltip">Analytics Section</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/User Referral Tree.html">
+        <span class="material-symbols-outlined">hub</span>
+        <span class="text-sm item-text ml-4">Referral System</span>
+        <span class="nav-tooltip">Referral System</span>
+      </a>
+
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Market Asset Price.html">
+        <span class="material-symbols-outlined">trending_up</span>
+        <span class="text-sm item-text ml-4">Market Asset Prices</span>
+        <span class="nav-tooltip">Market Asset Prices</span>
+      </a>
+
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Live Support.html">
+        <span class="material-symbols-outlined">support_agent</span>
+        <span class="text-sm item-text ml-4">Live Support</span>
+        <span class="nav-tooltip">Live Support</span>
+      </a>
+
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Buyer Communication.html">
+        <span class="material-symbols-outlined">forum</span>
+        <span class="text-sm item-text ml-4">Communication</span>
+        <span class="nav-tooltip">Communication</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/System Announcemeeent.html">
+        <span class="material-symbols-outlined">forum</span>
+        <span class="text-sm item-text ml-4">System Announcement</span>
+        <span class="nav-tooltip">System Announcement</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Invoice Management.html">
+        <span class="material-symbols-outlined">description</span>
+        <span class="text-sm item-text ml-4">Invoice Management</span>
+        <span class="nav-tooltip">Invoice Management</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Create Content.html">
+        <span class="material-symbols-outlined">edit_note</span>
+        <span class="text-sm item-text ml-4">Content Management</span>
+        <span class="nav-tooltip">Content Management</span>
+      </a>
+    </nav>
+
+    <div class="px-6 py-8">
+      <button
+        class="w-full h-10 flex items-center justify-center bg-primary text-sidebar-deep font-bold text-xs rounded-lg hover:brightness-110 transition-all shadow-lg shadow-primary/10 group relative">
+        <span class="material-symbols-outlined text-[20px] system-icon">logout</span>
+        <span class="ml-2 system-card-text">Logout</span>
+        <span class="nav-tooltip !left-full !ml-6">Logout</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main Content wrapper -->
+  <div class="flex-1 flex flex-col h-screen overflow-hidden bg-background-light dark:bg-background-dark">
+    <!-- Header -->
+    <header
+      class="h-20 bg-white dark:bg-background-dark border-b border-slate-100 dark:border-white/10 px-6 flex items-center justify-between flex-shrink-0 z-40">
+      <div class="flex items-center gap-6">
+        <button id="sidebarToggle"
+          class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 hover:text-sidebar-deep dark:hover:text-primary hover:bg-primary/10 transition-all">
+          <span class="material-symbols-outlined">menu</span>
+        </button>
+        <div class="relative w-96 group">
+          <span
+            class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 group-focus-within:text-sidebar-deep dark:group-focus-within:text-primary transition-colors">search</span>
+          <input
+            class="w-full bg-slate-100 dark:bg-white/5 border-none rounded-xl pl-10 pr-4 py-2.5 text-sm dark:text-white focus:ring-2 focus:ring-primary/20 transition-all placeholder:dark:text-slate-500"
+            placeholder="Search system records..." type="text" />
+        </div>
+      </div>
+
+      <div class="flex items-center gap-6">
+        <div class="flex items-center gap-2">
+          <button
+            class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 hover:text-sidebar-deep dark:hover:text-primary hover:bg-primary/10 transition-all relative">
+            <span class="material-symbols-outlined">notifications</span>
+            <span
+              class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-slate-900"></span>
+          </button>
+          <button id="themeToggle"
+            class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 hover:text-sidebar-deep dark:hover:text-primary hover:bg-primary/10 transition-all">
+            <span class="material-symbols-outlined">light_mode</span>
+          </button>
+        </div>
+        <div class="h-10 w-px bg-slate-200 dark:bg-white/10"></div>
+        <div class="flex items-center gap-3 cursor-pointer group">
+          <div class="text-right">
+            <p class="text-sm font-bold text-slate-900 dark:text-white group-hover:text-primary transition-colors">
+              Super Admin
+            </p>
+            <p class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-tighter">
+              System Manager
+            </p>
+          </div>
+          <div
+            class="w-12 h-12 rounded-xl border-2 border-primary/20 p-0.5 overflow-hidden group-hover:border-primary transition-all">
+            <img alt="Admin Profile" class="w-full h-full object-cover rounded-lg"
+              src="https://lh3.googleusercontent.com/aida-public/AB6AXuDI3q59cS__AXyYcqFQtKZ2-e__roEJ3Cic28K7cd-6tYYxzLfpTArNsAJE3UypttzDIKS6SoNy85-jDLh0ZMbLqXr0NEEjrbCPSgoCJZyYc4W89P8djmlf34I_NEoa2vfl5IS3jHwLSZZ6lgtwguAje5Lv9h9RbZ2fJqb36M_tmZc-iJY-XxAXsCDxVyU1bONcO3AV5LZgB1o5wURKpB9w2XEN6iWAILVT7fIzOkl2pQ4lJb5WxYgkvuNIlKakHZWN1e4bzfo25zYy" />
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Sub Navigation Tabs -->
+    <nav
+      class="sticky top-0 bg-white/50 dark:bg-background-dark/50 border-b border-gray-100 dark:border-white/5 backdrop-blur-sm relative z-30 rounded-l-[30px] ml-[110px]">
+      <div class="mx-auto w-full px-4">
+        <div id="tabsContainer" class="flex gap-4 overflow-x-auto no-scrollbar py-3">
+          <a class="flex items-center gap-2 px-4 py-2 rounded-[30px] text-sm font-semibold text-gray-700 dark:text-slate-400 hover:bg-white dark:hover:bg-white/5 hover:shadow-sm whitespace-nowrap transition-all"
+            href="/Admin Dashboard/KYC Review.html">
+            <span class="material-symbols-outlined text-[20px]">shield_person</span>
+            KYC Review
+          </a>
+          <a class="flex items-center gap-2 px-4 py-2 rounded-[30px] text-sm font-semibold text-gray-700 dark:text-slate-400 hover:bg-white dark:hover:bg-white/5 hover:shadow-sm whitespace-nowrap transition-all"
+            href="/Admin Dashboard/User Access.html">
+            <span class="material-symbols-outlined text-[20px]">manage_accounts</span>
+            User Access Management
+          </a>
+          <a class="flex items-center gap-2 px-4 py-2 rounded-[30px] text-sm font-semibold text-gray-700 dark:text-slate-400 hover:bg-white dark:hover:bg-white/5 hover:shadow-sm whitespace-nowrap transition-all"
+            href="/Admin Dashboard/Buyer Deposit Requests.html">
+            <span class="material-symbols-outlined text-[20px]">account_balance_wallet</span>
+            Buyer Deposit Requests
+          </a>
+          <a class="flex items-center gap-2 px-4 py-2 rounded-[30px] text-sm font-semibold active-tab-nav whitespace-nowrap transition-all"
+            href="/Admin Dashboard/Buyer Order Management.html">
+            <span class="material-symbols-outlined text-[20px]">receipt_long</span>
+            Buyer Order Management
+          </a>
+          <a class="flex items-center gap-2 px-4 py-2 rounded-[30px] text-sm font-semibold text-gray-700 dark:text-slate-400 hover:bg-white dark:hover:bg-white/5 hover:shadow-sm whitespace-nowrap transition-all"
+            href="/Admin Dashboard/User Task Verification.html">
+            <span class="material-symbols-outlined text-[20px]">task_alt</span>
+            Task Verification
+          </a>
+          <a class="flex items-center gap-2 px-4 py-2 rounded-[30px] text-sm font-semibold text-gray-700 dark:text-slate-400 hover:bg-white dark:hover:bg-white/5 hover:shadow-sm whitespace-nowrap transition-all"
+            href="/Admin Dashboard/User Payout Request.html">
+            <span class="material-symbols-outlined text-[20px]">payments</span>
+            Payout Request
+          </a>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main Dashboard Content -->
+    <main class="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-8 max-w-full">
+      <div class="max-w-[1600px] mx-auto w-full space-y-8">
+        <!-- Page Heading & Actions -->
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h1 class="text-3xl font-black tracking-tight text-slate-900 dark:text-white">
+              Assignments
+            </h1>
+            <p class="text-slate-500 dark:text-zinc-400 font-medium">
+              Manage buyer orders and allocate user tasks
+            </p>
+          </div>
+          <button id="openCreateTaskModalBtn"
+            class="flex items-center gap-2 bg-primary hover:bg-primary/90 text-zinc-900 px-6 py-3 rounded-xl font-bold transition-all shadow-lg shadow-primary/20">
+            <span class="material-symbols-outlined">add_task</span>
+            <span>Create Direct Task</span>
+          </button>
+        </div>
+        <!-- Stats Overview -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div class="bg-white dark:bg-white/5 p-6 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm">
+            <div class="flex items-center justify-between mb-2">
+              <p class="text-slate-500 dark:text-zinc-400 text-sm font-semibold uppercase tracking-wider">
+                Total Orders
+              </p>
+              <div
+                class="size-10 bg-green-50 dark:bg-green-500/10 text-green-500 rounded-xl flex items-center justify-center">
+                <span class="material-symbols-outlined">shopping_cart</span>
+              </div>
+            </div>
+            <p id="kpi-total-orders" class="text-3xl font-black dark:text-white">--</p>
+            <p id="kpi-growth" class="text-xs text-green-500 mt-2 font-bold">
+              --
+            </p>
+          </div>
+          <div class="bg-white dark:bg-white/5 p-6 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm">
+            <div class="flex items-center justify-between mb-2">
+              <p class="text-slate-500 dark:text-zinc-400 text-sm font-semibold uppercase tracking-wider">
+                Pending Review
+              </p>
+              <div
+                class="size-10 bg-amber-50 dark:bg-amber-500/10 text-amber-500 rounded-xl flex items-center justify-center">
+                <span class="material-symbols-outlined">pending_actions</span>
+              </div>
+            </div>
+            <p id="kpi-pending-review" class="text-3xl font-black text-amber-500">--</p>
+            <p class="text-xs text-amber-500 mt-2 font-bold">
+              Requires immediate action
+            </p>
+          </div>
+          <div class="bg-white dark:bg-white/5 p-6 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm">
+            <div class="flex items-center justify-between mb-2">
+              <p class="text-slate-500 dark:text-zinc-400 text-sm font-semibold uppercase tracking-wider">
+                Total Revenue
+              </p>
+              <div
+                class="size-10 bg-green-50 dark:bg-green-500/10 text-green-600 dark:text-green-500 rounded-xl flex items-center justify-center">
+                <span class="material-symbols-outlined">payments</span>
+              </div>
+            </div>
+            <p id="kpi-total-revenue" class="text-3xl font-black dark:text-white">--</p>
+            <p id="kpi-platform-commission" class="text-xs text-green-500 mt-2 font-bold">
+              Platform commission: --
+            </p>
+          </div>
+          <div class="bg-white dark:bg-white/5 p-6 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm">
+            <div class="flex items-center justify-between mb-2">
+              <p class="text-slate-500 dark:text-zinc-400 text-sm font-semibold uppercase tracking-wider">
+                Avg. Verification Time
+              </p>
+              <div
+                class="size-10 bg-purple-50 dark:bg-purple-500/10 text-purple-500 rounded-xl flex items-center justify-center">
+                <span class="material-symbols-outlined">timer</span>
+              </div>
+            </div>
+            <p id="kpi-avg-time" class="text-3xl font-black dark:text-white">--</p>
+            <p class="text-xs text-gray-500 dark:text-slate-400 mt-2 font-bold">
+              Avg. Verification Time
+            </p>
+          </div>
+        </div>
+        <!-- Orders Table Section -->
+        <div
+          class="bg-white dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm overflow-hidden">
+          <div
+            class="p-6 border-b border-slate-200 dark:border-white/10 flex flex-col md:flex-row justify-between items-center gap-4">
+            <h3 class="text-lg font-bold dark:text-white">Buyer Orders Queue</h3>
+            <div class="flex flex-wrap items-center gap-3 w-full md:w-auto">
+              <div class="relative flex-grow md:flex-grow-0 min-w-[200px]">
+                <span
+                  class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 text-sm">search</span>
+                <input id="searchInput" type="text" placeholder="Search Order or User..."
+                  class="w-full pl-9 pr-4 py-2 bg-slate-50 dark:bg-sidebar-deep border border-slate-200 dark:border-white/10 rounded-lg text-sm dark:text-white focus:ring-primary focus:border-primary transition-all placeholder:dark:text-slate-500" />
+              </div>
+              <select id="statusFilter"
+                class="bg-slate-50 dark:bg-sidebar-deep border border-slate-200 dark:border-white/10 rounded-lg text-sm px-4 py-2 dark:text-white focus:ring-primary focus:border-primary cursor-pointer">
+                <option class="dark:bg-sidebar-deep" value="all">All Status</option>
+                <option class="dark:bg-sidebar-deep" value="pending">Pending</option>
+                <option class="dark:bg-sidebar-deep" value="processing">Processing</option>
+                <option class="dark:bg-sidebar-deep" value="completed">Completed</option>
+                <option class="dark:bg-sidebar-deep" value="cancelled">Cancelled</option>
+              </select>
+              <button id="refreshBtn"
+                class="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg text-slate-400 dark:text-slate-500 transition-colors"
+                title="Refresh">
+                <span class="material-symbols-outlined">refresh</span>
+              </button>
+            </div>
+          </div>
+          <div class="overflow-x-auto overflow-y-hidden">
+            <table class="w-full text-left border-collapse">
+              <thead class="bg-slate-50 dark:bg-white/5">
+                <tr>
+                  <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    Order ID
+                  </th>
+                  <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    Buyer
+                  </th>
+                  <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    Platform
+                  </th>
+                  <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    Qty
+                  </th>
+                  <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    Buyer Price
+                  </th>
+                  <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    Admin Adj
+                  </th>
+                  <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    Final Price
+                  </th>
+                  <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    Status
+                  </th>
+                  <th
+                    class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 text-right">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody id="orders-table-body" class="divide-y divide-slate-200 dark:divide-white/10">
+                <tr>
+                  <td colspan="9" class="px-6 py-5 text-center text-slate-500 dark:text-zinc-500">Loading orders...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div
+            class="p-6 bg-slate-50 dark:bg-white/5 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-slate-500 dark:text-slate-400 font-medium border-t border-slate-200 dark:border-white/10 rounded-b-xl">
+            <span id="paginationText">Showing data...</span>
+            <div id="paginationControls" class="flex gap-2"></div>
+          </div>
+        </div>
+        <footer class="pt-16 pb-8 border-t border-slate-200 dark:border-white/10 mt-12">
+          <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+            <div
+              class="flex items-center gap-8 text-[11px] font-bold text-slate-400 dark:text-slate-600 uppercase tracking-widest">
+              <a class="hover:text-primary transition-colors" href="#">Privacy Policy</a>
+              <a class="hover:text-primary transition-colors" href="#">Terms of Service</a>
+              <a class="hover:text-primary transition-colors" href="#">Documentation</a>
+            </div>
+            <p class="text-[11px] font-bold text-slate-400 dark:text-slate-600">
+              © 2024 TIME TASK BD. ALL RIGHTS RESERVED.
+            </p>
+          </div>
+        </footer>
+      </div>
+    </main>
+  </div>
+
+  <!-- Create Direct Task Modal Overlay (Hidden by Default) -->
+  <div id="createTaskModal"
+    class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 dark:bg-black/80 backdrop-blur-sm hidden">
+    <div
+      class="w-full max-w-lg bg-white dark:bg-background-dark rounded-xl shadow-2xl overflow-hidden flex flex-col border border-transparent dark:border-white/10">
+      <div class="flex items-center justify-between px-6 py-5 border-b border-slate-100 dark:border-white/10">
+        <h2 class="text-slate-900 dark:text-white text-xl font-bold leading-tight tracking-[-0.015em]">
+          Create New Direct Task
+        </h2>
+        <button id="closeCreateTaskModalBtn"
+          class="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-full transition-colors">
+          <span class="material-symbols-outlined text-2xl dark:text-slate-400">close</span>
+        </button>
+      </div>
+      <div class="p-6 space-y-6 max-h-[80vh] overflow-y-auto">
+        <!-- Placeholder for Create Task form fields -->
+        <p class="text-slate-600 dark:text-slate-400">
+          This is where you would add your form fields for creating a direct
+          task.
+        </p>
+        <div class="space-y-4">
+          <div>
+            <label for="taskName" class="block text-sm font-semibold text-slate-900 dark:text-white mb-2">Task
+              Name</label>
+            <input type="text" id="taskName"
+              class="form-input w-full h-12 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 focus:border-primary focus:ring-1 focus:ring-primary text-base font-medium dark:text-white"
+              placeholder="e.g., Facebook Likes Campaign" />
+          </div>
+          <div>
+            <label for="taskDescription"
+              class="block text-sm font-semibold text-slate-900 dark:text-white mb-2">Description</label>
+            <textarea id="taskDescription" rows="4"
+              class="form-textarea w-full rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 focus:border-primary focus:ring-1 focus:ring-primary text-base font-medium dark:text-white"
+              placeholder="Provide a detailed description for the task..."></textarea>
+          </div>
+          <div>
+            <label for="taskQuantity"
+              class="block text-sm font-semibold text-slate-900 dark:text-white mb-2">Quantity</label>
+            <input type="number" id="taskQuantity"
+              class="form-input w-full h-12 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 focus:border-primary focus:ring-1 focus:ring-primary text-base font-medium dark:text-white"
+              value="100" />
+          </div>
+          <div>
+            <label for="taskPayout" class="block text-sm font-semibold text-slate-900 dark:text-white mb-2">Payout
+              per unit (Tk)</label>
+            <input type="number" id="taskPayout" step="0.5"
+              class="form-input w-full h-12 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 focus:border-primary focus:ring-1 focus:ring-primary text-base font-medium dark:text-white"
+              value="1.50" />
+          </div>
+        </div>
+      </div>
+      <div
+        class="flex items-center justify-end gap-3 px-6 py-5 bg-slate-50 dark:bg-white/5 border-t border-slate-100 dark:border-white/10">
+        <button id="closeCreateTaskBtnAlt"
+          class="px-5 py-2.5 text-sm font-bold text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors">
+          Cancel
+        </button>
+        <button
+          class="flex items-center justify-center gap-2 px-6 py-3 bg-primary text-[#0d1b17] rounded-lg font-bold text-sm tracking-wide shadow-lg shadow-primary/20 hover:brightness-105 active:scale-95 transition-all">
+          <span class="material-symbols-outlined text-xl">add</span>
+          Create Task
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Adjust Order Pricing Modal Overlay (Hidden by Default) -->
+  <div id="adjustPricingModal"
+    class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 dark:bg-black/80 backdrop-blur-sm hidden">
+    <!-- MODAL CONTAINER -->
+    <div
+      class="w-full max-w-[560px] bg-white dark:bg-background-dark rounded-xl shadow-2xl overflow-hidden flex flex-col border border-transparent dark:border-white/10">
+      <!-- Header -->
+      <div class="flex items-center justify-between px-6 py-5 border-b border-slate-100 dark:border-white/10">
+        <h2 class="text-slate-900 dark:text-white text-xl font-bold leading-tight tracking-[-0.015em]">
+          Adjust Order Pricing ID: <span id="modalOrderId"></span>
+        </h2>
+        <button id="closeAdjustPricingModalBtn"
+          class="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-full transition-colors">
+          <span class="material-symbols-outlined text-2xl dark:text-slate-400">close</span>
+        </button>
+      </div>
+      <!-- Scrollable Content Area -->
+      <div class="p-6 space-y-6 max-h-[80vh] overflow-y-auto">
+        <!-- Order Summary Card -->
+        <div class="bg-slate-50 dark:bg-white/5 p-4 rounded-lg border border-slate-100 dark:border-white/10">
+          <div class="flex justify-between gap-x-6 py-1">
+            <p class="text-slate-500 dark:text-slate-400 text-sm font-normal">
+              Original Buyer Price
+            </p>
+            <p class="text-slate-900 dark:text-white text-sm font-bold text-right">
+              20.00 Tk / Account
+            </p>
+          </div>
+          <div class="flex justify-between gap-x-6 py-1">
+            <p class="text-slate-500 dark:text-slate-400 text-sm font-normal">Total Quantity</p>
+            <p class="text-slate-900 dark:text-white text-sm font-bold text-right" id="modalTotalQuantity">
+              500 Units
+            </p>
+          </div>
+        </div>
+        <!-- Input Fields Group -->
+        <div class="space-y-4">
+          <div class="flex flex-col gap-2">
+            <label class="text-slate-900 dark:text-white text-sm font-semibold">Profit Margin per Account
+              (Tk)</label>
+            <div class="relative">
+              <span
+                class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 font-medium">Tk</span>
+              <input
+                class="form-input w-full pl-12 pr-4 h-14 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 focus:border-primary focus:ring-1 focus:ring-primary text-base font-medium dark:text-white"
+                step="0.5" type="number" value="" />
+            </div>
+          </div>
+          <div class="flex flex-col gap-2">
+            <label class="text-slate-900 dark:text-white text-sm font-semibold">Final User Payout per Account
+              (Tk)</label>
+            <div class="relative">
+              <span
+                class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 font-medium">Tk</span>
+              <input
+                class="form-input w-full pl-12 pr-4 h-14 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 focus:border-primary focus:ring-1 focus:ring-primary text-base font-medium dark:text-white"
+                step="0.5" type="number" value="" />
+            </div>
+          </div>
+          <!-- Management Fee Checkbox -->
+          <label class="flex items-center gap-3 cursor-pointer group py-2">
+            <div class="relative flex items-center">
+              <input checked=""
+                class="peer h-5 w-5 cursor-pointer appearance-none rounded border border-slate-200 dark:border-white/10 checked:bg-primary checked:border-primary focus:ring-0 focus:ring-offset-0 transition-all dark:bg-white/5"
+                type="checkbox" />
+              <span
+                class="material-symbols-outlined absolute text-sidebar-deep opacity-0 peer-checked:opacity-100 text-sm left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none">check</span>
+            </div>
+            <span class="text-slate-900 dark:text-white text-sm font-medium">Apply Platform Management Fee
+              (1.5%)</span>
+          </label>
+        </div>
+        <!-- Calculation Preview Section -->
+        <div class="bg-primary/5 dark:bg-primary/10 border-2 border-dashed border-primary/30 rounded-xl p-5">
+          <h3 class="text-xs font-bold uppercase tracking-widest text-[#4c9a80] mb-4">
+            Calculation Preview
+          </h3>
+          <div class="space-y-3">
+            <div class="flex justify-between items-center">
+              <span class="text-sm font-medium text-[#4c9a80]">Total Buyer Paid</span>
+              <span class="text-sm font-bold">10,000.00 Tk</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-sm font-medium text-primary-dark">Total Admin Profit</span>
+              <span class="text-sm font-bold text-primary-600">+ 2,500.00 Tk</span>
+            </div>
+            <div class="flex justify-between items-center border-t border-primary/20 pt-2 mt-2">
+              <span class="text-sm font-bold text-slate-900 dark:text-white">Total User Payout</span>
+              <span class="text-lg font-extrabold text-slate-900 dark:text-white">7,500.00 Tk</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Action Buttons -->
+      <div
+        class="flex items-center justify-end gap-3 px-6 py-5 bg-slate-50 dark:bg-white/5 border-t border-slate-100 dark:border-white/10">
+        <button id="closeAdjustPricingBtnAlt"
+          class="px-5 py-2.5 text-sm font-bold text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors">
+          Cancel
+        </button>
+        <button
+          class="flex items-center justify-center gap-2 px-6 py-3 bg-primary text-[#0d1b17] rounded-lg font-bold text-sm tracking-wide shadow-lg shadow-primary/20 hover:brightness-105 active:scale-95 transition-all">
+          <span class="material-symbols-outlined text-xl">send</span>
+          Update &amp; Push to Users
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Script for Sidebar Functionality -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../supabase-client.js"></script>
+  <script>
+    const sidebar = document.getElementById("mainSidebar");
+    const toggleBtn = document.getElementById("sidebarToggle");
+
+    // Toggle Sidebar
+    toggleBtn.addEventListener("click", () => {
+      sidebar.classList.toggle("sidebar-collapsed");
+    });
+
+    // Theme Toggle Logic
+    const themeToggle = document.getElementById("themeToggle");
+    const themeIcon = themeToggle.querySelector(".material-symbols-outlined");
+
+    function updateTheme(dark) {
+      if (dark) {
+        document.documentElement.classList.add("dark");
+        themeIcon.textContent = "dark_mode";
+        localStorage.setItem("theme", "dark");
+      } else {
+        document.documentElement.classList.remove("dark");
+        themeIcon.textContent = "light_mode";
+        localStorage.setItem("theme", "light");
+      }
+    }
+
+    // Initialize theme icon
+    updateTheme(document.documentElement.classList.contains("dark"));
+
+    themeToggle.addEventListener("click", () => {
+      const isDark = document.documentElement.classList.contains("dark");
+      updateTheme(!isDark);
+    });
+
+    // Simple Active Tab Highlighting for Sub-Nav
+    const subTabs = document.querySelectorAll("#tabsContainer a");
+    subTabs.forEach((tab) => {
+      tab.addEventListener("click", (e) => {
+        subTabs.forEach((t) => t.classList.remove("active-tab-nav"));
+        tab.classList.add("active-tab-nav");
+      });
+    });
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      // [SEC-001] HTML escape helper
+      function escapeHTML(str) {
+        if (!str) return "";
+        return String(str)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#039;");
+      }
+
+      // [SEC-001] Initialize Supabase Central Access 
+      const _supabase = (typeof SUPABASE_URL !== "undefined" && typeof SUPABASE_ANON_KEY !== "undefined")
+        ? supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+        : null;
+
+      if (!_supabase) {
+        console.error("Supabase client failed initialization.");
+        return;
+      }
+
+      // [SEC-001/SEC-002] Robust Admin Authentication Check
+      const { data: { session }, error: sessionErr } = await _supabase.auth.getSession();
+      if (sessionErr || !session) {
+        window.location.href = "Admin_Login.html";
+        return;
+      }
+
+      const { data: profile, error: profileErr } = await _supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', session.user.id)
+        .single();
+
+      if (profileErr || profile?.role !== "Admin") {
+        console.warn("Unauthorized access attempt by:", session.user.id);
+        await _supabase.auth.signOut();
+        window.location.href = "Admin_Login.html";
+        return;
+      }
+
+      // State Management
+      let currentUser = session.user;
+      let currentOrder = null;
+      let allOrders = [];
+      let currentSearchQuery = "";
+      let currentFilter = "all";
+      let currentPage = 1;
+      const rowsPerPage = 15;
+
+      // Modal Elements (Pricing)
+      const adjustPricingModal = document.getElementById("adjustPricingModal");
+      const modalOrderIdDisplay = document.getElementById("modalOrderId");
+      const modalTotalQuantityDisplay = document.getElementById("modalTotalQuantity");
+      const closeAdjustPricingModalBtn = document.getElementById("closeAdjustPricingModalBtn");
+
+      const modalInputs = adjustPricingModal.querySelectorAll("input[type='number']");
+      const profitMarginInput = modalInputs[0];
+      const userPayoutInput = modalInputs[1];
+      const pushBtn = adjustPricingModal.querySelector("button.bg-primary");
+
+      // Calculation Displays
+      const modalBuyerPriceDisplay = adjustPricingModal.querySelector(".text-right.text-sm.font-bold");
+      const modalCalculationPreview = adjustPricingModal.querySelector(".bg-primary\\/5");
+      const calcTotalBuyerPaid = modalCalculationPreview.querySelectorAll("span.font-bold")[0];
+      const calcTotalAdminProfit = modalCalculationPreview.querySelectorAll("span.font-bold")[1];
+      const calcTotalUserPayout = modalCalculationPreview.querySelectorAll("span.font-extrabold")[0];
+
+      // --- Core Functions ---
+
+      async function fetchKPIStats() {
+        try {
+          const { count: totalOrders } = await _supabase.from('orders').select('*', { count: 'exact', head: true });
+          const { count: pendingCount } = await _supabase.from('orders').select('*', { count: 'exact', head: true }).eq('status', 'pending');
+          const { data: revenueData } = await _supabase.from('orders').select('total_cost, price_per_unit, worker_rate, quantity');
+
+          let totalRevenue = 0;
+          let totalCommission = 0;
+          if (revenueData) {
+            revenueData.forEach(o => {
+              totalRevenue += o.total_cost || (o.price_per_unit * o.quantity) || 0;
+              if (o.worker_rate) {
+                const margin = (o.price_per_unit - o.worker_rate) * o.quantity;
+                totalCommission += margin > 0 ? margin : 0;
+              }
+            });
+          }
+
+          document.getElementById('kpi-total-orders').textContent = totalOrders || 0;
+          document.getElementById('kpi-pending-review').textContent = pendingCount || 0;
+          document.getElementById('kpi-total-revenue').textContent = `৳${totalRevenue.toLocaleString()}`;
+          document.getElementById('kpi-platform-commission').textContent = `Commission: ৳${totalCommission.toLocaleString()}`;
+        } catch (err) { console.error("KPI failure:", err); }
+      }
+
+      async function loadOrders() {
+        const tbody = document.getElementById("orders-table-body");
+        tbody.innerHTML = `<tr><td colspan="9" class="px-6 py-10 text-center font-bold text-slate-500 animate-pulse">Accessing Secure Records...</td></tr>`;
+
+        const { data: orders, error } = await _supabase
+          .from('orders')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .range(0, 49);
+
+        if (error) {
+          tbody.innerHTML = `<tr><td colspan="9" class="px-6 py-5 text-center text-red-500 font-bold">API Access Blocked: ${error.message}</td></tr>`;
+          return;
+        }
+
+        if (!orders || orders.length === 0) {
+          allOrders = [];
+          renderTable();
+          return;
+        }
+
+        const buyerIds = [...new Set(orders.map(o => o.buyer_id))].filter(Boolean);
+        let profilesMap = {};
+        if (buyerIds.length > 0) {
+          const { data: profiles } = await _supabase.from('profiles').select('id, username').in('id', buyerIds);
+          if (profiles) profiles.forEach(p => profilesMap[p.id] = p.username);
+        }
+
+        allOrders = orders.map(o => ({
+          ...o,
+          joined_buyer_username: profilesMap[o.buyer_id] || 'Unknown Agent'
+        }));
+
+        renderTable();
+      }
+
+      function renderTable() {
+        const tbody = document.getElementById("orders-table-body");
+
+        // Filter
+        let data = allOrders.filter(o => {
+          const q = currentSearchQuery.toLowerCase();
+          return o.order_id.toLowerCase().includes(q) || o.joined_buyer_username.toLowerCase().includes(q);
+        });
+        if (currentFilter !== 'all') data = data.filter(o => o.status === currentFilter);
+
+        // Pagination
+        const total = data.length;
+        const pages = Math.ceil(total / rowsPerPage) || 1;
+        if (currentPage > pages) currentPage = pages;
+        const paged = data.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
+
+        if (paged.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="9" class="px-6 py-10 text-center font-bold text-slate-400">No active records match specified parameters.</td></tr>`;
+        } else {
+          tbody.innerHTML = paged.map(o => {
+            const statusMap = {
+              'pending': `<span class="px-3 py-1 bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400 text-[10px] font-black uppercase rounded-full border border-amber-200">Pending</span>`,
+              'processing': `<span class="px-3 py-1 bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 text-[10px] font-black uppercase rounded-full">Processing</span>`,
+              'completed': `<span class="px-3 py-1 bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400 text-[10px] font-black uppercase rounded-full">Closed</span>`
+            };
+
+            const actionBtn = (o.status === 'pending')
+              ? `<button onclick="window.openPushModal('${o.id}')" class="flex items-center gap-1 bg-primary px-3 py-1.5 rounded-lg text-zinc-900 text-[10px] font-black hover:shadow-lg active:scale-95 transition-all"><span class="material-symbols-outlined text-sm">rocket_launch</span> PUSH TO USERS</button>`
+              : `<span class="text-[9px] font-black text-slate-400 uppercase tracking-widest border border-slate-200 dark:border-white/10 px-2 py-1 rounded">No Action Required</span>`;
+
+            return `
+              <tr class="hover:bg-slate-50/50 dark:hover:bg-white/5 transition-colors group">
+                <td class="px-6 py-4 font-mono text-[11px] font-black text-slate-600 dark:text-slate-400 uppercase tracking-tighter">${escapeHTML(o.order_id)}</td>
+                <td class="px-6 py-4 font-black"><div class="flex flex-col"><span class="text-sm">${escapeHTML(o.joined_buyer_username)}</span><span class="text-[9px] text-slate-400 uppercase">${o.buyer_id.split("-")[0]}</span></div></td>
+                <td class="px-6 py-4"><span class="text-[10px] font-black bg-slate-100 dark:bg-white/5 px-2 py-1 rounded border border-slate-200 dark:border-white/10 uppercase">${escapeHTML(o.platform)}</span></td>
+                <td class="px-6 py-4 text-center font-black">${o.quantity}</td>
+                <td class="px-6 py-4 font-bold">৳${o.price_per_unit.toFixed(2)}</td>
+                <td class="px-6 py-4 font-medium text-slate-400">৳${o.worker_rate ? (o.price_per_unit - o.worker_rate).toFixed(2) : '-'}</td>
+                <td class="px-6 py-4 font-black text-primary">৳${o.worker_rate || '-'}</td>
+                <td class="px-6 py-4">${statusMap[o.status] || o.status}</td>
+                <td class="px-6 py-4 text-right">${actionBtn}</td>
+              </tr>
+            `;
+          }).join('');
+        }
+
+        updatePaginationUI((currentPage - 1) * rowsPerPage, Math.min(currentPage * rowsPerPage, total), total, pages);
+      }
+
+      function updatePaginationUI(start, end, total, pages) {
+        document.getElementById("paginationText").innerHTML = `Showing <span class="font-black text-slate-900 dark:text-white">${total === 0 ? 0 : start + 1} - ${end}</span> of <span class="font-black text-slate-900 dark:text-white">${total}</span> records`;
+
+        const controls = document.getElementById("paginationControls");
+        let html = `<button onclick="window.changePage(${currentPage - 1})" class="size-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:bg-slate-50 transition-colors disabled:opacity-50" ${currentPage === 1 ? 'disabled' : ''}><span class="material-symbols-outlined text-sm">chevron_left</span></button>`;
+
+        for (let i = Math.max(1, currentPage - 2); i <= Math.min(pages, Math.max(1, currentPage - 2) + 4); i++) {
+          html += `<button onclick="window.changePage(${i})" class="size-8 flex items-center justify-center rounded-lg ${currentPage === i ? 'bg-primary text-[#102216] font-black' : 'bg-white border border-slate-200 text-slate-500 hover:text-slate-900 font-bold dark:bg-zinc-900 dark:border-zinc-700'} text-xs">${i}</button>`;
+        }
+
+        html += `<button onclick="window.changePage(${currentPage + 1})" class="size-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:bg-slate-50 transition-colors disabled:opacity-50" ${currentPage === pages ? 'disabled' : ''}><span class="material-symbols-outlined text-sm">chevron_right</span></button>`;
+        controls.innerHTML = html;
+      }
+
+      window.changePage = (pg) => { currentPage = pg; renderTable(); };
+
+      // --- Interaction Handlers ---
+
+      window.openPushModal = async (orderId) => {
+        const order = allOrders.find(o => o.id === orderId);
+        if (!order) return;
+        currentOrder = order;
+
+        modalOrderIdDisplay.textContent = order.order_id;
+        modalTotalQuantityDisplay.textContent = `${order.quantity} Units`;
+        modalBuyerPriceDisplay.textContent = `৳${order.price_per_unit.toFixed(2)} Per Unit`;
+
+        // Reset & Default (25% Profit)
+        const buyerPrice = order.price_per_unit;
+        const defaultMargin = (buyerPrice * 0.25).toFixed(2);
+        profitMarginInput.value = defaultMargin;
+        userPayoutInput.value = (buyerPrice - defaultMargin).toFixed(2);
+
+        updateModalCalculations();
+        adjustPricingModal.classList.remove("hidden");
+      };
+
+      function updateModalCalculations() {
+        if (!currentOrder) return;
+        const qty = currentOrder.quantity;
+        const buyerPrice = currentOrder.price_per_unit;
+        const margin = parseFloat(profitMarginInput.value) || 0;
+        const payout = parseFloat(userPayoutInput.value) || 0;
+
+        calcTotalBuyerPaid.textContent = `${(buyerPrice * qty).toLocaleString()} Tk`;
+        calcTotalAdminProfit.textContent = `+ ${(margin * qty).toLocaleString()} Tk`;
+        calcTotalUserPayout.textContent = `${(payout * qty).toLocaleString()} Tk`;
+      }
+
+      profitMarginInput.addEventListener("input", () => {
+        userPayoutInput.value = (currentOrder.price_per_unit - parseFloat(profitMarginInput.value || 0)).toFixed(2);
+        updateModalCalculations();
+      });
+
+      userPayoutInput.addEventListener("input", () => {
+        profitMarginInput.value = (currentOrder.price_per_unit - parseFloat(userPayoutInput.value || 0)).toFixed(2);
+        updateModalCalculations();
+      });
+
+      pushBtn.addEventListener("click", async () => {
+        if (!currentOrder) return;
+        const workerRate = parseFloat(userPayoutInput.value);
+
+        if (workerRate <= 0) { alert("Invalid worker rate."); return; }
+        if (!confirm(`Warning Review Action Required: Do you securely approve pushing this order with Tk ${workerRate.toFixed(2)} worker rate?`)) return;
+
+        pushBtn.disabled = true;
+        pushBtn.innerHTML = `<span class="material-symbols-outlined text-xl animate-spin text-zinc-900">progress_activity</span> SECURING...`;
+
+        try {
+          const { data, error } = await _supabase.rpc('handle_order_push', {
+            p_order_id: currentOrder.id,
+            p_worker_rate: workerRate
+          });
+
+          if (error) throw error;
+          if (data && !data.success) throw new Error(data.message);
+
+          alert("Order successfully pushed onto the worker pool globally!");
+          adjustPricingModal.classList.add("hidden");
+          loadOrders();
+          fetchKPIStats();
+        } catch (err) {
+          alert("Synchronization Failure:\n" + err.message);
+        } finally {
+          pushBtn.disabled = false;
+          pushBtn.innerHTML = `<span class="material-symbols-outlined text-xl">send</span> Update & Push to Users`;
+        }
+      });
+
+      closeAdjustPricingModalBtn.addEventListener("click", () => adjustPricingModal.classList.add("hidden"));
+      adjustPricingModal.querySelectorAll("button")[1].addEventListener("click", () => adjustPricingModal.classList.add("hidden"));
+
+      // Listner for UI
+      document.getElementById("searchInput").addEventListener("input", (e) => {
+        currentSearchQuery = e.target.value;
+        currentPage = 1;
+        renderTable();
+      });
+      document.getElementById("statusFilter").addEventListener("change", (e) => {
+        currentFilter = e.target.value;
+        currentPage = 1;
+        renderTable();
+      });
+      document.getElementById("refreshBtn").addEventListener("click", () => {
+        loadOrders();
+        fetchKPIStats();
+      });
+
+      // Init
+      loadOrders();
+      fetchKPIStats();
+    });
+
+    // Create Task Modal Logic (Existing - kept as is or minimized)
+    const createTaskModal = document.getElementById("createTaskModal");
+    const openCreateTaskModalBtn = document.getElementById("openCreateTaskModalBtn");
+    const closeCreateTaskModalBtn = document.getElementById("closeCreateTaskModalBtn");
+
+    if (openCreateTaskModalBtn) {
+      openCreateTaskModalBtn.addEventListener("click", () => {
+        createTaskModal.classList.remove("hidden");
+      });
+    }
+    if (closeCreateTaskModalBtn) {
+      closeCreateTaskModalBtn.addEventListener("click", () => {
+        createTaskModal.classList.add("hidden");
+      });
+    }
+  </script>
+</body>
+
+</html>

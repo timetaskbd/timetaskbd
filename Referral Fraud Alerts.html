@@ -1,0 +1,723 @@
+<!doctype html>
+<html class="light" lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <title>Admin Panel - Time Task BD</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../supabase-client.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+    rel="stylesheet" />
+  <script>
+    (function () {
+      const theme = localStorage.getItem("theme");
+      if (
+        theme === "dark" ||
+        (!theme && window.matchMedia("(prefers-color-scheme: dark)").matches)
+      ) {
+        document.documentElement.classList.add("dark");
+      } else {
+        document.documentElement.classList.add("light");
+      }
+    })();
+  </script>
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            primary: "#13ec5b",
+            "background-light": "#f6f8f6",
+            "background-dark": "#0a160f",
+            "sidebar-deep": "#102216",
+            "accent-green": "#13ec5b",
+          },
+          fontFamily: {
+            display: ["Manrope"],
+          },
+          borderRadius: {
+            DEFAULT: "0.25rem",
+            lg: "0.5rem",
+            xl: "0.75rem",
+            "2xl": "1rem",
+            full: "9999px",
+          },
+        },
+      },
+    };
+  </script>
+  <style type="text/tailwindcss">
+    @layer base {
+        body {
+          @apply font-display bg-background-light dark:bg-background-dark text-slate-900 dark:text-white transition-colors duration-300;
+        }
+      }
+
+      /* Sidebar Transitions */
+      .sidebar-transition {
+        @apply transition-all duration-300 ease-in-out;
+      }
+
+      /* Active Tab Notch Logic */
+      .sidebar-item-active {
+        @apply bg-background-light dark:bg-background-dark text-sidebar-deep dark:text-primary font-bold relative !important;
+        border-radius: 40px 0 0 40px;
+        margin-left: 10px;
+        width: calc(100% - 10px) !important;
+      }
+
+      .sidebar-item-active::before {
+        content: "";
+        position: absolute;
+        right: 0;
+        top: -40px;
+        width: 40px;
+        height: 40px;
+        background: transparent;
+        border-radius: 50%;
+        box-shadow: 20px 20px 0 0 #f6f8f6;
+        pointer-events: none;
+        @apply dark:shadow-[20px_20px_0_0_#0a160f];
+      }
+
+      .sidebar-item-active::after {
+        content: "";
+        position: absolute;
+        right: 0;
+        bottom: -40px;
+        width: 40px;
+        height: 40px;
+        background: transparent;
+        border-radius: 50%;
+        box-shadow: 20px -20px 0 0 #f6f8f6;
+        pointer-events: none;
+        @apply dark:shadow-[20px_-20px_0_0_#0a160f];
+      }
+
+      .sidebar-item {
+        @apply flex items-center py-4 text-white/70 hover:text-white transition-all duration-200 cursor-pointer w-full relative;
+      }
+
+      .sidebar-item .material-symbols-outlined {
+        @apply font-light text-[24px];
+      }
+
+      .sidebar-item-active .material-symbols-outlined {
+        @apply text-sidebar-deep;
+      }
+      .dark .sidebar-item-active { @apply bg-background-dark text-white !important; }
+      .dark .sidebar-item-active .material-symbols-outlined {
+        @apply text-primary;
+      }
+
+      /* Tooltip Logic - Show only when collapsed */
+      .nav-tooltip {
+        @apply invisible absolute left-full ml-4 px-2 py-1 bg-sidebar-deep text-white text-[10px] rounded whitespace-nowrap opacity-0 transition-opacity z-50 pointer-events-none;
+      }
+
+      /* Collapsed Sidebar States */
+      .sidebar-collapsed {
+        @apply w-20 pl-0;
+      }
+      .sidebar-collapsed .logo-text,
+      .sidebar-collapsed .item-text,
+      .sidebar-collapsed .menu-label,
+      .sidebar-collapsed .system-card-text {
+        @apply hidden;
+      }
+      .sidebar-collapsed .sidebar-item {
+        @apply justify-center px-0;
+      }
+      .sidebar-collapsed .sidebar-item:hover .nav-tooltip {
+        @apply visible opacity-100;
+      }
+      .sidebar-collapsed .sidebar-header {
+        @apply px-0 justify-center;
+      }
+
+      /* Custom Scrollbar */
+      .custom-scrollbar::-webkit-scrollbar {
+        width: 4px;
+      }
+      .custom-scrollbar::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+      }
+
+      .active-tab-nav { @apply bg-primary text-slate-900 dark:text-white shadow-lg shadow-primary/20; }
+    </style>
+</head>
+
+<body class="flex min-h-screen overflow-hidden">
+  <!-- Sidebar -->
+  <aside id="mainSidebar"
+    class="w-72 bg-sidebar-deep flex-shrink-0 flex flex-col h-screen sticky top-0 sidebar-transition pl-2">
+    <!-- Logo Section -->
+    <div class="sidebar-header p-6 pb-12 flex items-center gap-3 transition-all">
+      <div
+        class="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20 flex-shrink-0">
+        <span class="material-symbols-outlined text-sidebar-deep font-bold text-2xl">update</span>
+      </div>
+      <div class="flex flex-col logo-text overflow-hidden">
+        <span class="text-white font-extrabold text-lg leading-tight tracking-tight whitespace-nowrap">Time Task
+          BD</span>
+        <span class="text-primary/60 text-[10px] font-bold uppercase tracking-widest whitespace-nowrap">Admin
+          Control</span>
+      </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="flex-1">
+      <div class="px-8 mb-4 menu-label">
+        <p class="text-[10px] font-bold text-white/40 uppercase tracking-[0.2em]">
+          Main Menu
+        </p>
+      </div>
+
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Admin Index.html">
+        <span class="material-symbols-outlined">dashboard</span>
+        <span class="text-sm item-text ml-4">Dashboard</span>
+        <span class="nav-tooltip">Dashboard</span>
+      </a>
+
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/System Health.html">
+        <span class="material-symbols-outlined">monitor_heart</span>
+        <span class="text-sm item-text ml-4">System Monitoring</span>
+        <span class="nav-tooltip">Security & System Monitoring</span>
+      </a>
+
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/KYC Review.html">
+        <span class="material-symbols-outlined">manage_accounts</span>
+        <span class="text-sm item-text ml-4">Management</span>
+        <span class="nav-tooltip">User & Buyer Management</span>
+      </a>
+
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/User Analytics.html">
+        <span class="material-symbols-outlined">analytics</span>
+        <span class="text-sm item-text ml-4">Analytics Section</span>
+        <span class="nav-tooltip">Analytics Section</span>
+      </a>
+      <a class="sidebar-item sidebar-item-active px-8 group" href="/Admin Dashboard/User Referral Tree.html">
+        <span class="material-symbols-outlined">hub</span>
+        <span class="text-sm item-text ml-4">Referral System</span>
+        <span class="nav-tooltip">Referral System</span>
+      </a>
+
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Market Asset Price.html">
+        <span class="material-symbols-outlined">trending_up</span>
+        <span class="text-sm item-text ml-4">Market Asset Prices</span>
+        <span class="nav-tooltip">Market Asset Prices</span>
+      </a>
+
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Live Support.html">
+        <span class="material-symbols-outlined">support_agent</span>
+        <span class="text-sm item-text ml-4">Live Support</span>
+        <span class="nav-tooltip">Live Support</span>
+      </a>
+
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Buyer Communication.html">
+        <span class="material-symbols-outlined">forum</span>
+        <span class="text-sm item-text ml-4">Communication</span>
+        <span class="nav-tooltip">Communication</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/System Announcemeeent.html">
+        <span class="material-symbols-outlined">forum</span>
+        <span class="text-sm item-text ml-4">System Announcement</span>
+        <span class="nav-tooltip">System Announcement</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Invoice Management.html">
+        <span class="material-symbols-outlined">description</span>
+        <span class="text-sm item-text ml-4">Invoice Management</span>
+        <span class="nav-tooltip">Invoice Management</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Create Content.html">
+        <span class="material-symbols-outlined">edit_note</span>
+        <span class="text-sm item-text ml-4">Content Management</span>
+        <span class="nav-tooltip">Content Management</span>
+      </a>
+    </nav>
+
+    <div class="px-6 py-8">
+      <button
+        class="w-full h-10 flex items-center justify-center bg-primary text-sidebar-deep font-bold text-xs rounded-lg hover:brightness-110 transition-all shadow-lg shadow-primary/10 group relative">
+        <span class="material-symbols-outlined text-[20px] system-icon">logout</span>
+        <span class="ml-2 system-card-text">Logout</span>
+        <span class="nav-tooltip !left-full !ml-6">Logout</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main Content wrapper -->
+  <div
+    class="flex-1 flex flex-col h-screen overflow-hidden bg-background-light dark:bg-background-dark transition-colors duration-300">
+    <!-- Header -->
+    <header
+      class="h-20 bg-white dark:bg-[#111f16] border-b border-slate-100 dark:border-white/10 px-6 flex items-center justify-between flex-shrink-0 z-40 transition-colors duration-300">
+      <div class="flex items-center gap-6">
+        <button id="sidebarToggle"
+          class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 hover:text-sidebar-deep dark:hover:text-primary hover:bg-primary/10 transition-all">
+          <span class="material-symbols-outlined">menu</span>
+        </button>
+        <div class="relative w-96 group">
+          <span
+            class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-sidebar-deep transition-colors">search</span>
+          <input
+            class="w-full bg-slate-100 dark:bg-white/5 border-none rounded-xl pl-10 pr-4 py-2.5 text-sm dark:text-white focus:ring-2 focus:ring-primary/20 transition-all"
+            placeholder="Search system records..." type="text" />
+        </div>
+      </div>
+
+      <div class="flex items-center gap-6">
+        <div class="flex items-center gap-2">
+          <button
+            class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 hover:text-sidebar-deep dark:hover:text-primary hover:bg-primary/10 transition-all relative">
+            <span class="material-symbols-outlined">notifications</span>
+            <span
+              class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-background-dark"></span>
+          </button>
+          <button id="darkModeToggle"
+            class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 hover:text-sidebar-deep dark:hover:text-primary hover:bg-primary/10 transition-all">
+            <span id="darkIcon" class="material-symbols-outlined">light_mode</span>
+          </button>
+        </div>
+        <div class="h-10 w-px bg-slate-200 dark:bg-white/10"></div>
+        <div class="flex items-center gap-3 cursor-pointer group">
+          <div class="text-right">
+            <p class="text-sm font-bold text-slate-900 dark:text-white group-hover:text-primary transition-colors">
+              Super Admin
+            </p>
+            <p class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-tighter">
+              System Manager
+            </p>
+          </div>
+          <div
+            class="w-12 h-12 rounded-xl border-2 border-primary/20 p-0.5 overflow-hidden group-hover:border-primary transition-all">
+            <img alt="Admin Profile" class="w-full h-full object-cover rounded-lg"
+              src="https://lh3.googleusercontent.com/aida-public/AB6AXuDI3q59cS__AXyYcqFQtKZ2-e__roEJ3Cic28K7cd-6tYYxzLfpTArNsAJE3UypttzDIKS6SoNy85-jDLh0ZMbLqXr0NEEjrbCPSgoCJZyYc4W89P8djmlf34I_NEoa2vfl5IS3jHwLSZZ6lgtwguAje5Lv9h9RbZ2fJqb36M_tmZc-iJY-XxAXsCDxVyU1bONcO3AV5LZgB1o5wURKpB9w2XEN6iWAILVT7fIzOkl2pQ4lJb5WxYgkvuNIlKakHZWN1e4bzfo25zYy" />
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Sub Navigation Tabs -->
+    <nav
+      class="sticky top-0 bg-white/50 dark:bg-[#111f16]/50 border-b border-gray-100 dark:border-white/10 backdrop-blur-sm relative z-30 rounded-l-[30px] ml-80 transition-colors">
+      <div class="mx-auto w-full px-4">
+        <div id="tabsContainer" class="flex gap-4 overflow-x-auto no-scrollbar py-3">
+          <a class="flex items-center gap-2 px-4 py-2 rounded-[30px] text-sm font-semibold text-gray-700 dark:text-slate-300 hover:bg-white dark:hover:bg-white/5 hover:shadow-sm dark:hover:shadow-none whitespace-nowrap transition-all"
+            href="/Admin Dashboard/User Referral Tree.html">
+            <span class="material-symbols-outlined text-[20px]">account_tree</span>
+            User Referral Tree
+          </a>
+          <a class="flex items-center gap-2 px-4 py-2 rounded-[30px] text-sm font-semibold text-gray-700 dark:text-slate-300 hover:bg-white dark:hover:bg-white/5 hover:shadow-sm dark:hover:shadow-none whitespace-nowrap transition-all"
+            href="/Admin Dashboard/Referral Commission Setting.html">
+            <span class="material-symbols-outlined text-[20px]">settings_suggest</span>
+            Referral Commission Setting
+          </a>
+          <a class="flex items-center gap-2 px-4 py-2 rounded-[30px] text-sm font-semibold active-tab-nav dark:bg-primary whitespace-nowrap transition-all"
+            href="/Admin Dashboard/Referral Fraud Alerts.html">
+            <span class="material-symbols-outlined text-[20px]">warning</span>
+            Referral Fraud Alerts
+          </a>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main Dashboard Content -->
+    <main class="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-8 max-w-full">
+      <div class="max-w-[1600px] mx-auto w-full space-y-8">
+        <!-- Header Section -->
+        <div class="flex justify-between items-end">
+          <div>
+            <h1 class="text-2xl font-bold text-[#0d1b12] dark:text-white">
+              Referral Fraud Alerts
+            </h1>
+            <p class="text-[#4c9a66] text-sm">
+              Investigate and act on suspicious referral chains detected by
+              the system.
+            </p>
+          </div>
+          <div class="flex gap-3">
+            <button
+              class="flex items-center gap-2 px-4 py-2 bg-white dark:bg-[#1a2e21] border border-[#cfe7d7] dark:border-green-900/30 rounded-lg text-sm font-medium hover:shadow-sm">
+              <span class="material-symbols-outlined text-[20px]">filter_list</span>
+              Filter
+            </button>
+            <button
+              class="flex items-center gap-2 px-4 py-2 bg-primary text-[#0d1b12] rounded-lg text-sm font-bold shadow-md hover:opacity-90 transition-all shadow-primary/20">
+              <span class="material-symbols-outlined text-[20px]">refresh</span>
+              Check Now
+            </button>
+          </div>
+        </div>
+        <!-- Risk Summary Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div
+            class="bg-white dark:bg-[#1a2e21] rounded-xl p-6 border border-[#cfe7d7] dark:border-green-900/30 shadow-sm flex items-start justify-between">
+            <div>
+              <p class="text-[#4c9a66] text-sm font-medium mb-1 uppercase tracking-wider">
+                Suspicious Accounts Flagged
+              </p>
+              <h3 id="kpi-suspicious" class="text-3xl font-bold text-[#0d1b12] dark:text-white leading-none">
+                —
+              </h3>
+              <p id="kpi-suspicious-sub" class="text-[#078829] text-sm font-medium mt-2 flex items-center gap-1">
+                <span class="material-symbols-outlined text-[16px]">people</span>
+                Unique users flagged
+              </p>
+            </div>
+            <div class="bg-primary/10 p-2 rounded-lg text-primary flex">
+              <span class="material-symbols-outlined">group</span>
+            </div>
+          </div>
+          <div
+            class="bg-white dark:bg-[#1a2e21] rounded-xl p-6 border border-[#cfe7d7] dark:border-green-900/30 shadow-sm flex items-start justify-between">
+            <div>
+              <p class="text-[#4c9a66] text-sm font-medium mb-1 uppercase tracking-wider">
+                Duplicate IP Matches
+              </p>
+              <h3 id="kpi-duplicate-ip" class="text-3xl font-bold text-[#0d1b12] dark:text-white leading-none">
+                —
+              </h3>
+              <p class="text-blue-500 text-sm font-medium mt-2 flex items-center gap-1">
+                <span class="material-symbols-outlined text-[16px]">language</span>
+                Same-IP registrations
+              </p>
+            </div>
+            <div class="bg-blue-500/10 p-2 rounded-lg text-blue-500 flex">
+              <span class="material-symbols-outlined">language</span>
+            </div>
+          </div>
+          <div
+            class="bg-white dark:bg-[#1a2e21] rounded-xl p-6 border border-[#cfe7d7] dark:border-green-900/30 shadow-sm flex items-start justify-between">
+            <div>
+              <p class="text-[#4c9a66] text-sm font-medium mb-1 uppercase tracking-wider">
+                High-Frequency Referral Alerts
+              </p>
+              <h3 id="kpi-rapid" class="text-3xl font-bold text-[#0d1b12] dark:text-white leading-none">
+                —
+              </h3>
+              <p class="text-red-500 text-sm font-medium mt-2 flex items-center gap-1">
+                <span class="material-symbols-outlined text-[16px]">bolt</span>
+                Rapid-join patterns
+              </p>
+            </div>
+            <div class="bg-red-500/10 p-2 rounded-lg text-red-500 flex">
+              <span class="material-symbols-outlined">bolt</span>
+            </div>
+          </div>
+        </div>
+        <!-- Fraud Alert Table Content -->
+        <div
+          class="bg-white dark:bg-[#1a2e21] rounded-xl border border-[#cfe7d7] dark:border-green-900/30 shadow-sm overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr
+                  class="bg-background-light/50 dark:bg-green-950/20 border-b border-[#cfe7d7] dark:border-green-900/30">
+                  <th class="px-6 py-4 text-xs font-bold text-[#4c9a66] uppercase tracking-wider">
+                    Date
+                  </th>
+                  <th class="px-6 py-4 text-xs font-bold text-[#4c9a66] uppercase tracking-wider">
+                    Referrer ID
+                  </th>
+                  <th class="px-6 py-4 text-xs font-bold text-[#4c9a66] uppercase tracking-wider">
+                    Referee ID
+                  </th>
+                  <th class="px-6 py-4 text-xs font-bold text-[#4c9a66] uppercase tracking-wider">
+                    Risk Level
+                  </th>
+                  <th class="px-6 py-4 text-xs font-bold text-[#4c9a66] uppercase tracking-wider">
+                    Detection Type
+                  </th>
+                  <th class="px-6 py-4 text-xs font-bold text-[#4c9a66] uppercase tracking-wider text-right">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody id="fraud-alerts-tbody" class="divide-y divide-[#cfe7d7] dark:divide-green-900/20">
+                <tr id="alerts-loading-row">
+                  <td colspan="6" class="px-6 py-12 text-center text-sm text-[#4c9a66]">
+                    <span
+                      class="material-symbols-outlined animate-spin text-primary text-3xl block mx-auto mb-2">progress_activity</span>
+                    Loading fraud alerts...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <!-- Pagination Footer -->
+          <div
+            class="px-6 py-4 border-t border-[#cfe7d7] dark:border-white/10 flex items-center justify-between bg-background-light/20 dark:bg-white/5">
+            <p id="pagination-info" class="text-xs text-[#4c9a66] dark:text-slate-400 font-medium">Showing 0 entries</p>
+            <div class="flex gap-2">
+              <button id="prev-btn"
+                class="w-8 h-8 rounded border border-[#cfe7d7] dark:border-white/10 flex items-center justify-center hover:bg-white dark:hover:bg-white/5 transition-all text-[#4c9a66] dark:text-slate-400 disabled:opacity-40"><span
+                  class="material-symbols-outlined text-sm">chevron_left</span></button>
+              <span id="page-indicator"
+                class="w-8 h-8 rounded bg-primary text-[#0d1b12] font-bold text-xs flex items-center justify-center shadow-lg shadow-primary/10">1</span>
+              <button id="next-btn"
+                class="w-8 h-8 rounded border border-[#cfe7d7] dark:border-white/10 flex items-center justify-center hover:bg-white dark:hover:bg-white/5 transition-all text-[#4c9a66] dark:text-slate-400 disabled:opacity-40"><span
+                  class="material-symbols-outlined text-sm">chevron_right</span></button>
+            </div>
+          </div>
+        </div>
+        <footer class="pt-16 pb-8 border-t border-slate-200 dark:border-white/10 mt-12 transition-colors">
+          <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+            <div
+              class="flex items-center gap-8 text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+              <a class="hover:text-primary transition-colors" href="#">Privacy Policy</a>
+              <a class="hover:text-primary transition-colors" href="#">Terms of Service</a>
+              <a class="hover:text-primary transition-colors" href="#">Documentation</a>
+            </div>
+            <p class="text-[11px] font-bold text-slate-400 dark:text-slate-600">
+              © 2024 TIME TASK BD. ALL RIGHTS RESERVED.
+            </p>
+          </div>
+        </footer>
+      </div>
+    </main>
+  </div>
+
+  <!-- Sidebar Toggle & Theme Logic -->
+  <script>
+    const sidebar = document.getElementById('mainSidebar');
+    const toggleBtn = document.getElementById('sidebarToggle');
+
+    toggleBtn.addEventListener('click', () => {
+      sidebar.classList.toggle('sidebar-collapsed');
+    });
+
+    // Theme logic
+    const themeToggle = document.getElementById('darkModeToggle');
+    const darkIcon = document.getElementById('darkIcon');
+
+    function updateThemeUI(theme) {
+      if (theme === 'dark') {
+        document.documentElement.classList.add('dark');
+        document.documentElement.classList.remove('light');
+        darkIcon.textContent = 'dark_mode';
+      } else {
+        document.documentElement.classList.add('light');
+        document.documentElement.classList.remove('dark');
+        darkIcon.textContent = 'light_mode';
+      }
+    }
+
+    themeToggle.addEventListener('click', () => {
+      const isDark = document.documentElement.classList.contains('dark');
+      const newTheme = isDark ? 'light' : 'dark';
+      localStorage.setItem('theme', newTheme);
+      updateThemeUI(newTheme);
+    });
+  </script>
+
+  <!-- Fraud Alerts Logic -->
+  <script type="module">
+    const _supabase = window.supabaseClient;
+
+    const tbody = document.getElementById('fraud-alerts-tbody');
+    const kpiSusp = document.getElementById('kpi-suspicious');
+    const kpiDupIP = document.getElementById('kpi-duplicate-ip');
+    const kpiRapid = document.getElementById('kpi-rapid');
+    const paginInfo = document.getElementById('pagination-info');
+    const pageInd = document.getElementById('page-indicator');
+    const prevBtn = document.getElementById('prev-btn');
+    const nextBtn = document.getElementById('next-btn');
+    const checkNowBtn = document.querySelector('button[class*="bg-primary"]');
+    const filterBtn = document.querySelector('button[class*="bg-white"]');
+    const searchInput = document.querySelector('input[placeholder="Search system records..."]');
+
+    const PAGE_SIZE = 10;
+    let allAlerts = [];   // full dataset
+    let filtered = [];   // after filter + search
+    let currentPage = 1;
+    let showUnreviewed = false;  // filter toggle state
+    let profileMap = {};   // user_id → display name
+
+    // ── Risk helpers ────────────────────────────────────────────
+    const REASON_MAP = {
+      duplicate_ip: { label: 'Same IP Match', risk: 'High', cls: 'bg-red-100 dark:bg-red-500/10 text-red-700 dark:text-red-400' },
+      vpn_proxy: { label: 'VPN / Proxy Detected', risk: 'High', cls: 'bg-red-100 dark:bg-red-500/10 text-red-700 dark:text-red-400' },
+      rapid_submission: { label: 'Rapid Join Pattern', risk: 'Medium', cls: 'bg-amber-100 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400' },
+      high_rejection: { label: 'High Rejection Rate', risk: 'Medium', cls: 'bg-amber-100 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400' },
+    };
+
+    function riskBadge(reason) {
+      const r = REASON_MAP[reason] || { label: reason, risk: 'Low', cls: 'bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-400' };
+      let rCls = r.cls;
+      if (!rCls) {
+        rCls = r.risk === 'High' ? 'bg-red-100 dark:bg-red-500/10 text-red-700 dark:text-red-400' :
+          r.risk === 'Medium' ? 'bg-amber-100 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400' :
+            'bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-400';
+      }
+      return `<span class="px-3 py-1 ${rCls} rounded-full text-[10px] font-extrabold uppercase tracking-tight">${r.risk} Risk</span>`;
+    }
+
+    function detectionLabel(reason) {
+      return (REASON_MAP[reason] || { label: reason }).label;
+    }
+
+    // ── Row renderer ────────────────────────────────────────────
+    function renderRow(alert) {
+      const date = new Date(alert.created_at).toLocaleString('en-GB', { dateStyle: 'short', timeStyle: 'short' });
+      const refWelcomeCls = 'text-slate-400 dark:text-slate-500';
+      const refereeName = profileMap[alert.user_id] || alert.user_id?.slice(0, 8) + '...';
+      const referrerInfo = alert.details?.referrer_name || alert.details?.referrer_id?.slice(0, 8) || '—';
+      const reviewedCls = alert.is_reviewed ? 'opacity-50' : '';
+      const actionBtn = alert.is_reviewed
+        ? `<span class="inline-flex items-center gap-1 text-xs font-bold text-primary"><span class="material-symbols-outlined text-base">check_circle</span>Reviewed</span>`
+        : `<button data-id="${alert.id}" class="investigate-btn px-4 py-1.5 bg-primary/10 text-[#0d1b12] dark:text-primary rounded-lg text-sm font-bold border border-primary/20 hover:bg-primary/20 transition-all">Investigate</button>`;
+
+      return `
+          <tr class="hover:bg-background-light/30 dark:hover:bg-white/5 transition-colors ${reviewedCls}" data-alert-id="${alert.id}">
+            <td class="px-6 py-5 text-sm text-[#4c9a66] dark:text-slate-400">${date}</td>
+            <td class="px-6 py-5 font-mono text-sm font-semibold text-slate-700 dark:text-slate-300">${referrerInfo}</td>
+            <td class="px-6 py-5 font-mono text-sm font-semibold text-slate-700 dark:text-slate-300">${refereeName}</td>
+            <td class="px-6 py-5">${riskBadge(alert.reason)}</td>
+            <td class="px-6 py-5 text-sm text-slate-600 dark:text-slate-400">${detectionLabel(alert.reason)}</td>
+            <td class="px-6 py-5 text-right">${actionBtn}</td>
+          </tr>`;
+    }
+
+    // ── Table render + pagination ───────────────────────────────
+    function applyFilterSearch() {
+      const q = (searchInput?.value || '').toLowerCase().trim();
+      filtered = allAlerts.filter(a => {
+        if (showUnreviewed && a.is_reviewed) return false;
+        if (!q) return true;
+        const name = (profileMap[a.user_id] || '').toLowerCase();
+        const label = detectionLabel(a.reason).toLowerCase();
+        const ref = (a.details?.referrer_name || '').toLowerCase();
+        return name.includes(q) || label.includes(q) || ref.includes(q) || a.reason.includes(q);
+      });
+      currentPage = 1;
+      renderPage();
+    }
+
+    function renderPage() {
+      const total = filtered.length;
+      const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+      currentPage = Math.min(currentPage, totalPages);
+      const start = (currentPage - 1) * PAGE_SIZE;
+      const slice = filtered.slice(start, start + PAGE_SIZE);
+
+      if (slice.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-12 text-center text-sm text-gray-400">No alerts found.</td></tr>`;
+      } else {
+        tbody.innerHTML = slice.map(renderRow).join('');
+        attachRowListeners();
+      }
+      paginInfo.textContent = `Showing ${total === 0 ? 0 : start + 1}–${Math.min(start + PAGE_SIZE, total)} of ${total} entries`;
+      pageInd.textContent = currentPage;
+      prevBtn.disabled = currentPage <= 1;
+      nextBtn.disabled = currentPage >= totalPages;
+    }
+
+    // ── Invest button ────────────────────────────────────────────
+    function attachRowListeners() {
+      tbody.querySelectorAll('.investigate-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const id = btn.dataset.id;
+          btn.disabled = true;
+          btn.textContent = 'Saving...';
+          const { error } = await _supabase.from('fraud_alerts').update({ is_reviewed: true }).eq('id', id);
+          if (error) {
+            alert('Error: ' + error.message);
+            btn.disabled = false;
+            btn.textContent = 'Investigate';
+          } else {
+            const alert_ = allAlerts.find(a => a.id === id);
+            if (alert_) alert_.is_reviewed = true;
+            const row = tbody.querySelector(`tr[data-alert-id="${id}"]`);
+            if (row) {
+              row.classList.add('opacity-50');
+              btn.outerHTML = `<span class="inline-flex items-center gap-1 text-xs font-bold text-primary"><span class="material-symbols-outlined text-base">check_circle</span>Reviewed</span>`;
+            }
+          }
+        });
+      });
+    }
+
+    // ── KPI counters ─────────────────────────────────────────────
+    function updateKPIs(data) {
+      const uniqueUsers = new Set(data.map(a => a.user_id)).size;
+      const dupIP = data.filter(a => a.reason === 'duplicate_ip').length;
+      const rapid = data.filter(a => a.reason === 'rapid_submission').length;
+      kpiSusp.textContent = uniqueUsers;
+      kpiDupIP.textContent = dupIP;
+      kpiRapid.textContent = rapid;
+    }
+
+    // ── Load data ────────────────────────────────────────────────
+    async function loadAlerts() {
+      tbody.innerHTML = `<tr id="alerts-loading-row"><td colspan="6" class="px-6 py-12 text-center text-sm text-[#4c9a66]"><span class="material-symbols-outlined animate-spin text-primary text-3xl block mx-auto mb-2">progress_activity</span>Loading...</td></tr>`;
+
+      const { data, error } = await _supabase
+        .from('fraud_alerts')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-10 text-center text-sm text-red-500">Error: ${error.message}</td></tr>`;
+        return;
+      }
+      allAlerts = data || [];
+
+      // Build profile map for user names
+      const userIds = [...new Set(allAlerts.map(a => a.user_id).filter(Boolean))];
+      if (userIds.length > 0) {
+        const { data: profiles } = await _supabase
+          .from('profiles')
+          .select('id, full_name, username, email')
+          .in('id', userIds);
+        if (profiles) {
+          profiles.forEach(p => {
+            profileMap[p.id] = p.full_name || p.username || p.email || p.id.slice(0, 8);
+          });
+        }
+      }
+
+      updateKPIs(allAlerts);
+      applyFilterSearch();
+    }
+
+    // ── Event wiring ─────────────────────────────────────────────
+    prevBtn?.addEventListener('click', () => { if (currentPage > 1) { currentPage--; renderPage(); } });
+    nextBtn?.addEventListener('click', () => { currentPage++; renderPage(); });
+
+    if (checkNowBtn) {
+      checkNowBtn.addEventListener('click', () => loadAlerts());
+    }
+
+    if (filterBtn) {
+      filterBtn.addEventListener('click', () => {
+        showUnreviewed = !showUnreviewed;
+        filterBtn.classList.toggle('bg-primary', showUnreviewed);
+        filterBtn.classList.toggle('text-[#0d1b12]', showUnreviewed);
+        filterBtn.querySelector('span:last-child').textContent = showUnreviewed ? 'Unreviewed Only' : 'Filter';
+        applyFilterSearch();
+      });
+    }
+
+    searchInput?.addEventListener('input', applyFilterSearch);
+
+    loadAlerts();
+
+    // Initialization logic
+    document.addEventListener('DOMContentLoaded', () => {
+      const savedTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      updateThemeUI(savedTheme);
+    });
+  </script>
+</body>
+
+</html>

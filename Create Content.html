@@ -1,0 +1,1240 @@
+<!doctype html>
+<html class="light" lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <title>Admin Panel - Time Task BD</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+    rel="stylesheet" />
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../supabase-client.js"></script>
+  <script>
+    (function () {
+      const savedTheme = localStorage.getItem("theme") || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+      if (savedTheme === "dark") {
+        document.documentElement.classList.add("dark");
+        document.documentElement.classList.remove("light");
+      } else {
+        document.documentElement.classList.add("light");
+        document.documentElement.classList.remove("dark");
+      }
+    })();
+  </script>
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            primary: "#13ec5b",
+            "background-light": "#f6f8f6",
+            "background-dark": "#0d1b12",
+            "sidebar-deep": "#102216",
+            "accent-green": "#13ec5b",
+          },
+          fontFamily: {
+            display: ["Manrope"],
+          },
+          borderRadius: {
+            DEFAULT: "0.25rem",
+            lg: "0.5rem",
+            xl: "0.75rem",
+            "2xl": "1rem",
+            full: "9999px",
+          },
+        },
+      },
+    };
+  </script>
+  <style type="text/tailwindcss">
+    @layer base {
+        body {
+          @apply font-display bg-background-light text-slate-900;
+        }
+      }
+
+      /* Sidebar Transitions */
+      .sidebar-transition {
+        @apply transition-all duration-300 ease-in-out;
+      }
+
+      /* Active Tab Notch Logic */
+      .sidebar-item-active {
+        @apply bg-background-light text-sidebar-deep font-bold relative !important;
+        border-radius: 40px 0 0 40px;
+        margin-left: 10px;
+        width: calc(100% - 10px) !important;
+      }
+
+      .sidebar-item-active::before {
+        content: "";
+        position: absolute;
+        right: 0;
+        top: -40px;
+        width: 40px;
+        height: 40px;
+        background: transparent;
+        border-radius: 50%;
+        box-shadow: 20px 20px 0 0 #f6f8f6;
+        pointer-events: none;
+      }
+
+      .sidebar-item-active::after {
+        content: "";
+        position: absolute;
+        right: 0;
+        bottom: -40px;
+        width: 40px;
+        height: 40px;
+        background: transparent;
+        border-radius: 50%;
+        box-shadow: 20px -20px 0 0 #f6f8f6;
+        pointer-events: none;
+      }
+
+      .dark .sidebar-item-active::before { box-shadow: 20px 20px 0 0 #0d1b12; }
+      .dark .sidebar-item-active::after  { box-shadow: 20px -20px 0 0 #0d1b12; }
+      .dark .sidebar-item-active { @apply bg-background-dark text-white !important; }
+
+      .sidebar-item {
+        @apply flex items-center py-4 text-white/70 hover:text-white transition-all duration-200 cursor-pointer w-full relative;
+      }
+
+      .sidebar-item .material-symbols-outlined {
+        @apply font-light text-[24px];
+      }
+
+      .sidebar-item-active .material-symbols-outlined {
+        @apply text-sidebar-deep;
+      }
+
+      .dark .sidebar-item-active .material-symbols-outlined { @apply text-primary; }
+
+      .tree-line {
+        stroke: #13ec5b;
+        stroke-width: 2;
+        fill: none;
+      }
+
+      .canvas-grid {
+        background-image: radial-gradient(#d1d5db 1px, transparent 1px);
+        background-size: 24px 24px;
+        z-index: 10;
+      }
+
+      /* Tooltip Logic - Show only when collapsed */
+      .nav-tooltip {
+        @apply invisible absolute left-full ml-4 px-2 py-1 bg-sidebar-deep text-white text-[10px] rounded whitespace-nowrap opacity-0 transition-opacity z-50 pointer-events-none;
+      }
+
+      /* Collapsed Sidebar States */
+      .sidebar-collapsed {
+        @apply w-20 pl-0;
+      }
+      .sidebar-collapsed .logo-text,
+      .sidebar-collapsed .item-text,
+      .sidebar-collapsed .menu-label,
+      .sidebar-collapsed .system-card-text {
+        @apply hidden;
+      }
+      .sidebar-collapsed .sidebar-item {
+        @apply justify-center px-0;
+      }
+      .sidebar-collapsed .sidebar-item:hover .nav-tooltip {
+        @apply visible opacity-100;
+      }
+      .sidebar-collapsed .sidebar-header {
+        @apply px-0 justify-center;
+      }
+
+      /* Custom Scrollbar for Main Page */
+      .custom-scrollbar::-webkit-scrollbar {
+        width: 4px;
+      }
+      .custom-scrollbar::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+      }
+
+      /* Custom Scrollbar for Modal Content */
+      .modal-scrollbar::-webkit-scrollbar {
+        width: 6px;
+      }
+      .modal-scrollbar::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      .modal-scrollbar::-webkit-scrollbar-thumb {
+        background: #dbe6e2;
+        border-radius: 10px;
+      }
+      .modal-scrollbar::-webkit-scrollbar-thumb:hover {
+        background: #61897c;
+      }
+
+      .active-tab-nav {
+        @apply bg-primary text-white shadow-lg shadow-primary/20;
+      }
+
+      /* Modal Overlay Style */
+      .modal-overlay {
+        background-color: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(4px);
+      }
+    </style>
+</head>
+
+<body class="flex min-h-screen overflow-hidden">
+  <!-- Sidebar -->
+  <aside id="mainSidebar"
+    class="w-72 bg-sidebar-deep flex-shrink-0 flex flex-col h-screen sticky top-0 sidebar-transition pl-2">
+    <!-- Logo Section -->
+    <div class="sidebar-header p-6 pb-12 flex items-center gap-3 transition-all">
+      <div
+        class="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20 flex-shrink-0">
+        <span class="material-symbols-outlined text-sidebar-deep font-bold text-2xl">update</span>
+      </div>
+      <div class="flex flex-col logo-text overflow-hidden">
+        <span class="text-white font-extrabold text-lg leading-tight tracking-tight whitespace-nowrap">Time Task
+          BD</span>
+        <span class="text-primary/60 text-[10px] font-bold uppercase tracking-widest whitespace-nowrap">Admin
+          Control</span>
+      </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="flex-1">
+      <div class="px-8 mb-4 menu-label">
+        <p class="text-[10px] font-bold text-white/40 uppercase tracking-[0.2em]">
+          Main Menu
+        </p>
+      </div>
+
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Admin Index.html">
+        <span class="material-symbols-outlined">dashboard</span>
+        <span class="text-sm item-text ml-4">Dashboard</span>
+        <span class="nav-tooltip">Dashboard</span>
+      </a>
+
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/System Health.html">
+        <span class="material-symbols-outlined">monitor_heart</span>
+        <span class="text-sm item-text ml-4">System Monitoring</span>
+        <span class="nav-tooltip">Security & System Monitoring</span>
+      </a>
+
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/KYC Review.html">
+        <span class="material-symbols-outlined">manage_accounts</span>
+        <span class="text-sm item-text ml-4">Management</span>
+        <span class="nav-tooltip">User & Buyer Management</span>
+      </a>
+
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/User Analytics.html">
+        <span class="material-symbols-outlined">analytics</span>
+        <span class="text-sm item-text ml-4">Analytics Section</span>
+        <span class="nav-tooltip">Analytics Section</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/User Referral Tree.html">
+        <span class="material-symbols-outlined">hub</span>
+        <span class="text-sm item-text ml-4">Referral System</span>
+        <span class="nav-tooltip">Referral System</span>
+      </a>
+
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Market Asset Price.html">
+        <span class="material-symbols-outlined">trending_up</span>
+        <span class="text-sm item-text ml-4">Market Asset Prices</span>
+        <span class="nav-tooltip">Market Asset Prices</span>
+      </a>
+
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Live Support.html">
+        <span class="material-symbols-outlined">support_agent</span>
+        <span class="text-sm item-text ml-4">Live Support</span>
+        <span class="nav-tooltip">Live Support</span>
+      </a>
+
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Buyer Communication.html">
+        <span class="material-symbols-outlined">forum</span>
+        <span class="text-sm item-text ml-4">Communication</span>
+        <span class="nav-tooltip">Communication</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/System Announcemeeent.html">
+        <span class="material-symbols-outlined">forum</span>
+        <span class="text-sm item-text ml-4">System Announcement</span>
+        <span class="nav-tooltip">System Announcement</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Invoice Management.html">
+        <span class="material-symbols-outlined">description</span>
+        <span class="text-sm item-text ml-4">Invoice Management</span>
+        <span class="nav-tooltip">Invoice Management</span>
+      </a>
+      <a class="sidebar-item sidebar-item-active px-8 group" href="/Admin Dashboard/Create Content.html">
+        <span class="material-symbols-outlined">edit_note</span>
+        <span class="text-sm item-text ml-4">Content Management</span>
+        <span class="nav-tooltip">Content Management</span>
+      </a>
+    </nav>
+
+    <div class="px-6 py-8">
+      <button id="logoutBtn"
+        class="w-full h-10 flex items-center justify-center bg-primary text-sidebar-deep font-bold text-xs rounded-lg hover:brightness-110 transition-all shadow-lg shadow-primary/10 group relative">
+        <span class="material-symbols-outlined text-[20px] system-icon">logout</span>
+        <span class="ml-2 system-card-text">Logout</span>
+        <span class="nav-tooltip !left-full !ml-6">Logout</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main Content wrapper -->
+  <div class="flex-1 flex flex-col h-screen overflow-hidden bg-background-light dark:bg-background-dark">
+    <!-- Header -->
+    <header
+      class="h-20 bg-white dark:bg-background-dark/80 border-b border-slate-100 dark:border-white/10 px-6 flex items-center justify-between flex-shrink-0 z-40 backdrop-blur-sm">
+      <div class="flex items-center gap-6">
+        <button id="sidebarToggle"
+          class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-white/70 hover:text-sidebar-deep dark:hover:text-primary hover:bg-primary/10 transition-all">
+          <span class="material-symbols-outlined">menu</span>
+        </button>
+        <div class="relative w-96 group">
+          <span
+            class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-sidebar-deep transition-colors">search</span>
+          <input id="searchInput"
+            class="w-full bg-slate-100 border-none rounded-xl pl-10 pr-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 transition-all"
+            placeholder="Search system records..." type="text" />
+        </div>
+      </div>
+
+      <div class="flex items-center gap-6">
+        <div class="flex items-center gap-2">
+          <button id="notificationBtn"
+            class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-white/70 hover:text-sidebar-deep dark:hover:text-primary hover:bg-primary/10 transition-all relative">
+            <span class="material-symbols-outlined">notifications</span>
+            <span
+              class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-[#111f16]"></span>
+          </button>
+          <button id="themeToggleBtn"
+            class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-white/70 hover:text-sidebar-deep dark:hover:text-primary hover:bg-primary/10 transition-all">
+            <span id="themeIcon" class="material-symbols-outlined">light_mode</span>
+          </button>
+        </div>
+        <div class="h-10 w-px bg-slate-200 dark:bg-white/10"></div>
+        <div class="flex items-center gap-3 cursor-pointer group">
+          <div class="text-right">
+            <p class="text-sm font-bold text-slate-900 dark:text-white group-hover:text-primary transition-colors">
+              Super Admin
+            </p>
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
+              System Manager
+            </p>
+          </div>
+          <div
+            class="w-12 h-12 rounded-xl border-2 border-primary/20 p-0.5 overflow-hidden group-hover:border-primary transition-all">
+            <img alt="Admin Profile" class="w-full h-full object-cover rounded-lg"
+              src="https://lh3.googleusercontent.com/aida-public/AB6AXuDI3q59cS__AXyYcqFQtKZ2-e__roEJ3Cic28K7cd-6tYYxzLfpTArNsAJE3UypttzDIKS6SoNy85-jDLh0ZMbLqXr0NEEjrbCPSgoCJZyYc4W89P8djmlf34I_NEoa2vfl5IS3jHwLSZZ6lgtwguAje5Lv9h9RbZ2fJqb36M_tmZc-iJY-XxAXsCDxVyU1bONcO3AV5LZgB1o5wURKpB9w2XEN6iWAILVT7fIzOkl2pQ4lJb5WxYgkvuNIlKakHZWN1e4bzfo25zYy" />
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Sub Navigation Tabs -->
+    <nav
+      class="sticky top-0 bg-white/50 dark:bg-background-dark/80 border-b border-gray-100 dark:border-white/10 backdrop-blur-sm relative z-30 rounded-l-[30px] ml-80">
+      <div class="mx-auto w-full px-4">
+        <div id="tabsContainer" class="flex gap-4 overflow-x-auto no-scrollbar py-3">
+          <a class="flex items-center gap-2 px-4 py-2 rounded-[30px] text-sm font-semibold active-tab-nav whitespace-nowrap transition-all"
+            href="/Admin Dashboard/Create Content.html">
+            <span class="material-symbols-outlined text-[20px]">edit_note</span>
+            Create Content
+          </a>
+          <a class="flex items-center gap-2 px-4 py-2 rounded-[30px] text-sm font-semibold text-gray-700 dark:text-white/70 hover:bg-white dark:hover:bg-white/5 hover:shadow-sm whitespace-nowrap transition-all"
+            href="/Admin Dashboard/Content Library.html">
+            <span class="material-symbols-outlined text-[20px]">article</span>
+            Content Library
+          </a>
+          <a class="flex items-center gap-2 px-4 py-2 rounded-[30px] text-sm font-semibold text-gray-700 dark:text-white/70 hover:bg-white dark:hover:bg-white/5 hover:shadow-sm whitespace-nowrap transition-all"
+            href="/Admin Dashboard/Content Engagement Analytics.html">
+            <span class="material-symbols-outlined text-[20px]">groups</span>
+            Engagement Analytics
+          </a>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main Dashboard Content -->
+    <main class="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-8 max-w-full">
+      <div class="max-w-[1600px] mx-auto w-full space-y-8">
+        <div class="mb-8">
+          <h1 class="text-2xl font-black text-[#111813] dark:text-white">
+            Content Publishing Console
+          </h1>
+          <p class="text-sm text-gray-500">
+            Create and manage your platform's educational blog and video
+            resources.
+          </p>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div
+            class="bg-white dark:bg-[#102216] p-6 rounded-xl shadow-sm border border-[#dbe6df] dark:border-white/10 flex items-center gap-4">
+            <div class="size-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+              <span class="material-symbols-outlined">article</span>
+            </div>
+            <div>
+              <p class="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Total Articles
+              </p>
+              <p id="kpi-articles" class="text-xl font-black dark:text-white">—</p>
+            </div>
+          </div>
+          <div
+            class="bg-white dark:bg-[#102216] p-6 rounded-xl shadow-sm border border-[#dbe6df] dark:border-white/10 flex items-center gap-4">
+            <div class="size-12 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600">
+              <span class="material-symbols-outlined">video_library</span>
+            </div>
+            <div>
+              <p class="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Total Videos
+              </p>
+              <p id="kpi-videos" class="text-xl font-black dark:text-white">—</p>
+            </div>
+          </div>
+          <div
+            class="bg-white dark:bg-[#102216] p-6 rounded-xl shadow-sm border border-[#dbe6df] dark:border-white/10 flex items-center gap-4">
+            <div class="size-12 rounded-lg bg-orange-100 flex items-center justify-center text-orange-600">
+              <span class="material-symbols-outlined">visibility</span>
+            </div>
+            <div>
+              <p class="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Global Views
+              </p>
+              <p id="kpi-views" class="text-xl font-black dark:text-white">—</p>
+            </div>
+          </div>
+          <div
+            class="bg-white dark:bg-[#102216] p-6 rounded-xl shadow-sm border border-[#dbe6df] dark:border-white/10 flex items-center gap-4">
+            <div class="size-12 rounded-lg bg-purple-100 flex items-center justify-center text-purple-600">
+              <span class="material-symbols-outlined">timer</span>
+            </div>
+            <div>
+              <p class="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Total Posts</p>
+              <p id="kpi-total" class="text-xl font-black dark:text-white">—</p>
+            </div>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 gap-8">
+          <div
+            class="bg-white dark:bg-[#102216] rounded-xl shadow-sm border border-[#dbe6df] dark:border-white/10 overflow-hidden flex flex-col">
+            <div class="p-6 border-b border-gray-50 dark:border-white/5 flex items-center justify-between">
+              <h2 class="text-lg font-bold flex items-center gap-2 dark:text-white">
+                <span class="material-symbols-outlined text-primary">article</span>
+                Publish New Blog Post
+              </h2>
+              <span
+                class="text-[10px] bg-green-100 text-green-700 px-2 py-1 rounded font-bold uppercase tracking-wider">Blog
+                Article</span>
+            </div>
+            <div class="p-6 space-y-6 flex-1">
+              <div>
+                <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-2">Blog
+                  Title</label>
+                <input id="blog-title"
+                  class="w-full rounded-lg border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 focus:ring-primary focus:border-primary text-sm dark:text-white dark:placeholder:text-white/30"
+                  placeholder="e.g., 5 Ways to Increase Your Daily Earnings" type="text" />
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-2">Category</label>
+                <select id="blog-category"
+                  class="w-full rounded-lg border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 focus:ring-primary focus:border-primary text-sm dark:text-white">
+                  <option class="dark:bg-[#111f16]">Earning Tips</option>
+                  <option class="dark:bg-[#111f16]">Account Creation</option>
+                  <option class="dark:bg-[#111f16]">Platform Updates</option>
+                  <option class="dark:bg-[#111f16]">Worker Success Stories</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-2">Featured Image
+                  Link</label>
+                <div class="flex gap-4">
+                  <input id="blog-image"
+                    class="flex-1 rounded-lg border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 focus:ring-primary focus:border-primary text-sm dark:text-white dark:placeholder:text-white/30"
+                    placeholder="https://image-url.com/featured.jpg" type="text" />
+                  <div
+                    class="size-10 bg-gray-100 dark:bg-white/5 rounded-lg flex items-center justify-center text-gray-400 border border-dashed border-gray-300 dark:border-white/10">
+                    <span class="material-symbols-outlined text-sm">image</span>
+                  </div>
+                </div>
+              </div>
+              <div class="flex-1 flex flex-col">
+                <label class="block text-xs font-bold text-gray-500 uppercase mb-2 tracking-wide">
+                  Content Editor
+                </label>
+                <div
+                  class="border border-gray-200 dark:border-white/10 rounded-lg bg-white dark:bg-white/5 flex flex-col focus-within:ring-2 focus-within:ring-primary/80 focus-within:border-primary transition-all">
+
+                  <!-- Toolbar -->
+                  <div
+                    class="p-2 border-b border-gray-200 dark:border-white/10 flex gap-1 bg-gray-50 dark:bg-white/5 rounded-t-lg">
+                    <button type="button" data-fmt="bold"
+                      class="toolbar-btn w-8 h-8 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-white/10 rounded text-gray-700 dark:text-white/70 transition-colors"
+                      title="Bold (**text**)">
+                      <span class="material-symbols-outlined text-[18px]">format_bold</span>
+                    </button>
+                    <button type="button" data-fmt="italic"
+                      class="toolbar-btn w-8 h-8 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-white/10 rounded text-gray-700 dark:text-white/70 transition-colors"
+                      title="Italic (_text_)">
+                      <span class="material-symbols-outlined text-[18px]">format_italic</span>
+                    </button>
+                    <button type="button" data-fmt="list"
+                      class="toolbar-btn w-8 h-8 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-white/10 rounded text-gray-700 dark:text-white/70 transition-colors"
+                      title="Bullet List">
+                      <span class="material-symbols-outlined text-[18px]">format_list_bulleted</span>
+                    </button>
+                    <button type="button" data-fmt="link"
+                      class="toolbar-btn w-8 h-8 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-white/10 rounded text-gray-700 dark:text-white/70 transition-colors"
+                      title="Insert Link">
+                      <span class="material-symbols-outlined text-[18px]">link</span>
+                    </button>
+                  </div>
+
+                  <!-- Text Area -->
+                  <div id="blog-editor" contenteditable="true"
+                    class="w-full flex-1 p-4 text-sm text-gray-700 dark:text-white placeholder-gray-400 dark:placeholder-white/30 bg-transparent border-none outline-none focus:ring-0 overflow-y-auto min-h-[180px] rounded-b-lg empty:before:content-[attr(data-placeholder)] empty:before:text-gray-400 dark:empty:before:text-white/30"
+                    data-placeholder="Start writing your article content here..."></div>
+
+                </div>
+              </div>
+            </div>
+            <div class="p-6 bg-gray-50 dark:bg-white/5 border-t border-gray-100 dark:border-white/10 flex gap-3">
+              <button id="saveBlogDraftBtn"
+                class="flex-1 bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 hover:bg-gray-100 text-gray-700 dark:text-white font-bold py-3 rounded-lg transition-colors flex items-center justify-center gap-2">
+                <span class="material-symbols-outlined text-[20px]">draft</span> Save Draft
+              </button>
+              <button id="publishBlogBtn"
+                class="flex-1 bg-primary hover:bg-[#11d852] text-[#111813] font-bold py-3 rounded-lg transition-colors flex items-center justify-center gap-2 shadow-sm">
+                <span class="material-symbols-outlined">publish</span> Publish Blog
+              </button>
+            </div>
+          </div>
+          <div
+            class="bg-white dark:bg-[#102216] rounded-xl shadow-sm border border-[#dbe6df] dark:border-white/10 overflow-hidden flex flex-col">
+            <div class="p-6 border-b border-gray-50 dark:border-white/5 flex items-center justify-between">
+              <h2 class="text-lg font-bold flex items-center gap-2 dark:text-white">
+                <span class="material-symbols-outlined text-primary">video_library</span>
+                Add New Tutorial Video
+              </h2>
+              <span
+                class="text-[10px] bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 px-2 py-1 rounded font-bold uppercase tracking-wider">Video
+                Guide</span>
+            </div>
+            <div class="p-6 space-y-6 flex-1">
+              <div>
+                <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-2">Video
+                  Title</label>
+                <input id="video-title"
+                  class="w-full rounded-lg border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 focus:ring-primary focus:border-primary text-sm dark:text-white dark:placeholder:text-white/30"
+                  placeholder="e.g., How to Properly Submit Proof for Survey Tasks" type="text" />
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-2">Category</label>
+                <select id="video-category"
+                  class="w-full rounded-lg border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 focus:ring-primary focus:border-primary text-sm dark:text-white">
+                  <option class="dark:bg-[#111f16]">Submission Guides</option>
+                  <option class="dark:bg-[#111f16]">Payout Tutorials</option>
+                  <option class="dark:bg-[#111f16]">Account Security</option>
+                  <option class="dark:bg-[#111f16]">New User Onboarding</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-2">Video Source Link
+                  (YouTube/Vimeo)</label>
+                <div class="relative">
+                  <span
+                    class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-white/30 text-sm">link</span>
+                  <input id="video-url"
+                    class="w-full pl-10 pr-4 py-2 rounded-lg border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 focus:ring-primary focus:border-primary text-sm dark:text-white dark:placeholder:text-white/30"
+                    placeholder="https://www.youtube.com/watch?v=..." type="text" />
+                </div>
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-2">Video
+                  Description</label>
+                <textarea id="video-description"
+                  class="w-full rounded-lg border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 focus:ring-primary focus:border-primary text-sm dark:text-white dark:placeholder:text-white/30"
+                  placeholder="Provide a brief summary of what this video tutorial covers..." rows="6"></textarea>
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-2">Duration (e.g.
+                  12:45)</label>
+                <div class="relative">
+                  <span
+                    class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-white/30 text-sm">schedule</span>
+                  <input id="video-duration"
+                    class="w-full pl-10 pr-4 py-2 rounded-lg border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 focus:ring-primary focus:border-primary text-sm dark:text-white dark:placeholder:text-white/30"
+                    placeholder="mm:ss" type="text" />
+                </div>
+              </div>
+              <div class="p-4 bg-primary/5 dark:bg-primary/10 rounded-lg border border-primary/20">
+                <div class="flex items-center gap-3">
+                  <span class="material-symbols-outlined text-primary">info</span>
+                  <p class="text-xs text-gray-600 dark:text-white/70">Thumbnails are auto-generated from YouTube/Vimeo
+                    links.</p>
+                </div>
+              </div>
+            </div>
+            <div class="p-6 bg-gray-50 dark:bg-white/5 border-t border-gray-100 dark:border-white/10 flex gap-3">
+              <button id="saveVideoDraftBtn"
+                class="flex-1 bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 hover:bg-gray-100 dark:hover:bg-white/10 text-gray-700 dark:text-white font-bold py-3 rounded-lg transition-colors flex items-center justify-center gap-2">
+                <span class="material-symbols-outlined text-[20px]">draft</span> Save Draft
+              </button>
+              <button id="uploadVideoBtn"
+                class="flex-1 bg-primary hover:bg-[#11d852] text-[#111813] font-bold py-3 rounded-lg transition-colors flex items-center justify-center gap-2 shadow-sm">
+                <span class="material-symbols-outlined">upload</span> Upload to Gallery
+              </button>
+            </div>
+          </div>
+        </div>
+        <div
+          class="bg-white dark:bg-[#102216] rounded-xl shadow-sm border border-[#dbe6df] dark:border-white/10 overflow-hidden">
+          <div class="p-6 border-b border-gray-50 dark:border-white/5 flex items-center justify-between">
+            <h2 class="text-lg font-bold dark:text-white">Recently Published Content</h2>
+            <a href="/Admin Dashboard/Content Library.html"
+              class="text-sm text-primary font-bold flex items-center gap-1 hover:underline">
+              View Full Library
+              <span class="material-symbols-outlined text-sm">arrow_forward</span>
+            </a>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left">
+              <thead class="bg-gray-50 dark:bg-white/5 border-b border-gray-100 dark:border-white/10">
+                <tr>
+                  <th class="px-6 py-4 text-[10px] font-black uppercase text-gray-400">
+                    Date
+                  </th>
+                  <th class="px-6 py-4 text-[10px] font-black uppercase text-gray-400">
+                    Type
+                  </th>
+                  <th class="px-6 py-4 text-[10px] font-black uppercase text-gray-400">
+                    Title
+                  </th>
+                  <th class="px-6 py-4 text-[10px] font-black uppercase text-gray-400">
+                    Category
+                  </th>
+                  <th class="px-6 py-4 text-[10px] font-black uppercase text-gray-400">
+                    Views
+                  </th>
+                  <th class="px-6 py-4 text-[10px] font-black uppercase text-gray-400">
+                    Engagement
+                  </th>
+                  <th class="px-6 py-4 text-[10px] font-black uppercase text-gray-400">
+                    Status
+                  </th>
+                  <th class="px-6 py-4 text-[10px] font-black uppercase text-gray-400">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-50 dark:divide-white/10">
+                <!-- Rows injected by fetchRecentContent() -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <footer class="pt-16 pb-8 border-t border-slate-200 dark:border-white/10 mt-12">
+          <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+            <div class="flex items-center gap-8 text-[11px] font-bold text-slate-400 uppercase tracking-widest">
+              <a class="hover:text-primary transition-colors" href="#">Privacy Policy</a>
+              <a class="hover:text-primary transition-colors" href="#">Terms of Service</a>
+              <a class="hover:text-primary transition-colors" href="#">Documentation</a>
+            </div>
+            <p class="text-[11px] font-bold text-slate-400">
+              © 2024 TIME TASK BD. ALL RIGHTS RESERVED.
+            </p>
+          </div>
+        </footer>
+      </div>
+    </main>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- EDIT MODAL  -->
+  <!-- ========================================== -->
+  <div id="editModal" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4">
+    <!-- Modal Backdrop Overlay -->
+    <div onclick="closeModal()" class="fixed inset-0 modal-overlay z-40"></div>
+
+    <!-- Main Modal Container -->
+    <div
+      class="relative z-50 w-full max-w-[960px] bg-white dark:bg-background-dark rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] border border-transparent dark:border-white/10">
+      <!-- Header -->
+      <div class="flex items-center justify-between p-6 border-b border-[#dbe6e2] dark:border-white/10">
+        <h2 class="text-[#111816] dark:text-white text-2xl font-bold leading-tight">
+          Edit Content
+        </h2>
+        <button onclick="closeModal()"
+          class="flex items-center justify-center w-10 h-10 rounded-full hover:bg-gray-100 dark:hover:bg-white/10 transition-colors text-[#111816] dark:text-white">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+
+      <!-- Tabbed Switcher -->
+      <div class="px-6 pt-2">
+        <div class="flex border-b border-[#dbe6e2] dark:border-white/10 gap-8">
+          <!-- Blog Post Tab Button -->
+          <button id="tab-blog" onclick="switchTab('blog')"
+            class="flex items-center justify-center border-b-[3px] border-primary text-[#111816] dark:text-white pb-3 pt-4 px-2 group transition-all outline-none">
+            <span id="icon-blog" class="material-symbols-outlined text-sm mr-2 text-primary">article</span>
+            <p class="text-sm font-bold leading-normal tracking-[0.015em]">
+              Blog Post
+            </p>
+          </button>
+
+          <!-- Tutorial Video Tab Button -->
+          <button id="tab-video" onclick="switchTab('video')"
+            class="flex items-center justify-center border-b-[3px] border-transparent text-[#61897c] hover:text-[#111816] dark:hover:text-white pb-3 pt-4 px-2 group transition-all outline-none">
+            <span id="icon-video" class="material-symbols-outlined text-sm mr-2 text-[#61897c]">videocam</span>
+            <p class="text-sm font-bold leading-normal tracking-[0.015em]">
+              Tutorial Video
+            </p>
+          </button>
+        </div>
+      </div>
+
+      <!-- Scrollable Content Area -->
+      <div class="flex-1 overflow-y-auto p-6 modal-scrollbar">
+        <!-- SECTION: Blog Post Content -->
+        <div id="content-blog" class="block">
+          <div class="grid grid-cols-1 gap-6">
+            <!-- Left Column -->
+            <div class="space-y-6">
+              <div>
+                <label class="block mb-2">
+                  <span class="text-[#111816] dark:text-white text-base font-semibold">Post Title</span>
+                </label>
+                <input id="edit-blog-title"
+                  class="w-full rounded-lg border border-[#dbe6e2] dark:border-white/10 bg-white dark:bg-white/10 dark:text-white h-12 px-4 focus:ring-2 focus:ring-primary outline-none transition-all"
+                  type="text" value="How to Master Time Management in 2024" />
+              </div>
+              <div>
+                <label class="block mb-2">
+                  <span class="text-[#111816] dark:text-white text-base font-semibold">Category</span>
+                </label>
+                <select id="edit-blog-category"
+                  class="w-full rounded-lg border border-[#dbe6e2] dark:border-white/10 bg-white dark:bg-white/10 dark:text-white h-12 px-4 focus:ring-2 focus:ring-primary outline-none appearance-none transition-all">
+                  <option class="dark:text-gray-400" value="productivity">Productivity</option>
+                  <option class="dark:text-gray-400" value="business">Business Strategy</option>
+                  <option class="dark:text-gray-400" value="tutorials">Tutorials</option>
+                </select>
+              </div>
+              <div class="space-y-4">
+                <label class="block">
+                  <span class="text-[#111816] dark:text-white text-base font-semibold">Featured Image URL</span>
+                </label>
+                <div class="flex gap-4 items-start">
+                  <div class="flex-1">
+                    <input id="edit-blog-image"
+                      class="w-full rounded-lg border border-[#dbe6e2] dark:border-white/10 bg-white dark:bg-white/10 dark:text-white h-12 px-4 focus:ring-2 focus:ring-primary outline-none transition-all"
+                      type="text" value="https://images.unsplash.com/photo-1484480974693-6ca0a78fb36b" />
+                  </div>
+                  <div
+                    class="w-20 h-12 rounded-lg border border-[#dbe6e2] dark:border-white/10 overflow-hidden flex-shrink-0 bg-gray-100">
+                    <img alt="Thumbnail preview" class="w-full h-full object-cover"
+                      src="https://lh3.googleusercontent.com/aida-public/AB6AXuBX9mEtIC4U1ka15fM9GrDq2VYJHUHhCFloDajitnBLZUMAK4Y5Guld99O78ILnvkzdRkjGdgWMeQGRsnQf87j6sCs0W7ufFbTqF-PRwS8MqXlRKL2LM4hrzm6BMur6F6r7rXW_wuxOnOW80cmu_gWMcR_SPVggmKOB3ieKUz2oFEe-0LfYRBazB3t-TuUsPsiq-heVxCC_DXuW4FlMs5uOzag5RjVIxFiByRYEUtCtV9xCJnnajs2_NzIOQWDB3JCYj5YAAIPlQ2r7" />
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- Right Column -->
+            <div class="flex flex-col h-full">
+              <label class="block mb-2">
+                <span class="text-[#111816] dark:text-white text-base font-semibold">Content Editor</span>
+              </label>
+              <div
+                class="flex-1 min-h-[300px] border border-[#dbe6e2] dark:border-white/10 rounded-lg flex flex-col bg-white dark:bg-white/10">
+                <div class="p-2 border-b border-[#dbe6e2] dark:border-white/10 flex flex-wrap gap-1">
+                  <button type="button" data-fmt="bold"
+                    class="toolbar-btn p-1 hover:bg-gray-100 dark:hover:bg-white/5 rounded text-[#61897c]" title="Bold">
+                    <span class="material-symbols-outlined text-[20px]">format_bold</span>
+                  </button>
+                  <button type="button" data-fmt="italic"
+                    class="toolbar-btn p-1 hover:bg-gray-100 dark:hover:bg-white/5 rounded text-[#61897c]"
+                    title="Italic">
+                    <span class="material-symbols-outlined text-[20px]">format_italic</span>
+                  </button>
+                  <button type="button" data-fmt="list"
+                    class="toolbar-btn p-1 hover:bg-gray-100 dark:hover:bg-white/5 rounded text-[#61897c]"
+                    title="Bullet List">
+                    <span class="material-symbols-outlined text-[20px]">format_list_bulleted</span>
+                  </button>
+                  <button type="button" data-fmt="link"
+                    class="toolbar-btn p-1 hover:bg-gray-100 dark:hover:bg-white/5 rounded text-[#61897c]"
+                    title="Insert Link">
+                    <span class="material-symbols-outlined text-[20px]">link</span>
+                  </button>
+                </div>
+                <div id="edit-blog-editor" contenteditable="true"
+                  class="flex-1 w-full p-4 dark:text-white bg-transparent border-none outline-none focus:ring-0 overflow-y-auto text-base leading-relaxed empty:before:content-[attr(data-placeholder)] empty:before:text-[#61897c]"
+                  data-placeholder="Start writing your article content here..."></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION: Tutorial Video Content -->
+        <div id="content-video" class="hidden">
+          <div class="grid grid-cols-1 gap-6">
+            <div class="space-y-6">
+              <div>
+                <label class="block mb-2">
+                  <span class="text-[#111816] dark:text-white text-base font-semibold">Video Title</span>
+                </label>
+                <input id="edit-video-title"
+                  class="w-full rounded-lg border border-[#dbe6e2] dark:border-white/10 bg-white dark:bg-[#10221c] dark:text-white h-12 px-4 focus:ring-2 focus:ring-primary outline-none transition-all"
+                  type="text" value="Setting Up Your First Automated Workflow" />
+              </div>
+              <div>
+                <label class="block mb-2">
+                  <span class="text-[#111816] dark:text-white text-base font-semibold">Category</span>
+                </label>
+                <select id="edit-video-category"
+                  class="w-full rounded-lg border border-[#dbe6e2] dark:border-white/10 bg-white dark:bg-[#10221c] dark:text-white h-12 px-4 focus:ring-2 focus:ring-primary outline-none appearance-none transition-all">
+                  <option class="dark:text-gray-400" selected="" value="tutorials">Tutorials</option>
+                  <option class="dark:text-gray-400" value="productivity">Productivity</option>
+                </select>
+              </div>
+              <div>
+                <label class="block mb-2">
+                  <span class="text-[#111816] dark:text-white text-base font-semibold">Video Source URL</span>
+                </label>
+                <div class="relative">
+                  <input id="edit-video-url"
+                    class="w-full rounded-lg border border-[#dbe6e2] dark:border-white/10 bg-white dark:bg-[#10221c] dark:text-white h-12 pl-12 pr-4 focus:ring-2 focus:ring-primary outline-none transition-all"
+                    placeholder="YouTube or Vimeo link" type="url"
+                    value="https://www.youtube.com/watch?v=dQw4w9WgXcQ" />
+                  <span
+                    class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-[#61897c]">link</span>
+                </div>
+              </div>
+            </div>
+            <div class="flex flex-col h-full">
+              <label class="block mb-2">
+                <span class="text-[#111816] dark:text-white text-base font-semibold">Video Description</span>
+              </label>
+              <div class="flex-1 flex flex-col">
+                <textarea id="edit-video-description"
+                  class="flex-1 w-full p-4 rounded-lg border border-[#dbe6e2] dark:border-white/10 bg-white dark:bg-[#10221c] dark:text-white focus:ring-2 focus:ring-primary outline-none resize-none text-base leading-relaxed placeholder:text-[#61897c] min-h-[320px]"
+                  placeholder="Provide a detailed description...">
+In this comprehensive tutorial, we cover the essentials...</textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Danger Zone -->
+        <div
+          class="mt-8 p-4 border border-red-100 dark:border-red-900/30 bg-red-50 dark:bg-red-900/10 rounded-lg flex items-center justify-between">
+          <div>
+            <p class="text-red-600 dark:text-red-400 font-bold">
+              Danger Zone
+            </p>
+            <p class="text-[#61897c] text-sm">
+              Deleting this content is permanent.
+            </p>
+          </div>
+          <button id="deleteContentBtn"
+            class="text-red-600 dark:text-red-400 font-bold hover:underline flex items-center gap-1">
+            <span class="material-symbols-outlined text-sm">delete</span>
+            Delete Content
+          </button>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div
+        class="p-6 border-t border-[#dbe6e2] dark:border-white/10 flex items-center justify-end gap-4 bg-gray-50 dark:bg-white/5">
+        <button id="discardChangesBtn" onclick="closeModal()"
+          class="px-6 h-12 rounded-lg text-[#111816] dark:text-white font-semibold hover:bg-gray-200 dark:hover:bg-white/10 transition-colors">
+          Discard Changes
+        </button>
+        <button id="saveChangesBtn"
+          class="px-8 h-12 rounded-lg bg-primary text-[#111816] font-bold shadow-lg shadow-primary/20 hover:brightness-105 active:scale-[0.98] transition-all flex items-center gap-2">
+          <span class="material-symbols-outlined text-[20px]">save</span> Save
+          &amp; Update
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Script for Sidebar, Tabs & Modal Functionality -->
+  <script>
+    const sidebar = document.getElementById("mainSidebar");
+    const toggleBtn = document.getElementById("sidebarToggle");
+
+    // Toggle Sidebar
+    toggleBtn.addEventListener("click", () => {
+      sidebar.classList.toggle("sidebar-collapsed");
+    });
+
+    // Theme Toggle
+    const themeToggleBtn = document.getElementById("themeToggleBtn");
+    const themeIcon = document.getElementById("themeIcon");
+
+    themeToggleBtn.addEventListener("click", () => {
+      const isDark = document.documentElement.classList.toggle("dark");
+      document.documentElement.classList.toggle("light", !isDark);
+      localStorage.setItem("theme", isDark ? "dark" : "light");
+      themeIcon.textContent = isDark ? "dark_mode" : "light_mode";
+    });
+
+    // Update icon on load
+    const savedTheme = localStorage.getItem("theme") || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    themeIcon.textContent = savedTheme === "dark" ? "dark_mode" : "light_mode";
+
+    // Simple Active Tab Highlighting for Sub-Nav
+    const subTabs = document.querySelectorAll("#tabsContainer a");
+    subTabs.forEach((tab) => {
+      tab.addEventListener("click", (e) => {
+        subTabs.forEach((t) => t.classList.remove("active-tab-nav"));
+        tab.classList.add("active-tab-nav");
+      });
+    });
+
+    // ===========================
+    // MODAL & TAB LOGIC
+    // ===========================
+    const modal = document.getElementById("editModal");
+
+    function openModal(type) {
+      modal.classList.remove("hidden");
+      // Automatically switch to the correct tab based on button clicked
+      switchTab(type);
+    }
+
+    function closeModal() {
+      modal.classList.add("hidden");
+    }
+
+    function switchTab(tabName) {
+      // Elements
+      const contentBlog = document.getElementById("content-blog");
+      const contentVideo = document.getElementById("content-video");
+
+      const tabBlog = document.getElementById("tab-blog");
+      const tabVideo = document.getElementById("tab-video");
+
+      const iconBlog = document.getElementById("icon-blog");
+      const iconVideo = document.getElementById("icon-video");
+
+      // Styles
+      const activeClasses = [
+        "border-primary",
+        "text-[#111816]",
+        "dark:text-white",
+      ];
+      const inactiveClasses = [
+        "border-transparent",
+        "text-[#61897c]",
+        "hover:text-[#111816]",
+        "dark:hover:text-white",
+      ];
+
+      function setInactive(tab, icon) {
+        tab.classList.remove(...activeClasses);
+        tab.classList.add(...inactiveClasses);
+        icon.classList.remove("text-primary");
+        icon.classList.add("text-[#61897c]");
+      }
+
+      function setActive(tab, icon) {
+        tab.classList.remove(...inactiveClasses);
+        tab.classList.add(...activeClasses);
+        icon.classList.remove("text-[#61897c]");
+        icon.classList.add("text-primary");
+      }
+
+      if (tabName === "blog") {
+        contentBlog.classList.remove("hidden");
+        contentBlog.classList.add("block");
+        contentVideo.classList.add("hidden");
+        contentVideo.classList.remove("block");
+        setActive(tabBlog, iconBlog);
+        setInactive(tabVideo, iconVideo);
+      } else {
+        contentVideo.classList.remove("hidden");
+        contentVideo.classList.add("block");
+        contentBlog.classList.add("hidden");
+        contentBlog.classList.remove("block");
+        setActive(tabVideo, iconVideo);
+        setInactive(tabBlog, iconBlog);
+      }
+    }
+  </script>
+  <script type="module">
+    const supabaseClient = window.supabaseClient;
+
+    // Helper: Parse Video Source (YouTube/Vimeo)
+    function parseVideoUrl(url) {
+      let videoId = '';
+      let embedUrl = '';
+      let thumbUrl = '';
+
+      if (url.includes('youtube.com') || url.includes('youtu.be')) {
+        const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+        const match = url.match(regExp);
+        if (match && match[2].length == 11) {
+          videoId = match[2];
+          embedUrl = `https://www.youtube.com/embed/${videoId}`;
+          thumbUrl = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
+        }
+      } else if (url.includes('vimeo.com')) {
+        const regExp = /vimeo\.com\/(?:video\/|channels\/|groups\/|album\/\d+\/video\/|ondemand\/\d+\/|)(\d+)(?:$|\/|\?)/;
+        const match = url.match(regExp);
+        if (match) {
+          videoId = match[1];
+          embedUrl = `https://player.vimeo.com/video/${videoId}`;
+          // Vimeo thumbnail requires an API call, using a placeholder or default for now
+          thumbUrl = `https://vumbnail.com/${videoId}.jpg`;
+        }
+      }
+      return { videoId, embedUrl, thumbUrl };
+    }
+
+    // ===== TOAST NOTIFICATION =====
+    function showToast(msg, type = 'success') {
+      const t = document.createElement('div');
+      t.className = `fixed bottom-6 right-6 z-[999] px-5 py-3 rounded-xl text-sm font-bold shadow-2xl transform transition-all duration-300 ${type === 'success' ? 'bg-primary text-sidebar-deep' : 'bg-red-500 text-white'}`;
+      t.textContent = msg;
+      document.body.appendChild(t);
+      setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 3200);
+    }
+
+    // ===== LOADING STATE =====
+    function setLoading(btn, loading) {
+      if (loading) {
+        btn.disabled = true;
+        btn.dataset.orig = btn.innerHTML;
+        btn.innerHTML = `<svg class="animate-spin h-5 w-5 mx-auto" viewBox="0 0 24 24" fill="none"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>`;
+      } else {
+        btn.disabled = false;
+        btn.innerHTML = btn.dataset.orig || '';
+      }
+    }
+
+    // ===== TOOLBAR BUTTONS =====
+    document.querySelectorAll('.toolbar-btn').forEach(btn => {
+      btn.addEventListener('mousedown', (e) => {
+        e.preventDefault(); // Prevent losing focus in contenteditable
+        const fmt = btn.dataset.fmt;
+        if (fmt === 'bold') {
+          document.execCommand('bold', false, null);
+        } else if (fmt === 'italic') {
+          document.execCommand('italic', false, null);
+        } else if (fmt === 'list') {
+          document.execCommand('insertUnorderedList', false, null);
+        } else if (fmt === 'link') {
+          const url = prompt('Enter link URL:');
+          if (url) document.execCommand('createLink', false, url);
+        }
+      });
+    });
+
+    // ===== KPI STATS =====
+    async function fetchKpiStats() {
+      const { data } = await supabaseClient.from('contents').select('type, views_count');
+      if (!data) return;
+      const blogs = data.filter(d => d.type === 'blog').length;
+      const videos = data.filter(d => d.type === 'video').length;
+      const totalViews = data.reduce((s, d) => s + (d.views_count || 0), 0);
+      document.getElementById('kpi-articles').textContent = blogs;
+      document.getElementById('kpi-videos').textContent = videos;
+      document.getElementById('kpi-views').textContent = totalViews >= 1000 ? (totalViews / 1000).toFixed(1) + 'K' : totalViews;
+      document.getElementById('kpi-total').textContent = data.length;
+    }
+
+    // ===== PUBLISH / DRAFT BLOG =====
+    async function submitBlog(status) {
+      const title = document.getElementById('blog-title').value.trim();
+      const category = document.getElementById('blog-category').value;
+      const image = document.getElementById('blog-image').value.trim();
+      const content = document.getElementById('blog-editor').innerHTML.trim();
+      if (!title || !content) { showToast('Please fill out title and content.', 'error'); return; }
+      const btn = status === 'live' ? document.getElementById('publishBlogBtn') : document.getElementById('saveBlogDraftBtn');
+      setLoading(btn, true);
+      const { error } = await supabaseClient.from('contents').insert([{
+        title, category, type: 'blog', featured_image: image, content_body: content, status
+      }]);
+      setLoading(btn, false);
+      if (error) {
+        showToast('Error: ' + error.message, 'error');
+      } else {
+        showToast(status === 'live' ? '✓ Blog published successfully!' : '✓ Draft saved!');
+        document.getElementById('blog-title').value = '';
+        document.getElementById('blog-editor').innerHTML = '';
+        document.getElementById('blog-image').value = '';
+        fetchRecentContent();
+        fetchKpiStats();
+      }
+    }
+    document.getElementById('publishBlogBtn').addEventListener('click', () => submitBlog('live'));
+    document.getElementById('saveBlogDraftBtn').addEventListener('click', () => submitBlog('draft'));
+
+    // ===== UPLOAD / DRAFT VIDEO =====
+    async function submitVideo(status) {
+      const title = document.getElementById('video-title').value.trim();
+      const category = document.getElementById('video-category').value;
+      const url = document.getElementById('video-url').value.trim();
+      const description = document.getElementById('video-description').value.trim();
+      const duration = document.getElementById('video-duration').value.trim();
+      if (!title || !url) { showToast('Please fill out title and video URL.', 'error'); return; }
+      const { videoId, embedUrl, thumbUrl } = parseVideoUrl(url);
+      if (!embedUrl) { showToast('Invalid YouTube/Vimeo URL.', 'error'); return; }
+      const btn = status === 'live' ? document.getElementById('uploadVideoBtn') : document.getElementById('saveVideoDraftBtn');
+      setLoading(btn, true);
+      const { error } = await supabaseClient.from('contents').insert([{
+        title, category, type: 'video',
+        video_url: embedUrl, video_description: description,
+        video_thumbnail: thumbUrl, featured_image: thumbUrl,
+        video_duration: duration || null, status
+      }]);
+      setLoading(btn, false);
+      if (error) {
+        showToast('Error: ' + error.message, 'error');
+      } else {
+        showToast(status === 'live' ? '✓ Video uploaded successfully!' : '✓ Draft saved!');
+        document.getElementById('video-title').value = '';
+        document.getElementById('video-url').value = '';
+        document.getElementById('video-description').value = '';
+        document.getElementById('video-duration').value = '';
+        fetchRecentContent();
+        fetchKpiStats();
+      }
+    }
+    document.getElementById('uploadVideoBtn').addEventListener('click', () => submitVideo('live'));
+    document.getElementById('saveVideoDraftBtn').addEventListener('click', () => submitVideo('draft'));
+
+    // ===== RECENT CONTENT TABLE =====
+    async function fetchRecentContent() {
+      const { data, error } = await supabaseClient
+        .from('contents')
+        .select('*, content_analytics(likes_count, shares_count)')
+        .order('created_at', { ascending: false })
+        .limit(10);
+      if (error) { console.error('Error fetching content:', error); return; }
+      const tbody = document.querySelector('tbody');
+      tbody.innerHTML = '';
+      if (!data || !data.length) {
+        tbody.innerHTML = '<tr><td colspan="8" class="text-center py-10 text-gray-400 text-sm">No content published yet. Use the forms above to create your first post.</td></tr>';
+        return;
+      }
+      data.forEach(item => {
+        const date = new Date(item.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+        const icon = item.type === 'blog' ? 'article' : 'play_circle';
+        const iconColor = item.type === 'blog' ? 'text-green-500' : 'text-blue-500';
+        const analytics = (item.content_analytics && item.content_analytics[0]) || {};
+        const likes = analytics.likes_count ?? 0;
+        const shares = analytics.shares_count ?? 0;
+        const statusClass = item.status === 'live' ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300' : 'bg-gray-100 text-gray-500 dark:bg-white/5 dark:text-gray-400';
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-gray-50 dark:hover:bg-white/5 transition-colors border-b border-gray-100 dark:border-white/10';
+        tr.innerHTML = `
+          <td class="px-6 py-4 text-xs font-semibold dark:text-white">${date}</td>
+          <td class="px-6 py-4"><span class="material-symbols-outlined ${iconColor}">${icon}</span></td>
+          <td class="px-6 py-4 text-sm font-bold max-w-[200px] dark:text-white"><span class="block truncate" title="${item.title}">${item.title}</span></td>
+          <td class="px-6 py-4 text-xs text-gray-500 dark:text-gray-400">${item.category}</td>
+          <td class="px-6 py-4 text-sm font-bold dark:text-white">${(item.views_count || 0).toLocaleString()}</td>
+          <td class="px-6 py-4">
+            <div class="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
+              <span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm">thumb_up</span>${likes}</span>
+              <span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm">share</span>${shares}</span>
+            </div>
+          </td>
+          <td class="px-6 py-4"><span class="px-2 py-1 rounded ${statusClass} text-[10px] font-bold uppercase">${item.status}</span></td>
+          <td class="px-6 py-4">
+            <div class="flex items-center gap-2">
+              <button onclick="window.openEditModal('${item.id}')" class="p-1 text-gray-400 dark:text-white/40 hover:text-blue-500 transition-colors" title="Edit">
+                <span class="material-symbols-outlined text-lg">edit</span>
+              </button>
+              <button onclick="window.deleteContent('${item.id}')" class="p-1 text-gray-400 dark:text-white/40 hover:text-red-500 transition-colors" title="Delete">
+                <span class="material-symbols-outlined text-lg">delete</span>
+              </button>
+            </div>
+          </td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // ===== EDIT MODAL =====
+    let _editingId = null;
+    let _editingType = null;
+
+    window.openEditModal = async (id) => {
+      const { data, error } = await supabaseClient.from('contents').select('*').eq('id', id).single();
+      if (error || !data) { showToast('Could not load content.', 'error'); return; }
+      _editingId = id;
+      _editingType = data.type;
+      switchTab(data.type);
+      if (data.type === 'blog') {
+        document.getElementById('edit-blog-title').value = data.title || '';
+        document.getElementById('edit-blog-category').value = data.category || '';
+        document.getElementById('edit-blog-image').value = data.featured_image || '';
+        document.getElementById('edit-blog-editor').innerHTML = data.content_body || '';
+      } else {
+        document.getElementById('edit-video-title').value = data.title || '';
+        document.getElementById('edit-video-category').value = data.category || '';
+        document.getElementById('edit-video-url').value = data.video_url || '';
+        document.getElementById('edit-video-description').value = data.video_description || '';
+      }
+      document.getElementById('editModal').classList.remove('hidden');
+    };
+
+    document.getElementById('saveChangesBtn').addEventListener('click', async () => {
+      if (!_editingId) return;
+      const btn = document.getElementById('saveChangesBtn');
+      setLoading(btn, true);
+      let updates = {};
+      if (_editingType === 'blog') {
+        updates = {
+          title: document.getElementById('edit-blog-title').value,
+          category: document.getElementById('edit-blog-category').value,
+          featured_image: document.getElementById('edit-blog-image').value,
+          content_body: document.getElementById('edit-blog-editor').innerHTML,
+        };
+      } else {
+        updates = {
+          title: document.getElementById('edit-video-title').value,
+          category: document.getElementById('edit-video-category').value,
+          video_url: document.getElementById('edit-video-url').value,
+          video_description: document.getElementById('edit-video-description').value,
+        };
+      }
+      const { error } = await supabaseClient.from('contents').update(updates).eq('id', _editingId);
+      setLoading(btn, false);
+      if (error) {
+        showToast('Update failed: ' + error.message, 'error');
+      } else {
+        showToast('✓ Content updated successfully!');
+        closeModal();
+        fetchRecentContent();
+      }
+    });
+
+    document.getElementById('deleteContentBtn').addEventListener('click', async () => {
+      if (!_editingId || !confirm('Delete this content permanently?')) return;
+      const { error } = await supabaseClient.from('contents').delete().eq('id', _editingId);
+      if (error) showToast('Delete failed: ' + error.message, 'error');
+      else { showToast('✓ Content deleted.'); closeModal(); fetchRecentContent(); fetchKpiStats(); }
+    });
+
+    window.deleteContent = async (id) => {
+      if (!confirm('Delete this content permanently?')) return;
+      const { error } = await supabaseClient.from('contents').delete().eq('id', id);
+      if (error) showToast(error.message, 'error');
+      else { showToast('✓ Deleted.'); fetchRecentContent(); fetchKpiStats(); }
+    };
+
+    // Init
+    fetchKpiStats();
+    fetchRecentContent();
+  </script>
+</body>
+
+</html>

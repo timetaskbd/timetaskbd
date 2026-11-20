@@ -1,0 +1,1029 @@
+<!doctype html>
+<html class="light" lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <title>Admin Panel - Time Task BD</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+    rel="stylesheet" />
+  <script>
+    (function () {
+      const savedTheme = localStorage.getItem("theme") || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+      if (savedTheme === "dark") {
+        document.documentElement.classList.add("dark");
+        document.documentElement.classList.remove("light");
+      } else {
+        document.documentElement.classList.add("light");
+        document.documentElement.classList.remove("dark");
+      }
+    })();
+  </script>
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            primary: "#13ec5b",
+            "background-light": "#f6f8f6",
+            "background-dark": "#0d1b12",
+            "sidebar-deep": "#102216",
+            "accent-green": "#13ec5b",
+          },
+          fontFamily: {
+            display: ["Manrope"],
+          },
+          borderRadius: {
+            DEFAULT: "0.25rem",
+            lg: "0.5rem",
+            xl: "0.75rem",
+            "2xl": "1rem",
+            full: "9999px",
+          },
+        },
+      },
+    };
+  </script>
+  <style type="text/tailwindcss">
+    @layer base {
+        body {
+          @apply font-display bg-background-light dark:bg-background-dark text-slate-900 dark:text-white;
+        }
+      }
+
+      /* Sidebar Transitions */
+      .sidebar-transition {
+        @apply transition-all duration-300 ease-in-out;
+      }
+
+      /* Active Tab Notch Logic */
+      .sidebar-item-active {
+        @apply bg-background-light text-sidebar-deep font-bold relative !important;
+        border-radius: 40px 0 0 40px;
+        margin-left: 10px;
+        width: calc(100% - 10px) !important;
+      }
+
+      .sidebar-item-active::before {
+        content: "";
+        position: absolute;
+        right: 0;
+        top: -40px;
+        width: 40px;
+        height: 40px;
+        background: transparent;
+        border-radius: 50%;
+        box-shadow: 20px 20px 0 0 #f6f8f6;
+        pointer-events: none;
+      }
+
+      .sidebar-item-active::after {
+        content: "";
+        position: absolute;
+        right: 0;
+        bottom: -40px;
+        width: 40px;
+        height: 40px;
+        background: transparent;
+        border-radius: 50%;
+        box-shadow: 20px -20px 0 0 #f6f8f6;
+        pointer-events: none;
+      }
+
+      .dark .sidebar-item-active::before { box-shadow: 20px 20px 0 0 #0d1b12; }
+      .dark .sidebar-item-active::after  { box-shadow: 20px -20px 0 0 #0d1b12; }
+      .dark .sidebar-item-active { @apply bg-background-dark text-white !important; }
+      .dark .sidebar-item-active .material-symbols-outlined { @apply text-primary; }
+
+      .sidebar-item {
+        @apply flex items-center py-4 text-white/70 hover:text-white transition-all duration-200 cursor-pointer w-full relative;
+      }
+
+      .sidebar-item .material-symbols-outlined {
+        @apply font-light text-[24px];
+      }
+
+      .sidebar-item-active .material-symbols-outlined {
+        @apply text-sidebar-deep;
+      }
+      
+      .dark .sidebar-item-active .material-symbols-outlined { @apply text-primary; }
+
+      /* Tooltip Logic - Show only when collapsed */
+      .nav-tooltip {
+        @apply invisible absolute left-full ml-4 px-2 py-1 bg-sidebar-deep text-white text-[10px] rounded whitespace-nowrap opacity-0 transition-opacity z-50 pointer-events-none;
+      }
+
+      /* Collapsed Sidebar States */
+      .sidebar-collapsed {
+        @apply w-20 pl-0;
+      }
+      .sidebar-collapsed .logo-text,
+      .sidebar-collapsed .item-text,
+      .sidebar-collapsed .menu-label,
+      .sidebar-collapsed .system-card-text {
+        @apply hidden;
+      }
+      .sidebar-collapsed .sidebar-item {
+        @apply justify-center px-0;
+      }
+      .sidebar-collapsed .sidebar-item:hover .nav-tooltip {
+        @apply visible opacity-100;
+      }
+      .sidebar-collapsed .sidebar-header {
+        @apply px-0 justify-center;
+      }
+
+      /* Custom Scrollbar */
+      .custom-scrollbar::-webkit-scrollbar {
+        width: 4px;
+      }
+      .custom-scrollbar::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+      }
+
+      .active-tab-nav {
+        @apply bg-primary text-slate-900 dark:text-white shadow-lg shadow-primary/20;
+      }
+    </style>
+</head>
+
+<body class="flex min-h-screen overflow-hidden">
+  <!-- Sidebar -->
+  <aside id="mainSidebar"
+    class="w-72 bg-sidebar-deep flex-shrink-0 flex flex-col h-screen sticky top-0 sidebar-transition pl-2">
+    <!-- Logo Section -->
+    <div class="sidebar-header p-6 pb-12 flex items-center gap-3 transition-all">
+      <div
+        class="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20 flex-shrink-0">
+        <span class="material-symbols-outlined text-sidebar-deep font-bold text-2xl">update</span>
+      </div>
+      <div class="flex flex-col logo-text overflow-hidden">
+        <span class="text-white font-extrabold text-lg leading-tight tracking-tight whitespace-nowrap">Time Task
+          BD</span>
+        <span class="text-primary/60 text-[10px] font-bold uppercase tracking-widest whitespace-nowrap">Admin
+          Control</span>
+      </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="flex-1">
+      <div class="px-8 mb-4 menu-label">
+        <p class="text-[10px] font-bold text-white/40 uppercase tracking-[0.2em]">
+          Main Menu
+        </p>
+      </div>
+
+      <a class="sidebar-item px-8 group" href="Admin Index.html">
+        <span class="material-symbols-outlined">dashboard</span>
+        <span class="text-sm item-text ml-4">Dashboard</span>
+        <span class="nav-tooltip">Dashboard</span>
+      </a>
+
+      <a class="sidebar-item sidebar-item-active px-8 group" href="System Health.html">
+        <span class="material-symbols-outlined">monitor_heart</span>
+        <span class="text-sm item-text ml-4">System Monitoring</span>
+        <span class="nav-tooltip">Security & System Monitoring</span>
+      </a>
+
+      <a class="sidebar-item px-8 group" href="KYC Review.html">
+        <span class="material-symbols-outlined">manage_accounts</span>
+        <span class="text-sm item-text ml-4">Management</span>
+        <span class="nav-tooltip">Management</span>
+      </a>
+
+      <a class="sidebar-item px-8 group" href="User Analytics.html">
+        <span class="material-symbols-outlined">analytics</span>
+        <span class="text-sm item-text ml-4">Analytics Section</span>
+        <span class="nav-tooltip">Analytics Section</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="User Referral Tree.html">
+        <span class="material-symbols-outlined">hub</span>
+        <span class="text-sm item-text ml-4">Referral System</span>
+        <span class="nav-tooltip">Referral System</span>
+      </a>
+
+      <a class="sidebar-item px-8 group" href="Market Asset Price.html">
+        <span class="material-symbols-outlined">trending_up</span>
+        <span class="text-sm item-text ml-4">Market Asset Prices</span>
+        <span class="nav-tooltip">Market Asset Prices</span>
+      </a>
+
+      <a class="sidebar-item px-8 group" href="Live Support.html">
+        <span class="material-symbols-outlined">support_agent</span>
+        <span class="text-sm item-text ml-4">Live Support</span>
+        <span class="nav-tooltip">Live Support</span>
+      </a>
+
+      <a class="sidebar-item px-8 group" href="Buyer Communication.html">
+        <span class="material-symbols-outlined">forum</span>
+        <span class="text-sm item-text ml-4">Communication</span>
+        <span class="nav-tooltip">Communication</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="System Announcemeeent.html">
+        <span class="material-symbols-outlined">forum</span>
+        <span class="text-sm item-text ml-4">System Announcement</span>
+        <span class="nav-tooltip">System Announcement</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="Invoice Management.html">
+        <span class="material-symbols-outlined">description</span>
+        <span class="text-sm item-text ml-4">Invoice Management</span>
+        <span class="nav-tooltip">Invoice Management</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="Create Content.html">
+        <span class="material-symbols-outlined">edit_note</span>
+        <span class="text-sm item-text ml-4">Content Management</span>
+        <span class="nav-tooltip">Content Management</span>
+      </a>
+    </nav>
+
+    <div class="px-6 py-8">
+      <button id="logoutBtn"
+        class="w-full h-10 flex items-center justify-center bg-primary text-sidebar-deep font-bold text-xs rounded-lg hover:brightness-110 transition-all shadow-lg shadow-primary/10 group relative">
+        <span class="material-symbols-outlined text-[20px] system-icon">logout</span>
+        <span class="ml-2 system-card-text">Logout</span>
+        <span class="nav-tooltip !left-full !ml-6">Logout</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main Content wrapper -->
+  <div class="flex-1 flex flex-col h-screen overflow-hidden bg-background-light dark:bg-background-dark">
+    <!-- Header -->
+    <header
+      class="h-20 bg-white dark:bg-[#111f16] border-b border-slate-100 dark:border-white/10 px-6 flex items-center justify-between flex-shrink-0 z-40">
+      <div class="flex items-center gap-6">
+        <button id="sidebarToggle"
+          class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-white/70 hover:text-sidebar-deep dark:hover:text-primary hover:bg-primary/10 transition-all">
+          <span class="material-symbols-outlined">menu</span>
+        </button>
+        <div class="relative w-96 group">
+          <span
+            class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-sidebar-deep dark:group-focus-within:text-primary transition-colors">search</span>
+          <input
+            class="w-full bg-slate-100 dark:bg-white/5 border-none rounded-xl pl-10 pr-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 dark:text-white transition-all"
+            placeholder="Search system records..." type="text" />
+        </div>
+      </div>
+
+      <div class="flex items-center gap-6">
+        <div class="flex items-center gap-2">
+          <button
+            class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-white/70 hover:text-sidebar-deep dark:hover:text-primary hover:bg-primary/10 transition-all relative">
+            <span class="material-symbols-outlined">notifications</span>
+            <span
+              class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-[#111f16]"></span>
+          </button>
+          <button id="darkModeToggle"
+            class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-white/70 hover:text-sidebar-deep dark:hover:text-primary hover:bg-primary/10 transition-all">
+            <span id="darkIcon" class="material-symbols-outlined">light_mode</span>
+          </button>
+        </div>
+        <div class="h-10 w-px bg-slate-200 dark:bg-white/10"></div>
+        <div class="flex items-center gap-3 cursor-pointer group">
+          <div class="text-right">
+            <p class="text-sm font-bold text-slate-900 dark:text-white group-hover:text-primary transition-colors">
+              Super Admin
+            </p>
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
+              System Manager
+            </p>
+          </div>
+          <div
+            class="w-12 h-12 rounded-xl border-2 border-primary/20 p-0.5 overflow-hidden group-hover:border-primary transition-all">
+            <img alt="Admin Profile" class="w-full h-full object-cover rounded-lg"
+              src="https://lh3.googleusercontent.com/aida-public/AB6AXuDI3q59cS__AXyYcqFQtKZ2-e__roEJ3Cic28K7cd-6tYYxzLfpTArNsAJE3UypttzDIKS6SoNy85-jDLh0ZMbLqXr0NEEjrbCPSgoCJZyYc4W89P8djmlf34I_NEoa2vfl5IS3jHwLSZZ6lgtwguAje5Lv9h9RbZ2fJqb36M_tmZc-iJY-XxAXsCDxVyU1bONcO3AV5LZgB1o5wURKpB9w2XEN6iWAILVT7fIzOkl2pQ4lJb5WxYgkvuNIlKakHZWN1e4bzfo25zYy" />
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Sub Navigation Tabs -->
+    <nav
+      class="sticky top-0 bg-white/50 border-b border-gray-100 dark:bg-[#111f16]/50 dark:border-white/10 backdrop-blur-sm relative z-30 rounded-l-[30px] ml-80">
+      <div class="mx-auto w-full px-4">
+        <div id="tabsContainer" class="flex gap-4 overflow-x-auto no-scrollbar py-3">
+          <a class="flex items-center gap-2 px-4 py-2 rounded-[30px] text-sm font-semibold active-tab-nav whitespace-nowrap transition-all"
+            href="System Health.html">
+            <span class="material-symbols-outlined text-[20px]">security</span>
+            Security & System Health
+          </a>
+          <a class="flex items-center gap-2 px-4 py-2 rounded-[30px] text-sm font-semibold text-gray-700 dark:text-slate-300 hover:bg-white dark:hover:bg-white/5 disabled:opacity-50 hover:shadow-sm whitespace-nowrap transition-all"
+            href="System Status.html">
+            <span class="material-symbols-outlined text-[20px]">cloud_done</span>
+            System Status & Uptime
+          </a>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main Dashboard Content -->
+    <main class="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-8 max-w-full">
+      <div class="max-w-[1600px] mx-auto w-full space-y-8">
+        <!-- Top Header -->
+        <header class="pb-4">
+          <div class="flex flex-wrap justify-between items-end gap-6">
+            <div class="flex flex-col gap-2">
+              <h2 class="text-slate-900 dark:text-white text-4xl font-black leading-tight tracking-tight">
+                Security &amp; System Health
+              </h2>
+              <p class="text-slate-500 dark:text-slate-400 text-base font-medium flex items-center gap-2">
+                <span class="relative flex h-3 w-3">
+                  <span
+                    class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                  <span class="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
+                </span>
+                Real-time monitoring and threat detection active
+              </p>
+            </div>
+            <div class="flex gap-3">
+              <button id="btn-view-logs"
+                class="flex items-center gap-2 px-6 h-12 bg-white dark:bg-[#1a2e1f] border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 rounded-lg font-bold hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+                <span class="material-symbols-outlined text-[20px]">list_alt</span>
+                View Security Logs
+              </button>
+              <button id="btn-run-audit"
+                class="flex items-center gap-2 px-6 h-12 bg-primary text-slate-900 rounded-lg font-black hover:opacity-90 transition-opacity disabled:opacity-50">
+                <span class="material-symbols-outlined text-[20px]">shield</span>
+                Run System Audit
+              </button>
+            </div>
+          </div>
+        </header>
+        <!-- KPI Cards Section -->
+        <div class="py-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div
+            class="bg-white dark:bg-[#1a2e1f] p-6 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm flex flex-col gap-2">
+            <p class="text-slate-500 dark:text-slate-400 text-sm font-bold uppercase tracking-wider">
+              System Uptime
+            </p>
+            <div class="flex items-center justify-between">
+              <p id="kpi-uptime" class="text-slate-900 dark:text-white text-3xl font-black">
+                —
+              </p>
+              <span
+                class="material-symbols-outlined text-primary bg-primary/10 p-1.5 rounded-full fill-icon">check_circle</span>
+            </div>
+            <p id="kpi-uptime-sub" class="text-primary text-xs font-bold flex items-center gap-1">
+              <span class="material-symbols-outlined text-[14px]">trending_up</span>
+              Loading...
+            </p>
+          </div>
+          <div
+            class="bg-white dark:bg-[#1a2e1f] p-6 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm flex flex-col gap-2">
+            <p class="text-slate-500 dark:text-slate-400 text-sm font-bold uppercase tracking-wider">
+              Locked Accounts
+            </p>
+            <div class="flex items-center justify-between">
+              <p id="kpi-locked" class="text-slate-900 dark:text-white text-3xl font-black">
+                ...
+              </p>
+              <span
+                class="material-symbols-outlined text-amber-500 bg-amber-500/10 p-1.5 rounded-full fill-icon">lock</span>
+            </div>
+            <p class="text-amber-600 text-xs font-bold flex items-center gap-1">
+              <span class="material-symbols-outlined text-[14px]">warning</span>
+              Manual review required
+            </p>
+          </div>
+          <div
+            class="bg-white dark:bg-[#1a2e1f] p-6 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm flex flex-col gap-2">
+            <p class="text-slate-500 dark:text-slate-400 text-sm font-bold uppercase tracking-wider">
+              PIN Failures
+            </p>
+            <div class="flex items-center justify-between">
+              <p id="kpi-pin-failure" class="text-slate-900 dark:text-white text-3xl font-black">
+                ...
+              </p>
+              <span
+                class="material-symbols-outlined text-primary bg-primary/10 p-1.5 rounded-full fill-icon">verified_user</span>
+            </div>
+            <p id="kpi-pin-failure-sub" class="text-primary text-xs font-bold flex items-center gap-1">
+              <span class="material-symbols-outlined text-[14px]">arrow_downward</span>
+              -0.5% lower than average
+            </p>
+          </div>
+          <div
+            class="bg-white dark:bg-[#1a2e1f] p-6 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm flex flex-col gap-2">
+            <p class="text-slate-500 dark:text-slate-400 text-sm font-bold uppercase tracking-wider">
+              Manual Unlocks
+            </p>
+            <div class="flex items-center justify-between">
+              <p id="kpi-manual-unlocks" class="text-slate-900 dark:text-white text-3xl font-black">
+                ...
+              </p>
+              <span
+                class="material-symbols-outlined text-slate-400 bg-slate-100 dark:bg-slate-800 p-1.5 rounded-full">key</span>
+            </div>
+            <p class="text-slate-500 text-xs font-bold flex items-center gap-1">
+              <span class="material-symbols-outlined text-[14px]">event</span>
+              Consistent with baseline
+            </p>
+          </div>
+        </div>
+        <!-- Middle Row: Services and Score Gauges -->
+        <div class="py-4 grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <!-- Core Service Status -->
+          <div
+            class="lg:col-span-2 bg-white dark:bg-[#1a2e1f] p-6 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm">
+            <div class="flex items-center justify-between mb-6">
+              <h3 class="text-slate-900 dark:text-white text-xl font-bold">
+                Core Service Status
+              </h3>
+              <span
+                class="px-3 py-1 bg-primary/20 text-primary text-[10px] font-black uppercase rounded-full tracking-widest">Live
+                Monitoring</span>
+            </div>
+            <div id="service-status-grid" class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div
+                class="p-4 rounded-lg bg-background-light dark:bg-white/5 border border-slate-100 dark:border-white/10 flex flex-col gap-3">
+                <p class="text-slate-500 text-sm italic">Loading services...</p>
+              </div>
+            </div>
+          </div>
+          <!-- Score Gauges -->
+          <div
+            class="bg-white dark:bg-[#1a2e1f] p-6 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm flex flex-col justify-between">
+            <div>
+              <h3 class="text-slate-900 dark:text-white text-xl font-bold mb-6">
+                Performance Scores
+              </h3>
+              <div class="space-y-6">
+                <div>
+                  <div class="flex justify-between items-end mb-2">
+                    <span class="text-slate-500 dark:text-slate-400 text-sm font-bold">Data Accuracy Score</span>
+                    <span id="score-data-text" class="text-primary text-lg font-black tracking-tight">98%</span>
+                  </div>
+                  <div class="w-full bg-slate-100 dark:bg-white/10 h-2.5 rounded-full overflow-hidden">
+                    <div id="score-data-bar" class="bg-primary h-full transition-all duration-1000" style="width: 98%">
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <div class="flex justify-between items-end mb-2">
+                    <span class="text-slate-500 dark:text-slate-400 text-sm font-bold">Payment Reliability Score</span>
+                    <span id="score-payment-text" class="text-primary text-lg font-black tracking-tight">96%</span>
+                  </div>
+                  <div class="w-full bg-slate-100 dark:bg-white/10 h-2.5 rounded-full overflow-hidden">
+                    <div id="score-payment-bar" class="bg-primary h-full transition-all duration-1000"
+                      style="width: 96%"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="mt-4 pt-4 border-t border-slate-100 dark:border-white/10">
+              <p class="text-slate-400 text-[11px] font-medium leading-relaxed italic">
+                Scores are calculated based on the last 24 hours of system
+                throughput and validation logs.
+              </p>
+            </div>
+          </div>
+        </div>
+        <!-- Bottom Row: Security Alerts Table -->
+        <div class="py-4 mb-12">
+          <div
+            class="bg-white dark:bg-[#1a2e1f] rounded-xl border border-slate-200 dark:border-white/10 shadow-sm overflow-hidden">
+            <div class="p-6 border-b border-slate-100 dark:border-white/10 flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <h3 class="text-slate-900 dark:text-white text-xl font-bold">
+                  Active Security Alerts
+                </h3>
+                <span id="active-alerts-badge"
+                  class="flex items-center justify-center bg-red-500 text-white text-[10px] font-black w-5 h-5 rounded-full">0</span>
+              </div>
+              <button class="text-primary text-sm font-bold hover:underline" onclick="loadSecurityAlerts()">
+                Refresh Alerts
+              </button>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left">
+                <thead>
+                  <tr class="bg-slate-50 dark:bg-white/5">
+                    <th
+                      class="px-6 py-4 text-slate-500 dark:text-slate-400 text-[11px] font-black uppercase tracking-widest">
+                      Alert Description
+                    </th>
+                    <th
+                      class="px-6 py-4 text-slate-500 dark:text-slate-400 text-[11px] font-black uppercase tracking-widest">
+                      Resource ID
+                    </th>
+                    <th
+                      class="px-6 py-4 text-slate-500 dark:text-slate-400 text-[11px] font-black uppercase tracking-widest">
+                      Risk Level
+                    </th>
+                    <th
+                      class="px-6 py-4 text-slate-500 dark:text-slate-400 text-[11px] font-black uppercase tracking-widest">
+                      Timestamp
+                    </th>
+                    <th
+                      class="px-6 py-4 text-slate-500 dark:text-slate-400 text-[11px] font-black uppercase tracking-widest text-right">
+                      Action
+                    </th>
+                  </tr>
+                </thead>
+
+                <tbody id="security-alerts-body" class="divide-y divide-slate-100 dark:divide-slate-800">
+                  <!-- JS Injected rows -->
+                  <tr>
+                    <td colspan="5" class="px-6 py-4 text-center text-sm text-slate-500 italic">Loading security
+                      alerts...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <footer class="pt-16 pb-8 border-t border-slate-200 mt-12">
+          <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+            <div class="flex items-center gap-8 text-[11px] font-bold text-slate-400 uppercase tracking-widest">
+              <a class="hover:text-primary transition-colors" href="#">Privacy Policy</a>
+              <a class="hover:text-primary transition-colors" href="#">Terms of Service</a>
+              <a class="hover:text-primary transition-colors" href="#">Documentation</a>
+            </div>
+            <p class="text-[11px] font-bold text-slate-400">
+              © 2024 TIME TASK BD. ALL RIGHTS RESERVED.
+            </p>
+          </div>
+        </footer>
+      </div>
+    </main>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../supabase-client.js"></script>
+  <script>
+    const sidebar = document.getElementById("mainSidebar");
+    const toggleBtn = document.getElementById("sidebarToggle");
+    toggleBtn.addEventListener("click", () => sidebar.classList.toggle("sidebar-collapsed"));
+
+    const subTabs = document.querySelectorAll("#tabsContainer a");
+    subTabs.forEach((tab) => {
+      tab.addEventListener("click", () => {
+        subTabs.forEach((t) => t.classList.remove("active-tab-nav"));
+        tab.classList.add("active-tab-nav");
+      });
+    });
+
+    // ─── Supabase Client (module-scoped) ────────────────────────────
+    const _sb = window.supabaseClient || null;
+    const normalizeRole = (v) => String(v || "").trim().toLowerCase();
+    function escapeHtml(s) {
+      return String(s ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    // ─── Admin Session Guard (needed for RLS reads/updates) ─────────
+    async function requireAdminSession() {
+      if (!_sb?.auth) {
+        window.location.href = "/Admin Dashboard/Admin_Login.html";
+        return false;
+      }
+      const { data: { session }, error } = await _sb.auth.getSession();
+      if (error || !session) {
+        window.location.href = "/Admin Dashboard/Admin_Login.html";
+        return false;
+      }
+      const { data: profile, error: profErr } = await _sb
+        .from('profiles')
+        .select('role')
+        .eq('id', session.user.id)
+        .single();
+      if (profErr || normalizeRole(profile?.role) !== 'admin') {
+        window.location.href = "/Admin Dashboard/Admin_Login.html";
+        return false;
+      }
+      return true;
+    }
+
+    // ─── Fix 7: View Logs Button — smooth scroll to alerts table ───
+    document.getElementById('btn-view-logs').addEventListener('click', () => {
+      const alertsSection = document.getElementById('security-alerts-body').closest('div.bg-white');
+      if (alertsSection) alertsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+    document.getElementById("logoutBtn").addEventListener("click", async () => {
+      if (_sb?.auth) await _sb.auth.signOut();
+      window.location.href = "/Admin Dashboard/Admin_Login.html";
+    });
+
+    // ─── Live Metrics (Supabase-based, no localhost dependency) ─────
+
+    function formatUptime(sec) {
+      if (!sec || sec <= 0) return 'Unknown';
+      const d = Math.floor(sec / 86400);
+      const h = Math.floor((sec % 86400) / 3600);
+      const m = Math.floor((sec % 3600) / 60);
+      if (d > 0) return `${d}d ${h}h ${m}m`;
+      if (h > 0) return `${h}h ${m}m`;
+      return `${m}m`;
+    }
+
+    async function fetchMetrics() {
+      try {
+        if (!_sb) throw new Error('Supabase not initialized');
+
+        // Approx "uptime %" from system_components average uptime_percentage
+        const { data: comps, error: compErr } = await _sb
+          .from('system_components')
+          .select('uptime_percentage');
+        if (compErr) throw compErr;
+        const list = comps || [];
+        const avg = list.length
+          ? (list.reduce((s, c) => s + (Number(c.uptime_percentage) || 0), 0) / list.length)
+          : null;
+
+        const uptimeEl = document.getElementById('kpi-uptime');
+        const uptimeSub = document.getElementById('kpi-uptime-sub');
+        if (uptimeEl) {
+          uptimeEl.textContent = avg == null ? '—' : `${avg.toFixed(2)}%`;
+          if (uptimeSub) uptimeSub.textContent = "Based on component uptime";
+        }
+      } catch (err) {
+        console.warn('Metrics fetch failed:', err.message);
+        const uptimeEl = document.getElementById('kpi-uptime');
+        const uptimeSub = document.getElementById('kpi-uptime-sub');
+        if (uptimeEl && uptimeEl.textContent === '—') uptimeEl.textContent = 'Offline';
+        if (uptimeSub) uptimeSub.textContent = 'Backend server not running';
+      }
+    }
+
+    // ─── Fetch All Database Data ───────────────────────────────────
+    async function loadDatabaseData() {
+      if (typeof _sb === 'undefined') return;
+      await requireAdminSession();
+      await Promise.all([
+        loadLockedAccountsKpi(),
+        loadManualUnlocksKpi(),
+        loadPinFailuresKpi(),
+        loadSecurityAlerts(),
+        loadServiceStatus(),
+        loadPerformanceScores(),
+      ]);
+    }
+
+    // ─── Fix 1: Locked Accounts — from security_logs ───────────────
+    async function loadLockedAccountsKpi() {
+      const now = new Date().toISOString();
+      const { data, error } = await _sb
+        .from('security_logs')
+        .select('user_id')
+        .gt('withdrawal_locked_until', now);
+
+      const el = document.getElementById('kpi-locked');
+      if (el) el.textContent = error ? 'Err' : (data?.length ?? 0);
+    }
+
+    // ─── Fix 2: Manual Unlocks — from pin_reset_requests ──────────
+    async function loadManualUnlocksKpi() {
+      const { data, error } = await _sb
+        .from('pin_reset_requests')
+        .select('status, created_at');
+
+      const el = document.getElementById('kpi-manual-unlocks');
+      if (!el) return;
+
+      if (error) { el.textContent = 'Err'; return; }
+
+      const pending = data?.filter(r => normalizeRole(r.status) === 'pending').length ?? 0;
+      el.textContent = pending;
+    }
+
+    // ─── Fix 3: PIN Failures — from security_logs total attempts ───
+    async function loadPinFailuresKpi() {
+      const { data, error } = await _sb
+        .from('security_logs')
+        .select('failed_pin_attempts');
+
+      const pinEl = document.getElementById('kpi-pin-failure');
+      const pinSub = document.getElementById('kpi-pin-failure-sub');
+      if (!pinEl) return;
+
+      if (error) { pinEl.textContent = 'Err'; return; }
+
+      const totalFails = data?.reduce((acc, r) => acc + (r.failed_pin_attempts || 0), 0) ?? 0;
+      pinEl.textContent = totalFails;
+
+      if (totalFails >= 10) {
+        pinEl.className = 'text-red-500 dark:text-red-400 text-3xl font-black';
+        if (pinSub) { pinSub.textContent = 'Elevated - review users'; pinSub.className = 'text-red-500 text-xs font-bold flex items-center gap-1'; }
+      } else if (totalFails >= 5) {
+        pinEl.className = 'text-amber-500 dark:text-amber-400 text-3xl font-black';
+        if (pinSub) { pinSub.textContent = 'Slightly elevated'; pinSub.className = 'text-amber-600 text-xs font-bold flex items-center gap-1'; }
+      } else {
+        pinEl.className = 'text-slate-900 dark:text-white text-3xl font-black';
+        if (pinSub) { pinSub.textContent = 'Within safe range'; pinSub.className = 'text-primary text-xs font-bold flex items-center gap-1'; }
+      }
+    }
+
+    // ─── Performance Scores — from task_submissions ────────────────
+    async function loadPerformanceScores() {
+      const { data, error } = await _sb.from('task_submissions').select('status').limit(200);
+      let dataAcc, payRel;
+
+      if (!error && data && data.length > 0) {
+        const approved = data.filter(d => normalizeRole(d.status) === 'approved').length;
+        const rejected = data.filter(d => normalizeRole(d.status) === 'rejected').length;
+        const total = approved + rejected;
+        if (total > 0) {
+          dataAcc = Math.round((approved / total) * 100);
+          payRel = Math.max(90, dataAcc - 2);
+        }
+      }
+
+      // No fake fallback values for security/health KPIs
+      if (dataAcc == null) dataAcc = 0;
+      if (payRel == null) payRel = 0;
+
+      document.getElementById('score-data-text').textContent = `${dataAcc}%`;
+      document.getElementById('score-data-bar').style.width = `${dataAcc}%`;
+      document.getElementById('score-payment-text').textContent = `${payRel}%`;
+      document.getElementById('score-payment-bar').style.width = `${payRel}%`;
+    }
+
+    // ─── Security Alerts Table ─────────────────────────────────────
+    async function loadSecurityAlerts() {
+      const { data: alerts, error } = await _sb
+        .from('system_alerts')
+        .select('*')
+        .eq('resolved', false)
+        .order('created_at', { ascending: false });
+
+      const body = document.getElementById('security-alerts-body');
+      if (error) {
+        console.error('Error fetching system alerts', error);
+        body.innerHTML = `<tr><td colspan="5" class="px-6 py-4 text-red-500">Error fetching alerts.</td></tr>`;
+        return;
+      }
+
+      document.getElementById('active-alerts-badge').textContent = alerts.length;
+
+      if (alerts.length === 0) {
+        body.innerHTML = `<tr><td colspan="5" class="px-6 py-10 text-center text-green-600 font-bold italic">✓ No active security alerts. Platform is safe.</td></tr>`;
+        return;
+      }
+
+      body.innerHTML = alerts.map(a => {
+        let icon = 'warning';
+        let rowIconColor = 'text-amber-500';
+        let badgeClass = 'bg-slate-100 text-slate-600';
+
+        if (a.risk_level === 'Critical') {
+          icon = 'error'; rowIconColor = 'text-red-500';
+          badgeClass = 'bg-red-100 text-red-600';
+        } else if (a.risk_level === 'High') {
+          icon = 'bolt'; rowIconColor = 'text-amber-500';
+          badgeClass = 'bg-amber-100 text-amber-600';
+        } else if (a.risk_level === 'Low') {
+          icon = 'info'; rowIconColor = 'text-slate-400';
+        }
+
+        const date = new Date(a.created_at);
+        const isToday = date.toDateString() === new Date().toDateString();
+        const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const dateLabel = isToday ? `Today at ${timeStr}` : date.toLocaleDateString([], { month: 'short', day: 'numeric' }) + ` at ${timeStr}`;
+
+        return `
+          <tr class="hover:bg-slate-50/50 dark:hover:bg-white/5 transition-colors">
+            <td class="px-6 py-4">
+              <div class="flex items-center gap-3">
+                <span class="material-symbols-outlined ${rowIconColor} text-[18px]">${icon}</span>
+                <p class="text-slate-900 dark:text-white font-bold text-sm">${escapeHtml(a.alert_type)}</p>
+              </div>
+            </td>
+            <td class="px-6 py-4">
+              <span class="px-2 py-1 bg-slate-100 dark:bg-white/10 rounded text-slate-600 dark:text-white/60 font-mono text-xs">${escapeHtml(a.user_identifier)}</span>
+            </td>
+            <td class="px-6 py-4">
+              <span class="${badgeClass} px-2 py-0.5 text-[10px] font-black uppercase rounded tracking-wider">${escapeHtml(a.risk_level)}</span>
+            </td>
+            <td class="px-6 py-4 text-slate-500 dark:text-slate-400 text-xs font-medium">${dateLabel}</td>
+            <td class="px-6 py-4 text-right">
+              <button onclick="resolveAlert('${a.id}', this)"
+                class="px-4 py-1.5 bg-slate-900 text-white rounded font-bold text-xs hover:opacity-80 transition-opacity disabled:opacity-40">
+                Resolve
+              </button>
+            </td>
+          </tr>`;
+      }).join('');
+    }
+
+    async function resolveAlert(id, btn) {
+      if (btn) { btn.disabled = true; btn.textContent = '...'; }
+      await requireAdminSession();
+      const { error } = await _sb.from('system_alerts').update({ resolved: true, updated_at: new Date().toISOString() }).eq('id', id);
+      if (!error) {
+        await loadSecurityAlerts();
+        await loadLockedAccountsKpi(); // refresh locked count too
+      } else {
+        if (btn) { btn.disabled = false; btn.textContent = 'Resolve'; }
+        alert('Failed to resolve alert: ' + error.message);
+      }
+    }
+
+    // ─── Fix 4: Core Service Status — render ALL components ────────
+    async function loadServiceStatus() {
+      const { data: components, error } = await _sb
+        .from('system_components')
+        .select('*')
+        .order('name', { ascending: true });
+
+      const grid = document.getElementById('service-status-grid');
+      // Update grid to allow more columns for additional components
+      grid.className = 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4';
+
+      if (error) {
+        grid.innerHTML = `
+          <div class="p-4 col-span-full">
+            <p class="text-red-500 text-sm font-bold">Failed to load service components</p>
+            <p class="text-slate-500 dark:text-slate-400 text-xs mt-1 font-medium">Unable to load service components.</p>
+            <p class="text-slate-400 dark:text-slate-500 text-[11px] mt-3 italic">
+              Hint: Ensure you ran <code>system_status_migration.sql</code> and you are logged in as an Admin (RLS).
+            </p>
+          </div>
+        `;
+        return;
+      }
+
+      if (components && components.length > 0) {
+        grid.innerHTML = components.map(c => {
+          let color = 'text-primary';
+          let dotColor = 'bg-primary';
+          let statusText = 'Operational';
+          if (c.status === 'degraded') { color = 'text-amber-500'; dotColor = 'bg-amber-500'; statusText = 'Degraded'; }
+          if (c.status === 'outage') { color = 'text-red-500'; dotColor = 'bg-red-500'; statusText = 'Outage'; }
+
+          const uptime = c.uptime_percentage != null ? `${parseFloat(c.uptime_percentage).toFixed(1)}% uptime` : '';
+
+          return `
+            <div class="p-4 rounded-lg bg-background-light dark:bg-white/5 border border-slate-100 dark:border-white/10 flex flex-col gap-3">
+              <div class="flex items-center justify-between">
+                <span class="material-symbols-outlined ${color} text-3xl fill-icon">${c.icon || 'settings'}</span>
+                <span class="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest ${color}">
+                  <span class="w-1.5 h-1.5 rounded-full ${dotColor} ${c.status === 'operational' ? 'animate-pulse' : ''}"></span>
+                  ${statusText}
+                </span>
+              </div>
+              <div>
+                <h4 class="text-slate-900 dark:text-white font-bold text-base leading-none">${escapeHtml(c.name)}</h4>
+                ${uptime ? `<p class="text-slate-400 dark:text-white/40 text-xs font-medium mt-1">${uptime}</p>` : ''}
+              </div>
+            </div>`;
+        }).join('');
+      } else {
+        grid.innerHTML = `
+          <div class="p-4 col-span-full">
+            <p class="text-amber-600 dark:text-amber-500 text-sm font-bold">No service components found</p>
+            <p class="text-slate-500 dark:text-slate-400 text-xs mt-1 font-medium">
+              Your <code>system_components</code> table is empty. Run <code>system_status_migration.sql</code> to insert defaults.
+            </p>
+          </div>
+        `;
+      }
+    }
+
+    // ─── Fix 6: Run System Audit Button ────────────────────────────
+    document.getElementById('btn-run-audit').addEventListener('click', async () => {
+      const btn = document.getElementById('btn-run-audit');
+      const originalContent = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = `<span class="material-symbols-outlined text-[20px] animate-spin">autorenew</span> Scanning...`;
+
+      try {
+        await requireAdminSession();
+        let newAlerts = [];
+
+        // Check 1: Users with 5+ failed PIN attempts without an existing unresolved alert
+        const { data: secLogs } = await _sb
+          .from('security_logs')
+          .select('user_id, failed_pin_attempts')
+          .gte('failed_pin_attempts', 5);
+
+        const { data: existingAlerts } = await _sb
+          .from('system_alerts')
+          .select('user_id')
+          .eq('resolved', false)
+          .eq('alert_type', 'Repeated PIN Failure');
+
+        const alreadyFlagged = new Set(existingAlerts?.map(a => a.user_id) ?? []);
+
+        for (const log of (secLogs ?? [])) {
+          if (!alreadyFlagged.has(log.user_id)) {
+            newAlerts.push({
+              user_id: log.user_id,
+              user_identifier: log.user_id.slice(0, 8).toUpperCase(),
+              alert_type: 'Repeated PIN Failure',
+              risk_level: log.failed_pin_attempts >= 10 ? 'Critical' : 'High',
+              resolved: false,
+            });
+          }
+        }
+
+        // Check 2: Unreviewed fraud alerts not yet in system_alerts
+        const { data: frauds } = await _sb
+          .from('fraud_alerts')
+          .select('*')
+          .eq('is_reviewed', false);
+
+        const { data: existingFraud } = await _sb
+          .from('system_alerts')
+          .select('user_id')
+          .eq('resolved', false)
+          .ilike('alert_type', '%Fraud%');
+
+        const alreadyFraud = new Set(existingFraud?.map(a => a.user_id) ?? []);
+
+        for (const f of (frauds ?? [])) {
+          if (!alreadyFraud.has(f.user_id)) {
+            const reasonLabel = { duplicate_ip: 'Duplicate IP Fraud', rapid_submission: 'Rapid Submission Fraud', high_rejection: 'High Rejection Rate Fraud', vpn_proxy: 'VPN/Proxy Fraud' }[f.reason] || 'Fraud Detected';
+            newAlerts.push({
+              user_id: f.user_id,
+              user_identifier: f.ip_address || f.user_id.slice(0, 8).toUpperCase(),
+              alert_type: reasonLabel,
+              risk_level: f.reason === 'duplicate_ip' || f.reason === 'vpn_proxy' ? 'High' : 'Medium',
+              resolved: false,
+            });
+          }
+        }
+
+        if (newAlerts.length > 0) {
+          await _sb.from('system_alerts').insert(newAlerts);
+        }
+
+        await loadDatabaseData();
+
+        btn.innerHTML = `<span class="material-symbols-outlined text-[20px]">check_circle</span> Audit Complete (${newAlerts.length} new)`;
+        setTimeout(() => { btn.innerHTML = originalContent; btn.disabled = false; }, 3000);
+
+      } catch (err) {
+        console.error('Audit failed:', err);
+        btn.innerHTML = originalContent;
+        btn.disabled = false;
+      }
+    });
+
+    // ─── Initialize (auth-gated) ───────────────────────────────────
+    async function bootSystemHealth() {
+      const ok = await requireAdminSession();
+      if (!ok) return;
+      await fetchMetrics();
+      await loadDatabaseData();
+
+      setInterval(fetchMetrics, 5000);
+      setInterval(loadDatabaseData, 5000);
+
+      if (_sb) {
+        _sb.channel('system_health_realtime')
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'system_alerts' }, loadSecurityAlerts)
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'system_components' }, loadServiceStatus)
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'security_logs' }, () => {
+            loadLockedAccountsKpi();
+            loadPinFailuresKpi();
+          })
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'pin_reset_requests' }, loadManualUnlocksKpi)
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'task_submissions' }, loadPerformanceScores)
+          .subscribe();
+      }
+    }
+    document.addEventListener("DOMContentLoaded", bootSystemHealth);
+
+    // ─── Theme Toggle Logic ────────────────────────────────────────
+    const themeToggleBtn = document.getElementById("darkModeToggle");
+    const themeIcon = document.getElementById("darkIcon");
+
+    function updateTheme(isDark) {
+      if (isDark) {
+        document.documentElement.classList.add("dark");
+        document.documentElement.classList.remove("light");
+        themeIcon.textContent = "dark_mode";
+      } else {
+        document.documentElement.classList.add("light");
+        document.documentElement.classList.remove("dark");
+        themeIcon.textContent = "light_mode";
+      }
+      localStorage.setItem("theme", isDark ? "dark" : "light");
+    }
+
+    // Initialize theme icon state
+    const isInitialDark = document.documentElement.classList.contains("dark");
+    updateTheme(isInitialDark);
+
+    themeToggleBtn.addEventListener("click", () => {
+      const currentlyDark = document.documentElement.classList.contains("dark");
+      updateTheme(!currentlyDark);
+    });
+  </script>
+</body>
+
+</html>

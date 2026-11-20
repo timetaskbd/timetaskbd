@@ -1,0 +1,1263 @@
+<!doctype html>
+<html class="light" lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <title>User Onboarding - Time Task BD</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;display=swap"
+    rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+    rel="stylesheet" />
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            primary: "#13ec5b",
+            "background-light": "#f6f8f6",
+            "background-dark": "#102216",
+          },
+          fontFamily: {
+            display: ["Manrope", "sans-serif"],
+          },
+          borderRadius: {
+            DEFAULT: "0.25rem",
+            lg: "0.5rem",
+            xl: "0.75rem",
+            full: "9999px",
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    body {
+      font-family: "Manrope", sans-serif;
+    }
+
+    .material-symbols-outlined {
+      font-variation-settings:
+        "FILL" 0,
+        "wght" 400,
+        "GRAD" 0,
+        "opsz" 24;
+    }
+
+    .fill-icon {
+      font-variation-settings:
+        "FILL" 1,
+        "wght" 400,
+        "GRAD" 0,
+        "opsz" 24;
+    }
+
+    /* Smooth Transition Animations */
+    .step-wrapper {
+      display: none;
+      /* Hidden by default */
+      animation: fadeInUp 0.5s ease-out forwards;
+    }
+
+    .step-wrapper.active {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  </style>
+</head>
+
+<body
+  class="bg-background-light dark:bg-background-dark min-h-screen flex flex-col font-display transition-colors duration-300">
+  <!-- Header (Fixed for all steps) -->
+  <header
+    class="w-full bg-white dark:bg-background-dark border-b border-[#e7f3eb] dark:border-white/10 px-6 py-4 sticky top-0 z-50">
+    <div class="max-w-[1200px] mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="size-10 bg-primary/20 rounded-lg flex items-center justify-center text-primary">
+          <span class="material-symbols-outlined text-3xl font-bold">update</span>
+        </div>
+        <div>
+          <h2 class="text-[#0d1b12] dark:text-white text-xl font-extrabold leading-tight tracking-tight">
+            Time Task BD
+          </h2>
+          <p class="text-xs text-[#4c9a66] font-medium">Onboarding Guide</p>
+        </div>
+      </div>
+      <button onclick="completeOnboarding()"
+        class="flex items-center gap-2 cursor-pointer rounded-lg h-10 px-5 bg-white border border-[#e7f3eb] hover:bg-gray-50 dark:bg-transparent dark:border-white/20 dark:text-white text-[#0d1b12] text-sm font-bold transition-all">
+        <span>Skip Guide</span>
+        <span class="material-symbols-outlined text-lg">close</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Content Container -->
+  <div id="main-container" class="flex-1 w-full flex flex-col">
+    <!-- ============================ STEP 1 START ============================ -->
+    <div id="step-1" class="step-wrapper active">
+      <main class="flex-1 flex flex-col items-center py-12 px-4 w-full">
+        <div class="w-full max-w-[960px] mb-5">
+          <div
+            class="flex flex-col gap-4 p-4 bg-white dark:bg-white/5 rounded-xl border border-[#e7f3eb] dark:border-white/10 shadow-sm">
+            <div class="flex gap-6 justify-between items-center px-2">
+              <div class="flex flex-col">
+                <p class="text-[#0d1b12] dark:text-white text-lg font-bold">
+                  Step 1: Profile Setup
+                </p>
+                <p class="text-[#4c9a66] text-sm font-normal">
+                  Current: Completing your identity
+                </p>
+              </div>
+              <div class="flex items-center gap-2">
+                <span
+                  class="text-xs font-bold text-primary uppercase tracking-widest bg-primary/10 px-2 py-1 rounded">20%
+                  Complete</span>
+                <p class="text-[#0d1b12] dark:text-white text-xl font-extrabold leading-normal">
+                  1/5
+                </p>
+              </div>
+            </div>
+            <div class="relative h-3 w-full bg-[#cfe7d7] dark:bg-white/10 rounded-full overflow-hidden">
+              <div class="absolute left-0 top-0 h-full rounded bg-primary transition-all duration-500"
+                style="width: 20%"></div>
+            </div>
+            <div class="grid grid-cols-5 gap-2 mt-2">
+              <div class="h-1 bg-primary rounded-full"></div>
+              <div class="h-1 bg-[#cfe7d7] dark:bg-white/10 rounded-full"></div>
+              <div class="h-1 bg-[#cfe7d7] dark:bg-white/10 rounded-full"></div>
+              <div class="h-1 bg-[#cfe7d7] dark:bg-white/10 rounded-full"></div>
+              <div class="h-1 bg-[#cfe7d7] dark:bg-white/10 rounded-full"></div>
+            </div>
+          </div>
+        </div>
+        <div class="w-full max-w-[960px]">
+          <div
+            class="bg-white dark:bg-white/5 rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.05)] border border-[#e7f3eb] dark:border-white/10 overflow-hidden">
+            <div class="flex flex-col md:flex-row min-h-[520px]">
+              <div
+                class="w-full md:w-1/2 relative bg-[#f0fff4] dark:bg-primary/5 flex items-center justify-center p-12">
+                <div class="absolute inset-0 opacity-10 pointer-events-none" style="
+                      background-image: radial-gradient(
+                        circle at 2px 2px,
+                        #13ec5b 1px,
+                        transparent 0
+                      );
+                      background-size: 24px 24px;
+                    "></div>
+                <div class="relative z-10 flex flex-col items-center text-center">
+                  <div
+                    class="w-48 h-48 bg-white dark:bg-background-dark rounded-full shadow-xl flex items-center justify-center mb-8 border-4 border-primary/20">
+                    <span class="material-symbols-outlined text-8xl text-primary">person_check</span>
+                  </div>
+                  <div
+                    class="bg-primary/20 text-[#0d1b12] dark:text-white px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2">
+                    <span class="material-symbols-outlined text-base">verified_user</span>
+                    <span>Verification Required</span>
+                  </div>
+                </div>
+              </div>
+              <div class="w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center">
+                <h2 class="text-[#0d1b12] dark:text-white text-3xl font-extrabold mb-4 leading-tight">
+                  Complete Your Profile
+                </h2>
+                <p class="text-[#4c9a66] text-lg font-normal mb-8 leading-relaxed">
+                  Welcome to Time Task BD! To start earning, we need to verify
+                  your identity. Complete these three essential steps to
+                  unlock all task categories.
+                </p>
+                <div class="space-y-4 mb-10">
+                  <div
+                    class="flex items-start gap-4 p-4 rounded-lg bg-background-light dark:bg-white/5 border border-transparent hover:border-primary/30 transition-all">
+                    <div class="size-8 rounded-full bg-primary flex items-center justify-center shrink-0">
+                      <span class="material-symbols-outlined text-white text-lg">edit</span>
+                    </div>
+                    <div>
+                      <h5 class="font-bold text-[#0d1b12] dark:text-white">
+                        Personal Information
+                      </h5>
+                      <p class="text-sm text-[#4c9a66]">
+                        Fill in your full name, location, and contact details.
+                      </p>
+                    </div>
+                  </div>
+                  <div
+                    class="flex items-start gap-4 p-4 rounded-lg bg-background-light dark:bg-white/5 border border-transparent hover:border-primary/30 transition-all">
+                    <div class="size-8 rounded-full bg-primary flex items-center justify-center shrink-0">
+                      <span class="material-symbols-outlined text-white text-lg">mail</span>
+                    </div>
+                    <div>
+                      <h5 class="font-bold text-[#0d1b12] dark:text-white">
+                        Email Verification
+                      </h5>
+                      <p class="text-sm text-[#4c9a66]">
+                        Crucial for account security and payment processing.
+                      </p>
+                    </div>
+                  </div>
+                  <div
+                    class="flex items-start gap-4 p-4 rounded-lg bg-background-light dark:bg-white/10 border border-[#e7f3eb] dark:border-white/10 hover:border-primary/30 transition-all">
+                    <div class="size-8 rounded-full bg-primary flex items-center justify-center shrink-0">
+                      <span class="material-symbols-outlined text-white text-lg">badge</span>
+                    </div>
+                    <div>
+                      <h5 class="font-bold text-[#0d1b12] dark:text-white">
+                        Identity Verification
+                      </h5>
+                      <p class="text-sm text-[#4c9a66]">
+                        Upload your NID or Birth Registration to unlock secure
+                        withdrawals.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div class="flex flex-col sm:flex-row gap-4">
+                  <button
+                    class="flex-1 min-w-[120px] cursor-pointer items-center justify-center rounded-lg h-14 px-6 bg-transparent border-2 border-[#e7f3eb] dark:border-white/10 text-[#0d1b12] dark:text-white text-base font-bold transition-all hover:bg-gray-50 dark:hover:bg-white/5">
+                    <span class="truncate">Back</span>
+                  </button>
+                  <!-- Next Button Step 1 -->
+                  <button onclick="switchStep(2)"
+                    class="flex-[2] min-w-[120px] cursor-pointer items-center justify-center rounded-lg h-14 px-6 bg-primary text-[#0d1b12] text-base font-bold shadow-[0_4px_14px_rgba(19,236,91,0.4)] hover:shadow-[0_6px_20px_rgba(19,236,91,0.6)] hover:-translate-y-0.5 transition-all">
+                    <span class="truncate">Next Step</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <p class="text-center mt-6 text-[#4c9a66] text-sm italic">
+            Tip: Fully completed profiles get 40% more task invites.
+          </p>
+        </div>
+      </main>
+      <section class="max-w-[1200px] mx-auto w-full px-6 py-12">
+        <h3 class="text-[#0d1b12] dark:text-white text-xl font-bold mb-8 flex items-center gap-2">
+          <span class="material-symbols-outlined">map</span><span>Your Roadmap to Earning</span>
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
+          <div
+            class="bg-white dark:bg-white/5 p-6 rounded-xl border border-primary/40 flex flex-col gap-3 shadow-[0_4px_12px_rgba(19,236,91,0.1)]">
+            <div class="size-10 rounded-lg bg-primary/20 flex items-center justify-center text-primary">
+              <span class="material-symbols-outlined font-bold">account_circle</span>
+            </div>
+            <h6 class="font-bold text-[#0d1b12] dark:text-white">
+              Step 1: Profile Setup
+            </h6>
+            <p class="text-xs text-[#4c9a66]">
+              Complete Details, Verify Email, and Upload Identity Documents.
+            </p>
+          </div>
+          <!-- Other steps faded -->
+          <div
+            class="bg-white dark:bg-white/5 p-6 rounded-xl border border-[#e7f3eb] dark:border-white/10 flex flex-col gap-3 opacity-60">
+            <div
+              class="size-10 rounded-lg bg-[#cfe7d7] dark:bg-white/10 flex items-center justify-center text-gray-400">
+              <span class="material-symbols-outlined">lock_open</span>
+            </div>
+            <h6 class="font-bold text-[#0d1b12] dark:text-white">
+              Step 2: Security PIN
+            </h6>
+            <p class="text-xs text-[#4c9a66]">
+              Create a 6-digit withdrawal PIN for secure payments.
+            </p>
+          </div>
+          <div
+            class="bg-white dark:bg-white/5 p-6 rounded-xl border border-[#e7f3eb] dark:border-white/10 flex flex-col gap-3 opacity-60">
+            <div
+              class="size-10 rounded-lg bg-[#cfe7d7] dark:bg-white/10 flex items-center justify-center text-gray-400">
+              <span class="material-symbols-outlined">storefront</span>
+            </div>
+            <h6 class="font-bold text-[#0d1b12] dark:text-white">
+              Step 3: Marketplace
+            </h6>
+            <p class="text-xs text-[#4c9a66]">
+              Browse the 'Earning Page' and filter tasks by category.
+            </p>
+          </div>
+          <div
+            class="bg-white dark:bg-white/5 p-6 rounded-xl border border-[#e7f3eb] dark:border-white/10 flex flex-col gap-3 opacity-60">
+            <div
+              class="size-10 rounded-lg bg-[#cfe7d7] dark:bg-white/10 flex items-center justify-center text-gray-400">
+              <span class="material-symbols-outlined">task</span>
+            </div>
+            <h6 class="font-bold text-[#0d1b12] dark:text-white">
+              Step 4: Submission
+            </h6>
+            <p class="text-xs text-[#4c9a66]">
+              Use Google Sheets and Order ID to submit your proof.
+            </p>
+          </div>
+          <div
+            class="bg-white dark:bg-white/5 p-6 rounded-xl border border-[#e7f3eb] dark:border-white/10 flex flex-col gap-3 opacity-40 border-dashed">
+            <div
+              class="size-10 rounded-lg bg-[#cfe7d7] dark:bg-white/10 flex items-center justify-center text-gray-400">
+              <span class="material-symbols-outlined">payments</span>
+            </div>
+            <h6 class="font-bold text-[#0d1b12] dark:text-white">
+              Step 5: Payouts
+            </h6>
+            <p class="text-xs text-[#4c9a66]">
+              Receive your first payment directly to your wallet.
+            </p>
+          </div>
+        </div>
+      </section>
+    </div>
+    <!-- ============================ STEP 1 END ============================ -->
+
+    <!-- ============================ STEP 2 START ============================ -->
+    <div id="step-2" class="step-wrapper">
+      <main class="flex-1 flex flex-col items-center py-12 px-4 w-full">
+        <div class="w-full max-w-[960px] mb-5">
+          <div
+            class="flex flex-col gap-4 p-4 bg-white dark:bg-white/5 rounded-xl border border-[#e7f3eb] dark:border-white/10 shadow-sm">
+            <div class="flex gap-6 justify-between items-center px-2">
+              <div class="flex flex-col">
+                <p class="text-[#0d1b12] dark:text-white text-lg font-bold">
+                  Step 2: Security &amp; Payment
+                </p>
+                <p class="text-[#4c9a66] text-sm font-normal">
+                  Current: Protecting your account and linking payouts
+                </p>
+              </div>
+              <div class="flex items-center gap-2">
+                <span
+                  class="text-xs font-bold text-primary uppercase tracking-widest bg-primary/10 px-2 py-1 rounded">40%
+                  Complete</span>
+                <p class="text-[#0d1b12] dark:text-white text-xl font-extrabold leading-normal">
+                  2/5
+                </p>
+              </div>
+            </div>
+            <div class="relative h-3 w-full bg-[#cfe7d7] dark:bg-white/10 rounded-full overflow-hidden">
+              <div class="absolute left-0 top-0 h-full rounded bg-primary transition-all duration-500"
+                style="width: 40%"></div>
+            </div>
+            <div class="grid grid-cols-5 gap-2 mt-2">
+              <div class="h-1 bg-primary rounded-full"></div>
+              <div class="h-1 bg-primary rounded-full"></div>
+              <div class="h-1 bg-[#cfe7d7] dark:bg-white/10 rounded-full"></div>
+              <div class="h-1 bg-[#cfe7d7] dark:bg-white/10 rounded-full"></div>
+              <div class="h-1 bg-[#cfe7d7] dark:bg-white/10 rounded-full"></div>
+            </div>
+          </div>
+        </div>
+        <div class="w-full max-w-[960px] mb-6">
+          <div
+            class="bg-white dark:bg-white/5 rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.05)] border border-[#e7f3eb] dark:border-white/10 overflow-hidden">
+            <div class="flex flex-col md:flex-row min-h-[500px]">
+              <div
+                class="w-full md:w-1/2 relative bg-[#f0fff4] dark:bg-primary/5 flex items-center justify-center p-12">
+                <div class="absolute inset-0 opacity-10 pointer-events-none" style="
+                      background-image: radial-gradient(
+                        circle at 2px 2px,
+                        #13ec5b 1px,
+                        transparent 0
+                      );
+                      background-size: 24px 24px;
+                    "></div>
+                <div class="relative z-10 flex flex-col items-center text-center">
+                  <div
+                    class="w-48 h-48 bg-white dark:bg-background-dark rounded-full shadow-xl flex items-center justify-center mb-8 border-4 border-primary/20">
+                    <span class="material-symbols-outlined text-8xl text-primary fill-icon">payments</span>
+                  </div>
+                  <div
+                    class="bg-primary/20 text-[#0d1b12] dark:text-white px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2">
+                    <span class="material-symbols-outlined text-base">verified_user</span>
+                    <span>Security &amp; Gateway Setup</span>
+                  </div>
+                </div>
+              </div>
+              <div class="w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center">
+                <h2 class="text-[#0d1b12] dark:text-white text-3xl font-extrabold mb-4 leading-tight">
+                  Secure Your Earnings
+                </h2>
+                <p class="text-[#4c9a66] text-lg font-normal mb-8 leading-relaxed">
+                  To protect your account and receive payments, you need to
+                  set up a 6-digit withdrawal PIN and link your preferred
+                  payment method.
+                </p>
+                <div class="space-y-4 mb-10">
+                  <div
+                    class="flex items-start gap-4 p-4 rounded-lg bg-background-light dark:bg-white/5 border border-transparent hover:border-primary/30 transition-all">
+                    <div class="size-8 rounded-full bg-primary flex items-center justify-center shrink-0">
+                      <span class="material-symbols-outlined text-white text-lg">pin</span>
+                    </div>
+                    <div>
+                      <h5 class="font-bold text-[#0d1b12] dark:text-white">
+                        Choose a 6-Digit PIN
+                      </h5>
+                      <p class="text-sm text-[#4c9a66]">
+                        Pick a memorable but secure number to protect your
+                        wallet.
+                      </p>
+                    </div>
+                  </div>
+                  <div
+                    class="flex items-start gap-4 p-4 rounded-lg bg-background-light dark:bg-white/5 border border-transparent hover:border-primary/30 transition-all">
+                    <div class="size-8 rounded-full bg-primary flex items-center justify-center shrink-0">
+                      <span class="material-symbols-outlined text-white text-lg">account_balance_wallet</span>
+                    </div>
+                    <div>
+                      <h5 class="font-bold text-[#0d1b12] dark:text-white">
+                        Link Payment Gateway
+                      </h5>
+                      <div class="flex items-center gap-2 mt-1">
+                        <p class="text-sm text-[#4c9a66]">
+                          Connect bKash, Nagad, or Bank.
+                        </p>
+                        <div class="flex gap-1 ml-1 opacity-80">
+                          <span class="material-symbols-outlined text-sm">account_balance</span><span
+                            class="material-symbols-outlined text-sm">smartphone</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div
+                    class="flex items-start gap-4 p-4 rounded-lg bg-background-light dark:bg-white/5 border border-transparent hover:border-primary/30 transition-all">
+                    <div class="size-8 rounded-full bg-primary flex items-center justify-center shrink-0">
+                      <span class="material-symbols-outlined text-white text-lg">check_circle</span>
+                    </div>
+                    <div>
+                      <h5 class="font-bold text-[#0d1b12] dark:text-white">
+                        Confirm &amp; Activate
+                      </h5>
+                      <p class="text-sm text-[#4c9a66]">
+                        Verify your details to enable all withdrawal options.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div class="flex flex-col sm:flex-row gap-4">
+                  <!-- Back Button Step 2 -->
+                  <button onclick="switchStep(1)"
+                    class="flex-1 min-w-[120px] cursor-pointer items-center justify-center rounded-lg h-14 px-6 bg-transparent border-2 border-[#e7f3eb] dark:border-white/10 text-[#0d1b12] dark:text-white text-base font-bold transition-all hover:bg-gray-50 dark:hover:bg-white/5">
+                    <span class="truncate">Back</span>
+                  </button>
+                  <!-- Next Button Step 2 -->
+                  <button onclick="switchStep(3)"
+                    class="flex-[2] min-w-[120px] cursor-pointer items-center justify-center rounded-lg h-14 px-6 bg-primary text-[#0d1b12] text-base font-bold shadow-[0_4px_14px_rgba(19,236,91,0.4)] hover:shadow-[0_6px_20px_rgba(19,236,91,0.6)] hover:-translate-y-0.5 transition-all">
+                    <span class="truncate">Next Step</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <p class="text-center mt-6 text-[#4c9a66] text-sm italic">
+            Tip: For fast withdrawals, we recommend linking a verified mobile
+            banking account.
+          </p>
+        </div>
+      </main>
+      <section class="max-w-[1200px] mx-auto w-full px-6 py-12">
+        <h3 class="text-[#0d1b12] dark:text-white text-xl font-bold mb-8 flex items-center gap-2">
+          <span class="material-symbols-outlined">map</span><span>Your Roadmap to Earning</span>
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
+          <div
+            class="bg-white dark:bg-white/5 p-6 rounded-xl border border-[#e7f3eb] dark:border-white/10 flex flex-col gap-3 opacity-60">
+            <div class="size-10 rounded-lg bg-[#cfe7d7] dark:bg-white/10 flex items-center justify-center text-primary">
+              <span class="material-symbols-outlined fill-icon">person_check</span>
+            </div>
+            <h6 class="font-bold text-[#0d1b12] dark:text-white line-through decoration-primary decoration-2">
+              Step 1: Profile Setup
+            </h6>
+            <p class="text-xs text-[#4c9a66]">
+              Complete Details, Verify Email, and Upload Identity Documents.
+            </p>
+          </div>
+          <div
+            class="bg-white dark:bg-white/5 p-6 rounded-xl border-2 border-primary dark:border-primary flex flex-col gap-3 shadow-[0_8px_20px_rgba(19,236,91,0.15)]">
+            <div class="size-10 rounded-lg bg-primary flex items-center justify-center text-white">
+              <span class="material-symbols-outlined">payments</span>
+            </div>
+            <h6 class="font-bold text-[#0d1b12] dark:text-white">
+              Step 2: Security &amp; Payment
+            </h6>
+            <p class="text-xs text-[#4c9a66]">
+              Create a withdrawal PIN and link your payout gateway.
+            </p>
+          </div>
+          <div
+            class="bg-white dark:bg-white/5 p-6 rounded-xl border border-[#e7f3eb] dark:border-white/10 flex flex-col gap-3 opacity-60">
+            <div
+              class="size-10 rounded-lg bg-[#cfe7d7] dark:bg-white/10 flex items-center justify-center text-gray-400">
+              <span class="material-symbols-outlined">storefront</span>
+            </div>
+            <h6 class="font-bold text-[#0d1b12] dark:text-white">
+              Step 3: Marketplace
+            </h6>
+            <p class="text-xs text-[#4c9a66]">
+              Browse the 'Earning Page' and filter tasks by category.
+            </p>
+          </div>
+          <div
+            class="bg-white dark:bg-white/5 p-6 rounded-xl border border-[#e7f3eb] dark:border-white/10 flex flex-col gap-3 opacity-60">
+            <div
+              class="size-10 rounded-lg bg-[#cfe7d7] dark:bg-white/10 flex items-center justify-center text-gray-400">
+              <span class="material-symbols-outlined">task</span>
+            </div>
+            <h6 class="font-bold text-[#0d1b12] dark:text-white">
+              Step 4: Submission
+            </h6>
+            <p class="text-xs text-[#4c9a66]">
+              Use Google Sheets and Order ID to submit your proof.
+            </p>
+          </div>
+          <div
+            class="bg-white dark:bg-white/5 p-6 rounded-xl border border-[#e7f3eb] dark:border-white/10 flex flex-col gap-3 opacity-40 border-dashed">
+            <div
+              class="size-10 rounded-lg bg-[#cfe7d7] dark:bg-white/10 flex items-center justify-center text-gray-400">
+              <span class="material-symbols-outlined">payments</span>
+            </div>
+            <h6 class="font-bold text-[#0d1b12] dark:text-white">
+              Step 5: Payouts
+            </h6>
+            <p class="text-xs text-[#4c9a66]">
+              Receive your first payment directly to your wallet.
+            </p>
+          </div>
+        </div>
+      </section>
+    </div>
+    <!-- ============================ STEP 2 END ============================ -->
+
+    <!-- ============================ STEP 3 START ============================ -->
+    <div id="step-3" class="step-wrapper">
+      <main class="flex-1 flex flex-col items-center py-12 px-4 w-full">
+        <div class="w-full max-w-[960px] mb-5">
+          <div
+            class="flex flex-col gap-4 p-4 bg-white dark:bg-white/5 rounded-xl border border-[#e7f3eb] dark:border-white/10 shadow-sm">
+            <div class="flex gap-6 justify-between items-center px-2">
+              <div class="flex flex-col">
+                <p class="text-[#0d1b12] dark:text-white text-lg font-bold">
+                  Step 3: Finding Tasks
+                </p>
+                <p class="text-[#4c9a66] text-sm font-normal">
+                  Current: Browsing the Marketplace
+                </p>
+              </div>
+              <div class="flex items-center gap-2">
+                <span
+                  class="text-xs font-bold text-primary uppercase tracking-widest bg-primary/10 px-2 py-1 rounded">60%
+                  Complete</span>
+                <p class="text-[#0d1b12] dark:text-white text-xl font-extrabold leading-normal">
+                  3/5
+                </p>
+              </div>
+            </div>
+            <div class="relative h-3 w-full bg-[#cfe7d7] dark:bg-white/10 rounded-full overflow-hidden">
+              <div class="absolute left-0 top-0 h-full rounded bg-primary transition-all duration-500"
+                style="width: 60%"></div>
+            </div>
+            <div class="grid grid-cols-5 gap-2 mt-2">
+              <div class="h-1 bg-primary rounded-full"></div>
+              <div class="h-1 bg-primary rounded-full"></div>
+              <div class="h-1 bg-primary rounded-full"></div>
+              <div class="h-1 bg-[#cfe7d7] dark:bg-white/10 rounded-full"></div>
+              <div class="h-1 bg-[#cfe7d7] dark:bg-white/10 rounded-full"></div>
+            </div>
+          </div>
+        </div>
+        <div class="w-full max-w-[960px]">
+          <div
+            class="bg-white dark:bg-white/5 rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.05)] border border-[#e7f3eb] dark:border-white/10 overflow-hidden">
+            <div class="flex flex-col md:flex-row min-h-[450px]">
+              <div
+                class="w-full md:w-1/2 relative bg-[#f0fff4] dark:bg-primary/5 flex items-center justify-center p-12">
+                <div class="absolute inset-0 opacity-10 pointer-events-none" style="
+                      background-image: radial-gradient(
+                        circle at 2px 2px,
+                        #13ec5b 1px,
+                        transparent 0
+                      );
+                      background-size: 24px 24px;
+                    "></div>
+                <div class="relative z-10 flex flex-col items-center text-center">
+                  <div
+                    class="w-48 h-48 bg-white dark:bg-background-dark rounded-full shadow-xl flex items-center justify-center mb-8 border-4 border-primary/20">
+                    <span class="material-symbols-outlined text-8xl text-primary fill-icon">manage_search</span>
+                  </div>
+                  <div
+                    class="bg-primary/20 text-[#0d1b12] dark:text-white px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2">
+                    <span class="material-symbols-outlined text-base">storefront</span>
+                    <span>Task Discovery</span>
+                  </div>
+                </div>
+              </div>
+              <div class="w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center">
+                <h2 class="text-[#0d1b12] dark:text-white text-3xl font-extrabold mb-4 leading-tight">
+                  Explore the Task Marketplace
+                </h2>
+                <p class="text-[#4c9a66] text-lg font-normal mb-8 leading-relaxed">
+                  Find live orders from buyers and filter tasks by platform
+                  like Facebook or Gmail to match your specific skills and
+                  equipment.
+                </p>
+                <div class="space-y-4 mb-10">
+                  <div
+                    class="flex items-start gap-4 p-4 rounded-lg bg-background-light dark:bg-white/5 border border-transparent hover:border-primary/30 transition-all">
+                    <div class="size-8 rounded-full bg-primary flex items-center justify-center shrink-0">
+                      <span class="material-symbols-outlined text-white text-lg">filter_list</span>
+                    </div>
+                    <div>
+                      <h5 class="font-bold text-[#0d1b12] dark:text-white">
+                        Filter by Platform
+                      </h5>
+                      <p class="text-sm text-[#4c9a66]">
+                        Use the top chips to find specific social media or
+                        micro-tasks.
+                      </p>
+                    </div>
+                  </div>
+                  <div
+                    class="flex items-start gap-4 p-4 rounded-lg bg-background-light dark:bg-white/5 border border-transparent hover:border-primary/30 transition-all">
+                    <div class="size-8 rounded-full bg-primary flex items-center justify-center shrink-0">
+                      <span class="material-symbols-outlined text-white text-lg">payments</span>
+                    </div>
+                    <div>
+                      <h5 class="font-bold text-[#0d1b12] dark:text-white">
+                        Check Payout Rates
+                      </h5>
+                      <p class="text-sm text-[#4c9a66]">
+                        Look at the 'Price per Unit' to choose the
+                        highest-paying tasks.
+                      </p>
+                    </div>
+                  </div>
+                  <div
+                    class="flex items-start gap-4 p-4 rounded-lg bg-background-light dark:bg-white/5 border border-transparent hover:border-primary/30 transition-all">
+                    <div class="size-8 rounded-full bg-primary flex items-center justify-center shrink-0">
+                      <span class="material-symbols-outlined text-white text-lg">content_copy</span>
+                    </div>
+                    <div>
+                      <h5 class="font-bold text-[#0d1b12] dark:text-white">
+                        Copy Order ID
+                      </h5>
+                      <p class="text-sm text-[#4c9a66]">
+                        Crucial: Copy the unique Order ID before you start the
+                        work.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div class="flex flex-col sm:flex-row gap-4">
+                  <!-- Back Button Step 3 -->
+                  <button onclick="switchStep(2)"
+                    class="flex-1 min-w-[120px] cursor-pointer items-center justify-center rounded-lg h-14 px-6 bg-transparent border-2 border-[#e7f3eb] dark:border-white/10 text-[#0d1b12] dark:text-white text-base font-bold transition-all hover:bg-gray-50 dark:hover:bg-white/5">
+                    <span class="truncate">Back</span>
+                  </button>
+                  <!-- Next Button Step 3 -->
+                  <button onclick="switchStep(4)"
+                    class="flex-[2] min-w-[120px] cursor-pointer items-center justify-center rounded-lg h-14 px-6 bg-primary text-[#0d1b12] text-base font-bold shadow-[0_4px_14px_rgba(19,236,91,0.4)] hover:shadow-[0_6px_20px_rgba(19,236,91,0.6)] hover:-translate-y-0.5 transition-all">
+                    <span class="truncate">Next Step</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <p class="text-center mt-6 text-[#4c9a66] text-sm italic">
+            Tip: High-demand tasks go fast. Check the marketplace regularly
+            for new opportunities.
+          </p>
+        </div>
+      </main>
+      <section class="max-w-[1200px] mx-auto w-full px-6 py-12">
+        <h3 class="text-[#0d1b12] dark:text-white text-xl font-bold mb-8 flex items-center gap-2">
+          <span class="material-symbols-outlined">map</span><span>Your Roadmap to Earning</span>
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
+          <div
+            class="bg-white dark:bg-white/5 p-6 rounded-xl border border-[#e7f3eb] dark:border-white/10 flex flex-col gap-3 opacity-60">
+            <div class="size-10 rounded-lg bg-[#cfe7d7] dark:bg-white/10 flex items-center justify-center text-primary">
+              <span class="material-symbols-outlined fill-icon">person_check</span>
+            </div>
+            <h6 class="font-bold text-[#0d1b12] dark:text-white line-through decoration-primary decoration-2">
+              Step 1: Profile Setup
+            </h6>
+            <p class="text-xs text-[#4c9a66]">
+              Complete Details, Verify Email, and Upload Identity Documents.
+            </p>
+          </div>
+          <div
+            class="bg-white dark:bg-white/5 p-6 rounded-xl border border-[#e7f3eb] dark:border-white/10 flex flex-col gap-3 opacity-60">
+            <div class="size-10 rounded-lg bg-[#cfe7d7] dark:bg-white/10 flex items-center justify-center text-primary">
+              <span class="material-symbols-outlined fill-icon">lock</span>
+            </div>
+            <h6 class="font-bold text-[#0d1b12] dark:text-white line-through decoration-primary decoration-2">
+              Step 2: Security &amp; Payment
+            </h6>
+            <p class="text-xs text-[#4c9a66]">
+              Create a withdrawal PIN and link your payout gateway.
+            </p>
+          </div>
+          <div
+            class="bg-white dark:bg-white/5 p-6 rounded-xl border-2 border-primary dark:border-primary flex flex-col gap-3 shadow-[0_8px_20px_rgba(19,236,91,0.15)]">
+            <div class="size-10 rounded-lg bg-primary flex items-center justify-center text-white">
+              <span class="material-symbols-outlined fill-icon">storefront</span>
+            </div>
+            <h6 class="font-bold text-[#0d1b12] dark:text-white">
+              Step 3: Marketplace
+            </h6>
+            <p class="text-xs text-[#4c9a66]">
+              Browse the 'Earning Page' and filter tasks by category.
+            </p>
+          </div>
+          <div
+            class="bg-white dark:bg-white/5 p-6 rounded-xl border border-[#e7f3eb] dark:border-white/10 flex flex-col gap-3 opacity-60">
+            <div
+              class="size-10 rounded-lg bg-[#cfe7d7] dark:bg-white/10 flex items-center justify-center text-gray-400">
+              <span class="material-symbols-outlined">task</span>
+            </div>
+            <h6 class="font-bold text-[#0d1b12] dark:text-white">
+              Step 4: Submission
+            </h6>
+            <p class="text-xs text-[#4c9a66]">
+              Use Google Sheets and Order ID to submit your proof.
+            </p>
+          </div>
+          <div
+            class="bg-white dark:bg-white/5 p-6 rounded-xl border border-[#e7f3eb] dark:border-white/10 flex flex-col gap-3 opacity-40 border-dashed">
+            <div
+              class="size-10 rounded-lg bg-[#cfe7d7] dark:bg-white/10 flex items-center justify-center text-gray-400">
+              <span class="material-symbols-outlined">payments</span>
+            </div>
+            <h6 class="font-bold text-[#0d1b12] dark:text-white">
+              Step 5: Payouts
+            </h6>
+            <p class="text-xs text-[#4c9a66]">
+              Receive your first payment directly to your wallet.
+            </p>
+          </div>
+        </div>
+      </section>
+    </div>
+    <!-- ============================ STEP 3 END ============================ -->
+
+    <!-- ============================ STEP 4 START ============================ -->
+    <div id="step-4" class="step-wrapper">
+      <main class="flex-1 flex flex-col items-center py-12 px-4 w-full">
+        <div class="w-full max-w-[960px] mb-5">
+          <div
+            class="flex flex-col gap-4 p-4 bg-white dark:bg-white/5 rounded-xl border border-[#e7f3eb] dark:border-white/10 shadow-sm">
+            <div class="flex gap-6 justify-between items-center px-2">
+              <div class="flex flex-col">
+                <p class="text-[#0d1b12] dark:text-white text-lg font-bold">
+                  Step 4: Submit Work
+                </p>
+                <p class="text-[#4c9a66] text-sm font-normal">
+                  Current: Finalizing Submission
+                </p>
+              </div>
+              <div class="flex items-center gap-2">
+                <span
+                  class="text-xs font-bold text-primary uppercase tracking-widest bg-primary/10 px-2 py-1 rounded">80%
+                  Complete</span>
+                <p class="text-[#0d1b12] dark:text-white text-xl font-extrabold leading-normal">
+                  4/5
+                </p>
+              </div>
+            </div>
+            <div class="relative h-3 w-full bg-[#cfe7d7] dark:bg-white/10 rounded-full overflow-hidden">
+              <div class="absolute left-0 top-0 h-full rounded bg-primary transition-all duration-500"
+                style="width: 80%"></div>
+            </div>
+            <div class="grid grid-cols-5 gap-2 mt-2">
+              <div class="h-1 bg-primary rounded-full"></div>
+              <div class="h-1 bg-primary rounded-full"></div>
+              <div class="h-1 bg-primary rounded-full"></div>
+              <div class="h-1 bg-primary rounded-full"></div>
+              <div class="h-1 bg-[#cfe7d7] dark:bg-white/10 rounded-full"></div>
+            </div>
+          </div>
+        </div>
+        <div class="w-full max-w-[960px] mb-6">
+          <h4 class="text-[#4c9a66] text-sm font-bold leading-normal tracking-[0.15em] uppercase text-center">
+            Final Step
+          </h4>
+        </div>
+        <div class="w-full max-w-[960px]">
+          <div
+            class="bg-white dark:bg-white/5 rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.05)] border border-[#e7f3eb] dark:border-white/10 overflow-hidden">
+            <div class="flex flex-col md:flex-row min-h-[450px]">
+              <div
+                class="w-full md:w-1/2 relative bg-[#f0fff4] dark:bg-primary/5 flex items-center justify-center p-12">
+                <div class="absolute inset-0 opacity-10 pointer-events-none" style="
+                      background-image: radial-gradient(
+                        circle at 2px 2px,
+                        #13ec5b 1px,
+                        transparent 0
+                      );
+                      background-size: 24px 24px;
+                    "></div>
+                <div class="relative z-10 flex flex-col items-center text-center">
+                  <div
+                    class="w-48 h-48 bg-white dark:bg-background-dark rounded-full shadow-xl flex items-center justify-center mb-8 border-4 border-primary/20">
+                    <span class="material-symbols-outlined text-8xl text-primary fill-icon">cloud_upload</span>
+                  </div>
+                  <div
+                    class="bg-primary/20 text-[#0d1b12] dark:text-white px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2">
+                    <span class="material-symbols-outlined text-base">task_alt</span>
+                    <span>Ready to Review</span>
+                  </div>
+                </div>
+              </div>
+              <div class="w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center">
+                <h2 class="text-[#0d1b12] dark:text-white text-3xl font-extrabold mb-4 leading-tight">
+                  Submit Your Completed Work
+                </h2>
+                <p class="text-[#4c9a66] text-lg font-normal mb-8 leading-relaxed">
+                  Finalize your tasks by pasting your Google Sheet link and
+                  the unique Order ID you copied from the marketplace.
+                </p>
+                <div class="space-y-4 mb-10">
+                  <div
+                    class="flex items-start gap-4 p-4 rounded-lg bg-background-light dark:bg-white/5 border border-transparent hover:border-primary/30 transition-all">
+                    <div class="size-8 rounded-full bg-primary flex items-center justify-center shrink-0">
+                      <span class="material-symbols-outlined text-white text-lg">pin</span>
+                    </div>
+                    <div>
+                      <h5 class="font-bold text-[#0d1b12] dark:text-white">
+                        Paste Order ID
+                      </h5>
+                      <p class="text-sm text-[#4c9a66]">
+                        Enter the 4-digit ID copied from the marketplace for
+                        this specific task.
+                      </p>
+                    </div>
+                  </div>
+                  <div
+                    class="flex items-start gap-4 p-4 rounded-lg bg-background-light dark:bg-white/5 border border-transparent hover:border-primary/30 transition-all">
+                    <div class="size-8 rounded-full bg-primary flex items-center justify-center shrink-0">
+                      <span class="material-symbols-outlined text-white text-lg">link</span>
+                    </div>
+                    <div>
+                      <h5 class="font-bold text-[#0d1b12] dark:text-white">
+                        Google Sheet Link
+                      </h5>
+                      <p class="text-sm text-[#4c9a66]">
+                        Provide the shareable link containing all the created
+                        account details.
+                      </p>
+                    </div>
+                  </div>
+                  <div
+                    class="flex items-start gap-4 p-4 rounded-lg bg-background-light dark:bg-white/5 border border-transparent hover:border-primary/30 transition-all">
+                    <div class="size-8 rounded-full bg-primary flex items-center justify-center shrink-0">
+                      <span class="material-symbols-outlined text-white text-lg">verified_user</span>
+                    </div>
+                    <div>
+                      <h5 class="font-bold text-[#0d1b12] dark:text-white">
+                        Final Review
+                      </h5>
+                      <p class="text-sm text-[#4c9a66]">
+                        An Admin will verify your submission data before
+                        processing your payment.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div class="flex flex-col sm:flex-row gap-4">
+                  <!-- Back Button Step 4 -->
+                  <button onclick="switchStep(3)"
+                    class="flex-1 min-w-[120px] cursor-pointer items-center justify-center rounded-lg h-14 px-6 bg-transparent border-2 border-[#e7f3eb] dark:border-white/10 text-[#0d1b12] dark:text-white text-base font-bold transition-all hover:bg-gray-50 dark:hover:bg-white/5">
+                    <span class="truncate">Back</span>
+                  </button>
+                  <!-- Next Button Step 4 -->
+                  <button onclick="switchStep(5)"
+                    class="flex-[2] min-w-[120px] cursor-pointer items-center justify-center rounded-lg h-14 px-6 bg-primary text-[#0d1b12] text-base font-bold shadow-[0_4px_14px_rgba(19,236,91,0.4)] hover:shadow-[0_6px_20px_rgba(19,236,91,0.6)] hover:-translate-y-0.5 transition-all">
+                    <span class="truncate">Next Step</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <p class="text-center mt-6 text-[#4c9a66] text-sm italic">
+            Tip: Accuracy is key. Double-check your Google Sheet permissions
+            to ensure the Admin can access the data.
+          </p>
+        </div>
+      </main>
+      <section class="max-w-[1200px] mx-auto w-full px-6 py-12">
+        <h3 class="text-[#0d1b12] dark:text-white text-xl font-bold mb-8 flex items-center gap-2">
+          <span class="material-symbols-outlined">map</span><span>Your Roadmap to Earning</span>
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
+          <div
+            class="bg-white dark:bg-white/5 p-6 rounded-xl border border-[#e7f3eb] dark:border-white/10 flex flex-col gap-3 opacity-60">
+            <div class="size-10 rounded-lg bg-[#cfe7d7] dark:bg-white/10 flex items-center justify-center text-primary">
+              <span class="material-symbols-outlined fill-icon">person_check</span>
+            </div>
+            <h6 class="font-bold text-[#0d1b12] dark:text-white line-through decoration-primary decoration-2">
+              Step 1: Profile Setup
+            </h6>
+            <p class="text-xs text-[#4c9a66]">
+              Complete Details, Verify Email, and Upload Identity Documents.
+            </p>
+          </div>
+          <div
+            class="bg-white dark:bg-white/5 p-6 rounded-xl border border-[#e7f3eb] dark:border-white/10 flex flex-col gap-3 opacity-60">
+            <div class="size-10 rounded-lg bg-[#cfe7d7] dark:bg-white/10 flex items-center justify-center text-primary">
+              <span class="material-symbols-outlined fill-icon">lock</span>
+            </div>
+            <h6 class="font-bold text-[#0d1b12] dark:text-white line-through decoration-primary decoration-2">
+              Step 2: Security &amp; Payment
+            </h6>
+            <p class="text-xs text-[#4c9a66]">
+              Create a withdrawal PIN and link your payout gateway.
+            </p>
+          </div>
+          <div
+            class="bg-white dark:bg-white/5 p-6 rounded-xl border border-[#e7f3eb] dark:border-white/10 flex flex-col gap-3 opacity-60">
+            <div class="size-10 rounded-lg bg-[#cfe7d7] dark:bg-white/10 flex items-center justify-center text-primary">
+              <span class="material-symbols-outlined fill-icon">storefront</span>
+            </div>
+            <h6 class="font-bold text-[#0d1b12] dark:text-white line-through decoration-primary decoration-2">
+              Step 3: Marketplace
+            </h6>
+            <p class="text-xs text-[#4c9a66]">
+              Browse the 'Earning Page' and filter tasks by category.
+            </p>
+          </div>
+          <div
+            class="bg-white dark:bg-white/5 p-6 rounded-xl border-2 border-primary dark:border-primary flex flex-col gap-3 shadow-[0_8px_20px_rgba(19,236,91,0.15)]">
+            <div class="size-10 rounded-lg bg-primary flex items-center justify-center text-white">
+              <span class="material-symbols-outlined fill-icon">task</span>
+            </div>
+            <h6 class="font-bold text-[#0d1b12] dark:text-white">
+              Step 4: Submission
+            </h6>
+            <p class="text-xs text-[#4c9a66]">
+              Use Google Sheets and Order ID to submit your proof.
+            </p>
+          </div>
+          <div
+            class="bg-white dark:bg-white/5 p-6 rounded-xl border border-[#e7f3eb] dark:border-white/10 flex flex-col gap-3 opacity-40 border-dashed">
+            <div
+              class="size-10 rounded-lg bg-[#cfe7d7] dark:bg-white/10 flex items-center justify-center text-gray-400">
+              <span class="material-symbols-outlined">payments</span>
+            </div>
+            <h6 class="font-bold text-[#0d1b12] dark:text-white">
+              Step 5: Payouts
+            </h6>
+            <p class="text-xs text-[#4c9a66]">
+              Receive your first payment directly to your wallet.
+            </p>
+          </div>
+        </div>
+      </section>
+    </div>
+    <!-- ============================ STEP 4 END ============================ -->
+
+    <!-- ============================ STEP 5 START ============================ -->
+    <div id="step-5" class="step-wrapper">
+      <main class="flex-1 flex flex-col max-w-[1200px] items-center mx-auto w-full px-4 py-8">
+        <div class="w-full max-w-[960px] mb-5">
+          <div
+            class="flex flex-col gap-4 p-4 bg-white dark:bg-white/5 rounded-xl border border-[#e7f3eb] dark:border-white/10 shadow-sm">
+            <div class="flex gap-6 justify-between items-center px-2">
+              <div class="flex flex-col">
+                <p class="text-[#0d1b12] dark:text-white text-lg font-bold">
+                  Step 5: Receive Payouts
+                </p>
+                <p class="text-[#4c9a66] text-sm font-normal">
+                  Final Step: Secure Your Earnings
+                </p>
+              </div>
+              <div class="flex items-center gap-2">
+                <span
+                  class="text-xs font-bold text-primary uppercase tracking-widest bg-primary/10 px-2 py-1 rounded">100%
+                  Complete</span>
+                <p class="text-[#0d1b12] dark:text-white text-xl font-extrabold leading-normal">
+                  5/5
+                </p>
+              </div>
+            </div>
+            <div class="relative h-3 w-full bg-[#cfe7d7] dark:bg-white/10 rounded-full overflow-hidden">
+              <div class="absolute left-0 top-0 h-full rounded bg-primary transition-all duration-500"
+                style="width: 100%"></div>
+            </div>
+            <div class="grid grid-cols-5 gap-2 mt-2">
+              <div class="h-1 bg-primary rounded-full"></div>
+              <div class="h-1 bg-primary rounded-full"></div>
+              <div class="h-1 bg-primary rounded-full"></div>
+              <div class="h-1 bg-primary rounded-full"></div>
+              <div class="h-1 bg-primary rounded-full"></div>
+            </div>
+          </div>
+        </div>
+        <div class="w-full max-w-[960px] mb-6">
+          <h4 class="text-[#4c9a66] text-sm font-bold leading-normal tracking-[0.15em] uppercase text-center">
+            Final Step
+          </h4>
+        </div>
+        <!-- Main Content Area: Split Layout -->
+        <div
+          class="w-full max-w-[960px] bg-white dark:bg-white/5 rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.05)] border border-[#e7f3eb] dark:border-white/10 overflow-hidden flex flex-col md:flex-row gap-5 items-center mb-16 p-12">
+          <!-- Left Column: Illustration -->
+          <div class="flex-1">
+            <div
+              class="relative w-full max-w-[400px] aspect-square flex items-center justify-center bg-white dark:bg-[#1a2e21] rounded-3xl shadow-xl overflow-hidden border border-primary/10">
+              <!-- Placeholder for 3D Illustration -->
+              <div class="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent"></div>
+              <div class="relative flex flex-col items-center">
+                <div class="size-48 bg-primary/20 rounded-full flex items-center justify-center mb-4">
+                  <span class="material-symbols-outlined text-[120px] text-primary"
+                    style="font-variation-settings: &quot;FILL&quot; 1">account_balance_wallet</span>
+                </div>
+                <div
+                  class="absolute top-1/2 right-0 translate-x-1/4 -translate-y-1/2 size-24 bg-white dark:bg-background-dark rounded-full shadow-2xl border-4 border-primary flex items-center justify-center">
+                  <span class="material-symbols-outlined text-primary text-[48px] font-bold">check_circle</span>
+                </div>
+                <div class="flex gap-2">
+                  <div class="size-4 bg-primary rounded-full animate-bounce"></div>
+                  <div class="size-4 bg-primary rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+                  <div class="size-4 bg-primary rounded-full animate-bounce" style="animation-delay: 0.4s"></div>
+                </div>
+              </div>
+              <div class="absolute bottom-8 text-[#0d1b12] dark:text-white font-bold text-xl">
+                Success! Ready for Payouts
+              </div>
+            </div>
+          </div>
+          <!-- Right Column: Instructions -->
+          <div class="flex-1">
+            <h1 class="text-[#0d1b12] dark:text-white text-[32px] font-extrabold leading-tight tracking-[-0.02em] mb-4">
+              Receive Your First Payment
+            </h1>
+            <p class="text-[#4c9a66] dark:text-gray-400 text-lg mb-8 leading-relaxed">
+              Great job! Once your tasks are verified by our quality control
+              team, your earnings move to your 'Available Balance' for
+              immediate withdrawal.
+            </p>
+            <div class="flex flex-col gap-4">
+              <!-- Checklist Components -->
+              <div
+                class="bg-white dark:bg-[#1a2e21] p-4 rounded-xl border border-[#e7f3eb] dark:border-[#1e3a28] flex gap-4">
+                <div class="size-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <span class="material-symbols-outlined text-primary">verified_user</span>
+                </div>
+                <div>
+                  <h4 class="text-[#0d1b12] dark:text-white font-bold text-base">
+                    Verification Audit
+                  </h4>
+                  <p class="text-sm text-[#4c9a66] dark:text-gray-400">
+                    Brief 2-4 hour security window ensures all tasks meet
+                    quality standards before funds release.
+                  </p>
+                </div>
+              </div>
+              <div
+                class="bg-white dark:bg-[#1a2e21] p-4 rounded-xl border border-[#e7f3eb] dark:border-[#1e3a28] flex gap-4">
+                <div class="size-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <span class="material-symbols-outlined text-primary">lock</span>
+                </div>
+                <div>
+                  <h4 class="text-[#0d1b12] dark:text-white font-bold text-base">
+                    Secure Withdrawal
+                  </h4>
+                  <p class="text-sm text-[#4c9a66] dark:text-gray-400">
+                    Always use your unique 6-digit secure PIN for transferring
+                    funds to your linked bank or mobile wallet.
+                  </p>
+                </div>
+              </div>
+              <div
+                class="bg-white dark:bg-[#1a2e21] p-4 rounded-xl border border-[#e7f3eb] dark:border-[#1e3a28] flex gap-4">
+                <div class="size-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <span class="material-symbols-outlined text-primary">monitoring</span>
+                </div>
+                <div>
+                  <h4 class="text-[#0d1b12] dark:text-white font-bold text-base">
+                    Earnings Tracking
+                  </h4>
+                  <p class="text-sm text-[#4c9a66] dark:text-gray-400">
+                    View your lifetime statistics, active tasks, and payment
+                    history in real-time via the Dashboard.
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div class="flex flex-col sm:flex-row gap-4 mt-10">
+              <!-- Start First Task Button (Completion) -->
+              <button onclick="handleCompleteOnboarding()"
+                class="flex-1 bg-primary hover:bg-[#11d652] text-[#0d1b12] font-bold py-4 px-8 rounded-xl transition-all flex items-center justify-center gap-2 text-lg">
+                Finish &amp; Start Earning
+                <span class="material-symbols-outlined">rocket_launch</span>
+              </button>
+              <!-- Back Button Step 5 -->
+              <button onclick="switchStep(4)"
+                class="bg-[#e7f3eb] dark:bg-[#1e3a28] text-[#0d1b12] dark:text-white font-bold py-4 px-8 rounded-xl hover:bg-[#cfe7d7] transition-all">
+                Back
+              </button>
+            </div>
+          </div>
+        </div>
+        <section class="max-w-[1200px] mx-auto w-full px-6 py-12">
+          <h3 class="text-[#0d1b12] dark:text-white text-xl font-bold mb-8 flex items-center gap-2">
+            <span class="material-symbols-outlined">map</span><span>Your Roadmap to Earning</span>
+          </h3>
+          <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
+            <div
+              class="bg-white dark:bg-white/5 p-6 rounded-xl border border-[#e7f3eb] dark:border-white/10 flex flex-col gap-3 opacity-60">
+              <div
+                class="size-10 rounded-lg bg-[#cfe7d7] dark:bg-white/10 flex items-center justify-center text-primary">
+                <span class="material-symbols-outlined fill-icon">person_check</span>
+              </div>
+              <h6 class="font-bold text-[#0d1b12] dark:text-white line-through decoration-primary decoration-2">
+                Step 1: Profile Setup
+              </h6>
+              <p class="text-xs text-[#4c9a66]">
+                Complete Details, Verify Email, and Upload Identity Documents.
+              </p>
+            </div>
+            <div
+              class="bg-white dark:bg-white/5 p-6 rounded-xl border border-[#e7f3eb] dark:border-white/10 flex flex-col gap-3 opacity-60">
+              <div
+                class="size-10 rounded-lg bg-[#cfe7d7] dark:bg-white/10 flex items-center justify-center text-primary">
+                <span class="material-symbols-outlined fill-icon">lock</span>
+              </div>
+              <h6 class="font-bold text-[#0d1b12] dark:text-white line-through decoration-primary decoration-2">
+                Step 2: Security &amp; Payment
+              </h6>
+              <p class="text-xs text-[#4c9a66]">
+                Create a withdrawal PIN and link your payout gateway.
+              </p>
+            </div>
+            <div
+              class="bg-white dark:bg-white/5 p-6 rounded-xl border border-[#e7f3eb] dark:border-white/10 flex flex-col gap-3 opacity-60">
+              <div
+                class="size-10 rounded-lg bg-[#cfe7d7] dark:bg-white/10 flex items-center justify-center text-primary">
+                <span class="material-symbols-outlined fill-icon">storefront</span>
+              </div>
+              <h6 class="font-bold text-[#0d1b12] dark:text-white line-through decoration-primary decoration-2">
+                Step 3: Marketplace
+              </h6>
+              <p class="text-xs text-[#4c9a66]">
+                Browse the 'Earning Page' and filter tasks by category.
+              </p>
+            </div>
+            <div
+              class="bg-white dark:bg-white/5 p-6 rounded-xl border border-[#e7f3eb] dark:border-white/10 flex flex-col gap-3 opacity-60">
+              <div
+                class="size-10 rounded-lg bg-[#cfe7d7] dark:bg-white/10 flex items-center justify-center text-primary">
+                <span class="material-symbols-outlined fill-icon">task</span>
+              </div>
+              <h6 class="font-bold text-[#0d1b12] dark:text-white line-through decoration-primary decoration-2">
+                Step 4: Submission
+              </h6>
+              <p class="text-xs text-[#4c9a66]">
+                Use Google Sheets and Order ID to submit your proof.
+              </p>
+            </div>
+            <div
+              class="bg-white dark:bg-white/5 p-6 rounded-xl border-2 border-primary dark:border-primary flex flex-col gap-3 shadow-[0_8px_20px_rgba(19,236,91,0.15)]">
+              <div class="size-10 rounded-lg bg-primary flex items-center justify-center text-white">
+                <span class="material-symbols-outlined fill-icon">payments</span>
+              </div>
+              <h6 class="font-bold text-[#0d1b12] dark:text-white">
+                Step 5: Payouts
+              </h6>
+              <p class="text-xs text-[#4c9a66]">
+                Receive your first payment directly to your wallet.
+              </p>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+    <!-- ============================ STEP 5 END ============================ -->
+  </div>
+
+  <!-- Footer (Common) -->
+  <footer
+    class="w-full bg-white dark:bg-background-dark border-t border-[#e7f3eb] dark:border-white/10 py-8 px-6 mt-auto">
+    <div class="max-w-[1200px] mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
+      <div class="flex items-center gap-2 text-[#4c9a66] text-sm">
+        <span class="material-symbols-outlined text-base">copyright</span>
+        <span>2024 Time Task BD. All rights reserved.</span>
+      </div>
+      <div class="flex gap-8">
+        <a class="text-[#4c9a66] hover:text-primary text-sm font-medium transition-colors" href="#">Privacy Policy</a>
+        <a class="text-[#4c9a66] hover:text-primary text-sm font-medium transition-colors" href="#">Terms of Service</a>
+        <a class="text-[#4c9a66] hover:text-primary text-sm font-medium transition-colors" href="#">Support Center</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Logic for Switching Steps -->
+  <script type="module">
+    import {
+      requireAuth,
+      setOnboardingStep,
+      completeOnboarding,
+      signOut,
+      PATH
+    } from '../auth_backend_logic.js';
+
+    // Make switchStep globally available for inline onclick handlers
+    window.switchStep = function(stepNumber) {
+      // Hide all steps first
+      const allSteps = document.querySelectorAll(".step-wrapper");
+      allSteps.forEach((step) => {
+        step.classList.remove("active");
+      });
+
+      // Show the target step
+      const targetStep = document.getElementById("step-" + stepNumber);
+      if (targetStep) {
+        targetStep.classList.add("active");
+
+        // Smooth scroll to top of main container for better UX
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    };
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      // Auth guard — only Users can access this page
+      const authData = await requireAuth('USER');
+      if (!authData) return; // requireAuth handles redirect
+
+      const { session } = authData;
+      
+      // Update DB to step 2 (Guideline)
+      await setOnboardingStep(2);
+
+      // We need to attach completeOnboarding to the buttons.
+      // There's a skip button at the top header: onclick="completeOnboarding()"
+      // There's a Finish button at Step 5: onclick="handleCompleteOnboarding()"
+      
+      const handleFinish = async () => {
+         const finishBtn = document.querySelector('button[onclick="handleCompleteOnboarding()"]');
+         const skipBtn = document.querySelector('button[onclick="completeOnboarding()"]');
+         if(finishBtn) finishBtn.disabled = true;
+         if(skipBtn) skipBtn.disabled = true;
+         
+         await completeOnboarding(session.user.id);
+         window.location.href = PATH.userDash;
+      };
+
+      // Override the global functions since they are hardcoded in HTML onclicks
+      window.handleCompleteOnboarding = handleFinish;
+      window.completeOnboarding = handleFinish;
+    });
+  </script>
+</body>
+
+</html>

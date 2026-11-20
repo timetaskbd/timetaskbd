@@ -1,0 +1,1021 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <script>
+    (function () {
+      const theme = localStorage.getItem('theme') || 'light';
+      if (theme === 'dark') {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    })();
+  </script>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <title>Time Task BD - Video Detail View</title>
+  <!-- Dynamic SEO Meta Tags (updated by JS) -->
+  <meta id="meta-description" name="description" content="Watch video tutorials on Time Task BD." />
+  <meta id="og-title" property="og:title" content="Time Task BD - Video Detail View" />
+  <meta id="og-image" property="og:image" content="" />
+  <meta property="og:type" content="video.other" />
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <!-- Supabase Client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- D3.js for comment tree rendering -->
+  <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+  <script src="../supabase-client.js"></script>
+  <script src="../navbar-auth.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400;500;600;700&amp;display=swap"
+    rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+    rel="stylesheet" />
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            primary: "#13ec5b",
+            "background-light": "#f6f8f6",
+            "background-dark": "#102216",
+            "footer-light": "#f0f2f0",
+            "footer-dark": "#1a2e20",
+            "brand-bg": "#f6f8f6",
+            "accent-green": "#13ec5b",
+            "accent-green-hover": "#0dbd49",
+            "accent-green-dim": "rgba(19, 236, 91, 0.1)",
+          },
+          fontFamily: {
+            display: ["Work Sans"],
+          },
+          borderRadius: {
+            DEFAULT: "0.25rem",
+            lg: "0.5rem",
+            xl: "0.75rem",
+            full: "9999px",
+          },
+        },
+      },
+    };
+  </script>
+  <style type="text/tailwindcss">
+    body {
+        font-family: "Work Sans", sans-serif;
+      }
+      .material-symbols-outlined {
+        font-variation-settings:
+          "FILL" 0,
+          "wght" 400,
+          "GRAD" 0,
+          "opsz" 24;
+      }
+      .active-nav-link {
+        @apply text-[#0d1b12] dark:text-white font-bold relative;
+      }
+      .active-nav-link::after {
+        content: "";
+        @apply absolute -bottom-[31px] left-0 w-full h-[3px] bg-primary rounded-t-full;
+      }
+      /* Description expand/collapse */
+      .desc-collapsed { max-height: 60px; overflow: hidden; }
+      .desc-expanded { max-height: none; }
+    </style>
+</head>
+
+<body class="bg-background-light dark:bg-background-dark text-[#0d1b12] dark:text-white min-h-screen flex flex-col">
+  <!-- Header from Header_Footer.html -->
+  <header
+    class="sticky top-0 z-50 w-full bg-white/95 dark:bg-background-dark/95 backdrop-blur-md border-b border-[#e7f3eb] dark:border-white/10">
+    <div class="max-w-[1280px] mx-auto h-20 flex items-center justify-between">
+      <div class="flex items-center shrink-0">
+        <a class="flex items-center gap-2 group" href="#">
+          <div class="size-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
+            <span class="material-symbols-outlined text-2xl">update</span>
+          </div>
+          <span class="text-xl font-bold tracking-tight text-[#0d1b12] dark:text-white ml-1">Time Task <span
+              class="text-primary">BD</span></span>
+        </a>
+      </div>
+      <div class="flex items-center justify-end flex-grow gap-8 ml-auto">
+        <nav class="hidden lg:flex items-center gap-10">
+          <a class="text-sm transition-colors" href="Home_Page.html">Home</a>
+          <a class="text-sm font-medium hover:text-primary transition-colors text-[#0d1b12] dark:text-gray-300"
+            href="Blog_Page.html">Blog</a>
+          <a class="text-sm active-nav-link transition-colors" href="Video_Gallery_Page.html">Video Gallery
+          </a>
+          <a class="text-sm font-medium hover:text-primary transition-colors text-[#0d1b12] dark:text-gray-300"
+            href="About_Page.html">About Us</a>
+          <a class="text-sm font-medium hover:text-primary transition-colors text-[#0d1b12] dark:text-gray-300"
+            href="Contact_Page.html">Contact Us</a>
+          <a class="text-sm font-medium hover:text-primary transition-colors text-[#0d1b12] dark:text-gray-300"
+            href="Earning_Page.html">Earning Page</a>
+        </nav>
+        <div class="flex items-center gap-3">
+          <button id="theme-toggle"
+            class="p-2.5 rounded-lg hover:bg-[#e7f3eb] dark:hover:bg-white/10 transition-colors text-[#0d1b12] dark:text-white flex items-center justify-center">
+            <span class="material-symbols-outlined text-[22px]">dark_mode</span>
+          </button>
+          <div class="h-8 w-[1px] bg-[#e7f3eb] dark:bg-white/10 mx-1"></div>
+          <button onclick="window.location.href = 'Login_Page.html'"
+            class="px-4 h-10 text-sm font-bold text-[#0d1b12] dark:text-white hover:text-primary transition-colors">
+            Login
+          </button>
+          <button onclick="window.location.href = 'Register_Page.html'"
+            class="bg-primary hover:bg-[#11d853] text-black px-6 h-10 rounded-lg text-sm font-bold tracking-wide transition-all shadow-sm">
+            Register
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="py-6 bg-background-light dark:bg-background-dark flex-grow">
+    <div class="max-w-[1280px] mx-auto px-4 flex flex-col lg:flex-row gap-6">
+
+      <!-- ===== LEFT COLUMN (70%) ===== -->
+      <div class="w-full lg:w-[70%] flex flex-col gap-4">
+
+        <!-- Video Player -->
+        <div id="player-container" class="relative aspect-video bg-black rounded-xl overflow-hidden shadow-xl w-full">
+          <div class="absolute inset-0 flex items-center justify-center bg-black">
+            <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
+          </div>
+        </div>
+
+        <!-- Title -->
+        <h1 id="video-title" class="text-[#0d1b12] dark:text-white text-xl md:text-2xl font-bold leading-snug">
+          Loading...
+        </h1>
+
+        <!-- Channel row + Action Bar -->
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <!-- Channel Info -->
+          <div class="flex items-center gap-3">
+            <div
+              class="w-10 h-10 rounded-full bg-primary/20 flex-shrink-0 flex items-center justify-center text-primary font-extrabold text-base">
+              T</div>
+            <div>
+              <p class="text-sm font-bold text-[#0d1b12] dark:text-white">Time Task BD</p>
+              <p class="text-xs text-gray-500">5.2K subscribers</p>
+            </div>
+            <button
+              class="ml-2 px-4 py-2 bg-[#0d1b12] dark:bg-white text-white dark:text-[#0d1b12] rounded-full text-xs font-bold hover:opacity-80 transition-opacity">Subscribe</button>
+          </div>
+          <!-- Action Buttons -->
+          <div class="flex items-center gap-2">
+            <!-- Like/Dislike pill -->
+            <div class="flex items-center bg-gray-100 dark:bg-[#272f25] rounded-full overflow-hidden">
+              <button data-action="like"
+                class="flex items-center gap-1.5 px-4 py-2 hover:bg-gray-200 dark:hover:bg-[#313f2e] transition-colors border-r border-gray-200 dark:border-[#3a4d37] font-bold text-sm">
+                <span class="material-symbols-outlined text-[20px]">thumb_up</span>
+                <span class="like-count">0</span>
+              </button>
+              <button data-action="dislike"
+                class="flex items-center gap-1.5 px-4 py-2 hover:bg-gray-200 dark:hover:bg-[#313f2e] transition-colors font-bold text-sm">
+                <span class="material-symbols-outlined text-[20px]">thumb_down</span>
+                <span class="dislike-text text-xs hidden">Disliked</span>
+              </button>
+            </div>
+            <!-- Share -->
+            <button data-action="copy-link"
+              class="flex items-center gap-1.5 bg-gray-100 dark:bg-[#272f25] px-4 py-2 rounded-full hover:bg-gray-200 dark:hover:bg-[#313f2e] transition-colors text-sm font-bold">
+              <span class="material-symbols-outlined text-[20px]">share</span>
+              <span class="share-text">Share</span>
+            </button>
+            <!-- Save -->
+            <button id="save-btn"
+              class="flex items-center gap-1.5 bg-gray-100 dark:bg-[#272f25] px-4 py-2 rounded-full hover:bg-gray-200 dark:hover:bg-[#313f2e] transition-colors text-sm font-bold">
+              <span id="save-icon" class="material-symbols-outlined text-[20px]">bookmark</span>
+              <span id="save-text">Save</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Description Box -->
+        <div id="desc-box" class="bg-gray-100 dark:bg-[#1e2e23] rounded-xl p-4 cursor-pointer" onclick="toggleDesc()">
+          <p id="video-meta" class="text-sm font-bold text-[#0d1b12] dark:text-white mb-2">0 views • Just now</p>
+          <div id="desc-content" class="desc-collapsed relative">
+            <p id="video-description"
+              class="text-sm text-[#4b6152] dark:text-gray-300 leading-relaxed whitespace-pre-wrap">...</p>
+            <div id="desc-fade"
+              class="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-gray-100 dark:from-[#1e2e23] to-transparent pointer-events-none">
+            </div>
+          </div>
+          <button id="desc-toggle-btn"
+            class="text-sm font-bold text-[#0d1b12] dark:text-white mt-2 focus:outline-none">Show more</button>
+        </div>
+
+        <!-- ========== COMMENTS SECTION ========== -->
+        <div class="py-4">
+          <!-- Header -->
+          <div class="flex items-center gap-6 mb-6">
+            <h3 id="comments-heading" class="text-base font-bold text-[#0d1b12] dark:text-white">0 Comments</h3>
+            <button id="sort-btn"
+              class="flex items-center gap-1.5 text-sm font-bold text-[#0d1b12] dark:text-white hover:bg-gray-100 dark:hover:bg-white/10 px-3 py-1.5 rounded-full transition-colors">
+              <span class="material-symbols-outlined text-[18px]">swap_vert</span> <span id="sort-label">Sort:
+                Newest</span>
+            </button>
+          </div>
+
+          <!-- Add Comment Row -->
+          <div class="flex gap-4 items-start mb-8">
+            <div
+              class="w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center font-bold text-base mt-0.5 text-white"
+              style="background:#13ec5b;color:#0d1b12">U</div>
+            <div class="flex-1 border-b border-gray-200 dark:border-white/10">
+              <textarea id="comment-text"
+                class="w-full bg-transparent border-0 focus:ring-0 px-0 py-2 text-sm resize-none transition-colors min-h-[36px] overflow-hidden text-[#0d1b12] dark:text-white placeholder:text-gray-400"
+                placeholder="Add a comment..." rows="1"></textarea>
+              <div id="comment-actions" class="flex items-center justify-between pb-2 hidden">
+                <input id="comment-name" type="text"
+                  class="bg-transparent border-0 border-b border-gray-300 dark:border-gray-600 focus:ring-0 px-0 py-0.5 text-xs font-medium w-48 transition-colors placeholder:text-gray-400"
+                  placeholder="Your name (optional)" />
+                <div class="flex items-center gap-2">
+                  <button id="cancel-comment-btn"
+                    class="text-sm font-bold px-4 py-2 rounded-full hover:bg-gray-100 dark:hover:bg-white/10 transition-colors">Cancel</button>
+                  <button id="submit-comment-btn" disabled
+                    class="text-sm font-bold bg-[#0f0f0f] dark:bg-primary dark:text-[#0d1b12] text-white px-4 py-2 rounded-full transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:enabled:opacity-90">Comment</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Comment List -->
+          <div id="comment-list" class="space-y-7">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== RIGHT COLUMN (30%) Sidebar ===== -->
+      <div class="w-full lg:w-[30%] flex flex-col gap-6">
+
+        <!-- Up Next -->
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="font-bold text-base text-[#0d1b12] dark:text-white">Up next</h3>
+            <span class="text-xs font-bold text-primary cursor-pointer">Autoplay</span>
+          </div>
+          <div id="up-next-container" class="space-y-3">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+
+        <!-- Resources & Blog sidebar -->
+        <div class="border-t border-gray-200 dark:border-white/10 pt-5">
+          <h3 class="font-bold text-sm mb-4 flex items-center gap-2 text-[#0d1b12] dark:text-white">
+            <span class="material-symbols-outlined text-primary text-[18px]">description</span>
+            Resources & Blog
+          </h3>
+          <div id="resources-blog-list" class="space-y-4">
+            <p class="text-xs text-gray-400">Loading articles...</p>
+          </div>
+          <a href="Blog_Page.html"
+            class="block w-full mt-5 py-2 border border-gray-300 dark:border-white/10 text-center text-[#0d1b12] dark:text-white rounded-lg text-xs font-bold hover:bg-gray-100 dark:hover:bg-white/5 transition-colors">
+            View All Articles
+          </a>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer from Header_Footer.html -->
+  <footer class="bg-footer-light dark:bg-footer-dark pt-16 pb-8 border-t border-[#e7f3eb] dark:border-white/5">
+    <div class="max-w-[1280px] mx-auto">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
+        <div class="space-y-6">
+          <div class="flex items-center gap-3">
+            <div class="size-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
+              <span class="material-symbols-outlined text-2xl">update</span>
+            </div>
+            <span class="text-xl font-bold tracking-tight text-[#0d1b12] dark:text-white">Time Task <span
+                class="text-primary">BD</span></span>
+          </div>
+          <p class="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">
+            Empowering your digital productivity through innovative task
+            management and streamlined earning opportunities.
+          </p>
+          <div class="flex gap-4">
+            <a class="size-10 rounded-xl border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-black transition-all"
+              href="#">
+              <span class="material-symbols-outlined text-[20px]">public</span>
+            </a>
+            <a class="size-10 rounded-xl border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-black transition-all"
+              href="#">
+              <span class="material-symbols-outlined text-[20px]">share</span>
+            </a>
+            <a class="size-10 rounded-xl border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-black transition-all"
+              href="#">
+              <span class="material-symbols-outlined text-[20px]">alternate_email</span>
+            </a>
+          </div>
+        </div>
+        <div>
+          <h4 class="text-sm font-bold uppercase tracking-widest mb-6 text-[#0d1b12] dark:text-white">
+            Quick Links
+          </h4>
+          <ul class="space-y-4">
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="Navbar/Home_Page.html">Home</a>
+            </li>
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="Navbar/About_Page.html">About Us</a>
+            </li>
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="Navbar/Contact_Page.html">Contact Us</a>
+            </li>
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="FAQ_Page.html">Help Center &amp; FAQ</a>
+            </li>
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="Navbar/Blog_Page.html">Our Blog</a>
+            </li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="text-sm font-bold uppercase tracking-widest mb-6 text-[#0d1b12] dark:text-white">
+            Services &amp; Legal
+          </h4>
+          <ul class="space-y-4">
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="Navbar/About_Page.html">About Us</a>
+            </li>
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="Privacy_Policy.html">Privacy Policy</a>
+            </li>
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="Terms_of_Service.html">Terms of Service</a>
+            </li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="text-sm font-bold uppercase tracking-widest mb-6 text-[#0d1b12] dark:text-white">
+            Contact Info
+          </h4>
+          <ul class="space-y-4">
+            <li class="flex items-start gap-3">
+              <span class="material-symbols-outlined text-primary text-[20px]">mail</span>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary"
+                href="mailto:support@timetaskbd.com">support@timetaskbd.com</a>
+            </li>
+            <li class="flex items-start gap-3">
+              <span class="material-symbols-outlined text-primary text-[20px]">call</span>
+              <span class="text-sm text-gray-600 dark:text-gray-400">+880 1234 567890</span>
+            </li>
+            <li class="flex items-start gap-3">
+              <span class="material-symbols-outlined text-primary text-[20px]">location_on</span>
+              <span class="text-sm text-gray-600 dark:text-gray-400">Dhaka, Bangladesh</span>
+            </li>
+          </ul>
+          <div class="mt-8 pt-8 border-t border-[#e7f3eb] dark:border-white/5">
+            <p class="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-4">
+              Social Media
+            </p>
+            <div class="flex gap-4">
+              <a class="text-[#4c9a66] hover:text-primary transition-colors" href="#">
+                <svg class="size-6" fill="currentColor" viewBox="0 0 24 24">
+                  <path
+                    d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z">
+                  </path>
+                </svg>
+              </a>
+              <a class="text-[#4c9a66] hover:text-primary transition-colors" href="#">
+                <svg class="size-6" fill="currentColor" viewBox="0 0 24 24">
+                  <path
+                    d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.84 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z">
+                  </path>
+                </svg>
+              </a>
+              <a class="text-[#4c9a66] hover:text-primary transition-colors" href="#">
+                <svg class="size-6" fill="currentColor" viewBox="0 0 24 24">
+                  <path
+                    d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z">
+                  </path>
+                </svg>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div
+        class="pt-8 border-t border-[#e7f3eb] dark:border-white/5 flex flex-col md:flex-row items-center justify-between gap-4">
+        <p class="text-sm text-gray-500 dark:text-gray-400">
+          Copyright © 2024
+          <span class="text-[#0d1b12] dark:text-white font-semibold">Time Task BD</span>. All rights reserved.
+        </p>
+        <p class="text-sm text-gray-500 dark:text-gray-400">
+          Developed with <span class="text-primary font-bold">★</span> by
+          <a class="text-primary font-medium hover:underline" href="#">Digital Dynamics Agency</a>
+        </p>
+      </div>
+    </div>
+  </footer>
+  <script src="../auth-guard.js"></script>
+  <script type="module">
+    const supabaseClient = window.supabaseClient;
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const videoId = urlParams.get('id');
+
+    async function loadVideoDetails() {
+      if (!videoId) { window.location.href = 'Video_Gallery_Page.html'; return; }
+
+      const { data: video, error } = await supabaseClient
+        .from('contents')
+        .select('*, content_analytics(likes_count, shares_count)')
+        .eq('id', videoId)
+        .single();
+
+      if (error || !video) { console.error('Error fetching video:', error); return; }
+
+      const analytics = (video.content_analytics && video.content_analytics[0]) || {};
+      const likesCount = analytics.likes_count ?? 0;
+
+      // ===== Update UI =====
+      document.title = `${video.title} - Time Task BD`;
+      document.getElementById('video-title').innerText = video.title;
+      document.getElementById('video-meta').innerText = `${(video.views_count || 0).toLocaleString()} Views • Uploaded ${new Date(video.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}`;
+      document.getElementById('video-description').innerText = video.video_description || 'No description provided.';
+
+      // ===== Dynamic SEO Meta Tags =====
+      const desc = (video.video_description || 'Watch video tutorials on Time Task BD.').substring(0, 155);
+      document.getElementById('meta-description').setAttribute('content', desc);
+      document.getElementById('og-title').setAttribute('content', `${video.title} - Time Task BD`);
+      document.getElementById('og-image').setAttribute('content', video.video_thumbnail || video.featured_image || '');
+
+      // ===== Inject Iframe =====
+      const playerContainer = document.getElementById('player-container');
+      playerContainer.innerHTML = `<iframe src="${video.video_url}" class="w-full h-full" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>`;
+
+      // ===== Tracking: Increment Views =====
+      await supabaseClient.rpc('increment_views', { item_id: videoId });
+
+      // ===== video_progress tracking for logged-in users =====
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      let watchStartTime = Date.now();
+      if (session && session.user) {
+        const userId = session.user.id;
+        const saveProgress = async () => {
+          const elapsedSeconds = Math.round((Date.now() - watchStartTime) / 1000);
+          if (elapsedSeconds < 2) return;
+          const videoDurationSecs = parseInt(video.video_duration) || 0;
+          const isCompleted = videoDurationSecs > 0 && elapsedSeconds >= videoDurationSecs * 0.85;
+          await supabaseClient.from('video_progress').upsert({
+            content_id: videoId,
+            user_id: userId,
+            watch_time_seconds: elapsedSeconds,
+            is_completed: isCompleted,
+            updated_at: new Date().toISOString()
+          }, { onConflict: ['content_id', 'user_id'] });
+        };
+        window.addEventListener('beforeunload', saveProgress);
+        document.addEventListener('visibilitychange', () => { if (document.hidden) saveProgress(); });
+      }
+
+      // ===== LIKE BUTTON =====
+      const likeKey = `liked_video_${videoId}`;
+      const likeBtn = document.querySelector('[data-action="like"]');
+      if (likeBtn) {
+        likeBtn.querySelector('span.like-count').innerText = likesCount;
+        const likeIcon = likeBtn.querySelector('.material-symbols-outlined');
+        if (localStorage.getItem(likeKey)) {
+          likeBtn.disabled = true;
+          likeBtn.classList.add('opacity-50', 'cursor-not-allowed');
+          likeIcon.style.fontVariationSettings = '"FILL" 1';
+        }
+        likeBtn.addEventListener('click', async () => {
+          if (localStorage.getItem(likeKey)) return;
+          await supabaseClient.rpc('increment_likes', { item_id: videoId });
+          localStorage.setItem(likeKey, 'true');
+          likeBtn.disabled = true;
+          likeBtn.classList.add('opacity-50', 'cursor-not-allowed');
+          likeIcon.style.fontVariationSettings = '"FILL" 1';
+          const current = parseInt(likeBtn.querySelector('span.like-count').innerText) || 0;
+          likeBtn.querySelector('span.like-count').innerText = current + 1;
+        });
+      }
+
+      // ===== DISLIKE BUTTON =====
+      const dislikeKey = `disliked_video_${videoId}`;
+      const dislikeBtn = document.querySelector('[data-action="dislike"]');
+      if (dislikeBtn) {
+        const dislikeIcon = dislikeBtn.querySelector('.material-symbols-outlined');
+        const dislikeText = dislikeBtn.querySelector('.dislike-text');
+        if (localStorage.getItem(dislikeKey)) {
+          dislikeBtn.classList.add('text-red-500', 'opacity-60');
+          dislikeIcon.style.fontVariationSettings = '"FILL" 1';
+          dislikeText.classList.remove('hidden');
+          dislikeText.innerText = 'Disliked';
+        }
+        dislikeBtn.addEventListener('click', () => {
+          if (localStorage.getItem(dislikeKey)) return;
+          localStorage.setItem(dislikeKey, 'true');
+          dislikeBtn.classList.add('text-red-500', 'opacity-60');
+          dislikeIcon.style.fontVariationSettings = '"FILL" 1';
+          dislikeText.classList.remove('hidden');
+          dislikeText.innerText = 'Disliked';
+        });
+      }
+
+      // ===== SAVE BUTTON =====
+      const saveKey = `saved_video_${videoId}`;
+      const saveBtn = document.getElementById('save-btn');
+      const saveIcon = document.getElementById('save-icon');
+      const saveText = document.getElementById('save-text');
+      if (saveBtn) {
+        const updateSaveUI = (saved) => {
+          if (saved) {
+            saveIcon.style.fontVariationSettings = '"FILL" 1';
+            saveIcon.classList.add('text-primary');
+            saveText.textContent = 'Saved';
+          } else {
+            saveIcon.style.fontVariationSettings = '"FILL" 0';
+            saveIcon.classList.remove('text-primary');
+            saveText.textContent = 'Save';
+          }
+        };
+        updateSaveUI(!!localStorage.getItem(saveKey));
+        saveBtn.addEventListener('click', () => {
+          const isSaved = !!localStorage.getItem(saveKey);
+          if (isSaved) {
+            localStorage.removeItem(saveKey);
+            updateSaveUI(false);
+          } else {
+            localStorage.setItem(saveKey, JSON.stringify({ id: videoId, title: video.title, thumbnail: video.video_thumbnail || video.featured_image }));
+            updateSaveUI(true);
+          }
+        });
+      }
+
+      // ===== SHARE BUTTON =====
+      const copyBtn = document.querySelector('[data-action="copy-link"]');
+      if (copyBtn) {
+        copyBtn.addEventListener('click', async () => {
+          await navigator.clipboard.writeText(window.location.href);
+          await supabaseClient.rpc('increment_shares', { item_id: videoId });
+          copyBtn.querySelector('.share-text').innerText = 'Copied!';
+          setTimeout(() => { copyBtn.querySelector('.share-text').innerText = 'Share'; }, 2500);
+        });
+      }
+
+      // ===== SUBSCRIBE BUTTON =====
+      const subscribeBtn = document.querySelector('button.ml-2');
+      if (subscribeBtn) {
+        subscribeBtn.addEventListener('click', () => {
+          subscribeBtn.textContent = 'Subscribed ✓';
+          subscribeBtn.disabled = true;
+          subscribeBtn.classList.add('bg-primary', '!text-[#0d1b12]', '!dark:bg-primary');
+          subscribeBtn.classList.remove('bg-[#0d1b12]', 'dark:bg-white');
+        });
+      }
+
+      // Load sidebar sections
+      loadUpNext(video.category, videoId);
+      loadResourcesBlog();
+    }
+
+    // ===== D3-POWERED COMMENT TREE =====
+    const AVATAR_COLORS = ['#4f46e5', '#0891b2', '#059669', '#d97706', '#dc2626', '#7c3aed', '#db2777', '#0284c7'];
+
+    function getAvatarColor(name) {
+      let h = 0; for (let c of (name || 'A')) h = c.charCodeAt(0) + ((h << 5) - h);
+      return AVATAR_COLORS[Math.abs(h) % AVATAR_COLORS.length];
+    }
+    function timeAgo(s) {
+      const d = (Date.now() - new Date(s)) / 1000;
+      if (d < 60) return 'just now';
+      if (d < 3600) return `${Math.floor(d / 60)}m ago`;
+      if (d < 86400) return `${Math.floor(d / 3600)}h ago`;
+      if (d < 2592000) return `${Math.floor(d / 86400)}d ago`;
+      return new Date(s).toLocaleDateString();
+    }
+
+    // Build one comment node (avatar + text + actions) via D3 selection
+    function buildCommentNode(sel, nodeData, isReply) {
+      const c = nodeData.data;
+      const name = c.user_name || 'Anonymous';
+      const color = getAvatarColor(name);
+      const avatarSize = isReply ? 'w-8 h-8 text-xs' : 'w-9 h-9 text-sm';
+      const rboxId = `rbox-${c.id}`;
+      const parentId = isReply ? nodeData.parent.data.id : c.id;
+
+      // Root wrapper
+      const row = sel.append('div')
+        .attr('class', 'flex gap-3')
+        .attr('id', `comment-${c.id}`);
+
+      // Avatar circle
+      row.append('div')
+        .attr('class', `${avatarSize} rounded-full flex-shrink-0 flex items-center justify-center font-bold text-white select-none mt-0.5`)
+        .style('background', color)
+        .text(name[0].toUpperCase());
+
+      // Content column
+      const content = row.append('div').attr('class', 'flex-1 min-w-0');
+
+      // Header: @name + time
+      const header = content.append('div').attr('class', 'flex items-center gap-2 mb-0.5');
+      header.append('span')
+        .attr('class', 'text-[13px] font-bold text-[#0d1b12] dark:text-white')
+        .text(`@${name}`);
+      header.append('span')
+        .attr('class', 'text-[12px] text-gray-400')
+        .text(timeAgo(c.created_at));
+
+      // Comment text
+      content.append('p')
+        .attr('class', 'text-[13px] text-[#0d1b12] dark:text-[#f1f1f1] leading-relaxed mb-2 break-words')
+        .text(c.comment_text);
+
+      // Action bar
+      const bar = content.append('div').attr('class', 'flex items-center gap-0.5 -ml-2');
+
+      // Like button
+      const likeBtn = bar.append('button')
+        .attr('class', 'flex items-center gap-1 px-2 py-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-white/10 transition-colors text-gray-500 dark:text-gray-400 text-[13px]')
+        .attr('data-liked', '0');
+      likeBtn.append('span').attr('class', 'ti material-symbols-outlined text-[18px]').text('thumb_up');
+      const likeCount = likeBtn.append('span').attr('class', 'lc text-[12px]');
+      likeBtn.on('click', function () {
+        const liked = this.dataset.liked === '1';
+        const db = this.nextElementSibling;
+        const icon = this.querySelector('.ti');
+        const lc = this.querySelector('.lc');
+        if (liked) {
+          this.dataset.liked = '0';
+          icon.style.fontVariationSettings = '"FILL" 0';
+          const n = parseInt(lc.textContent) || 0;
+          lc.textContent = n > 1 ? n - 1 : '';
+        } else {
+          this.dataset.liked = '1';
+          icon.style.fontVariationSettings = '"FILL" 1';
+          const n = parseInt(lc.textContent) || 0;
+          lc.textContent = n + 1;
+          if (db && db.dataset.disliked === '1') db.click();
+        }
+      });
+
+      // Dislike button
+      const dislikeBtn = bar.append('button')
+        .attr('class', 'flex items-center gap-1 px-2 py-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-white/10 transition-colors text-gray-500 dark:text-gray-400 text-[13px]')
+        .attr('data-disliked', '0');
+      dislikeBtn.append('span').attr('class', 'ti material-symbols-outlined text-[18px]').text('thumb_down');
+      dislikeBtn.on('click', function () {
+        const disliked = this.dataset.disliked === '1';
+        const lb = this.previousElementSibling;
+        const icon = this.querySelector('.ti');
+        if (disliked) {
+          this.dataset.disliked = '0';
+          icon.style.fontVariationSettings = '"FILL" 0';
+        } else {
+          this.dataset.disliked = '1';
+          icon.style.fontVariationSettings = '"FILL" 1';
+          if (lb && lb.dataset.liked === '1') lb.click();
+        }
+      });
+
+      // Reply button
+      bar.append('button')
+        .attr('class', 'px-3 py-1.5 rounded-full text-[13px] font-bold text-[#0d1b12] dark:text-white hover:bg-gray-100 dark:hover:bg-white/10 transition-colors')
+        .text('Reply')
+        .on('click', () => window.toggleReply(rboxId, `@${name} `));
+
+      // Reply input box (hidden)
+      const rbox = content.append('div')
+        .attr('id', rboxId)
+        .attr('class', 'hidden mt-3');
+      const rboxRow = rbox.append('div').attr('class', 'flex gap-3 items-start');
+      rboxRow.append('div')
+        .attr('class', 'w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center font-bold text-sm text-[#0d1b12]')
+        .style('background', '#13ec5b')
+        .text('U');
+      const rboxInner = rboxRow.append('div').attr('class', 'flex-1 border-b border-gray-300 dark:border-white/10');
+      const rta = rboxInner.append('textarea')
+        .attr('class', 'reply-text w-full bg-transparent border-0 focus:ring-0 px-0 py-1 text-sm resize-none min-h-[32px] overflow-hidden text-[#0d1b12] dark:text-white placeholder:text-gray-400')
+        .attr('placeholder', 'Add a reply...')
+        .attr('rows', '1');
+      rta.on('focus', function () {
+        this.closest('[id^=rbox]').querySelector('.reply-actions').classList.remove('hidden');
+      })
+        .on('input', function () {
+          this.style.height = 'auto';
+          this.style.height = this.scrollHeight + 'px';
+          const sb = this.closest('[id^=rbox]').querySelector('.rb-submit');
+          if (sb) sb.disabled = this.value.trim().length === 0;
+        });
+      const rActions = rboxInner.append('div').attr('class', 'reply-actions flex items-center justify-between pb-1.5 hidden');
+      rActions.append('input')
+        .attr('type', 'text')
+        .attr('class', 'reply-name bg-transparent border-0 border-b border-gray-200 dark:border-white/5 focus:ring-0 px-0 py-0.5 text-xs w-36 text-[#0d1b12] dark:text-white placeholder:text-gray-400')
+        .attr('placeholder', 'Your name (optional)');
+      const rBtns = rActions.append('div').attr('class', 'flex gap-2');
+      rBtns.append('button')
+        .attr('class', 'text-sm font-bold px-4 py-2 rounded-full hover:bg-gray-100 dark:hover:bg-white/10 transition-colors')
+        .text('Cancel')
+        .on('click', () => window.toggleReply(rboxId));
+      rBtns.append('button')
+        .attr('class', 'rb-submit text-sm font-bold bg-[#0f0f0f] dark:bg-primary dark:text-[#0d1b12] text-white px-4 py-2 rounded-full disabled:opacity-40 disabled:cursor-not-allowed')
+        .attr('disabled', true)
+        .text('Reply')
+        .on('click', function () { window.submitVideoReply(this, parentId); });
+
+      return content;
+    }
+
+    let currentSortMode = 'newest'; // 'newest' | 'top'
+
+    window.loadComments = async function loadComments(sortMode) {
+      if (sortMode) currentSortMode = sortMode;
+      const isNewest = currentSortMode === 'newest';
+
+      const { data, error } = await supabaseClient
+        .from('content_comments')
+        .select('*')
+        .eq('content_id', videoId)
+        .order('created_at', { ascending: isNewest });
+
+      const listEl = document.getElementById('comment-list');
+      const heading = document.getElementById('comments-heading');
+      d3.select(listEl).html('');
+
+      if (error || !data) {
+        d3.select(listEl).append('p').attr('class', 'text-sm text-gray-400').text('Could not load comments.');
+        return;
+      }
+
+      const topLevel = data.filter(c => !c.parent_id);
+      heading.textContent = `${data.length} Comment${data.length !== 1 ? 's' : ''}`;
+
+      if (!topLevel.length) {
+        d3.select(listEl).append('p').attr('class', 'text-sm text-gray-400 py-2').text('No comments yet. Be the first!');
+        return;
+      }
+
+      // Build a virtual root node so d3.stratify can handle multiple top-level nodes
+      const augmented = [{ id: '__root__', parent_id: null }, ...data];
+      const stratify = d3.stratify()
+        .id(d => d.id)
+        .parentId(d => d.parent_id || '__root__');
+
+      let root;
+      try { root = stratify(augmented); }
+      catch (e) {
+        // Fallback if some parent_ids are orphaned
+        const validIds = new Set(data.map(d => d.id));
+        const clean = augmented.map(d => ({
+          ...d,
+          parent_id: d.id === '__root__' ? null : (validIds.has(d.parent_id) ? d.parent_id : null) || '__root__'
+        }));
+        root = stratify(clean);
+      }
+
+      // Only render direct children of root (true top-level comments)
+      const list = d3.select(listEl);
+
+      root.children.forEach(node => {
+        // Top-level comment wrapper
+        const wrapper = list.append('div').attr('class', 'comment-thread');
+        const content = buildCommentNode(wrapper, node, false);
+
+        // Replies
+        if (node.children && node.children.length > 0) {
+          const replyCount = node.children.length;
+          const repliesId = `replies-${node.data.id}`;
+
+          // "View X replies" toggle button
+          const toggleWrap = content.append('div').attr('class', 'mt-1');
+          const toggleBtn = toggleWrap.append('button')
+            .attr('class', 'flex items-center gap-1 text-primary font-bold text-[13px] hover:bg-primary/10 px-2 py-1 rounded-full transition-colors')
+            .attr('data-open', 'false');
+          toggleBtn.append('span').attr('class', 'material-symbols-outlined text-[18px]').text('expand_more');
+          toggleBtn.append('span').text(` View ${replyCount} ${replyCount === 1 ? 'reply' : 'replies'}`);
+          toggleBtn.on('click', function () {
+            const open = this.dataset.open === 'true';
+            const container = document.getElementById(repliesId);
+            if (!container) return;
+            this.dataset.open = open ? 'false' : 'true';
+            container.classList.toggle('hidden');
+            const icon = this.querySelector('.material-symbols-outlined');
+            const lbl = this.querySelector('span:last-child');
+            icon.textContent = open ? 'expand_more' : 'expand_less';
+            lbl.textContent = open ? ` View ${replyCount} ${replyCount === 1 ? 'reply' : 'replies'}` : ' Hide replies';
+          });
+
+          // Replies container
+          const repliesContainer = content.append('div')
+            .attr('id', repliesId)
+            .attr('class', 'hidden pl-3 border-l-2 border-gray-200 dark:border-white/10 ml-1 mt-2');
+
+          node.children.forEach(replyNode => {
+            const replyWrapper = repliesContainer.append('div').attr('class', 'mt-4');
+            buildCommentNode(replyWrapper, replyNode, true);
+          });
+        }
+      });
+    };
+
+    // ===== COMMENT SORT BUTTON =====
+    const sortBtn = document.getElementById('sort-btn');
+    const sortLabel = document.getElementById('sort-label');
+    if (sortBtn) {
+      sortBtn.addEventListener('click', () => {
+        const nextMode = currentSortMode === 'newest' ? 'top' : 'newest';
+        sortLabel.textContent = nextMode === 'newest' ? 'Sort: Newest' : 'Sort: Top';
+        window.loadComments(nextMode);
+      });
+    }
+
+    // ===== COMMENT INPUT BEHAVIOR =====
+    const commentInput = document.getElementById('comment-text');
+    const commentActions = document.getElementById('comment-actions');
+    const submitBtn = document.getElementById('submit-comment-btn');
+
+    commentInput.addEventListener('focus', () => {
+      commentActions.classList.remove('hidden');
+    });
+    commentInput.addEventListener('input', () => {
+      commentInput.style.height = 'auto';
+      commentInput.style.height = commentInput.scrollHeight + 'px';
+      submitBtn.disabled = commentInput.value.trim().length === 0;
+    });
+    document.getElementById('cancel-comment-btn').addEventListener('click', () => {
+      commentInput.value = '';
+      commentInput.style.height = 'auto';
+      document.getElementById('comment-name').value = '';
+      commentActions.classList.add('hidden');
+      submitBtn.disabled = true;
+    });
+
+    document.getElementById('submit-comment-btn').addEventListener('click', async () => {
+      const text = document.getElementById('comment-text').value.trim();
+      const name = document.getElementById('comment-name').value.trim() || 'Anonymous';
+      if (!text) return;
+      const btn = document.getElementById('submit-comment-btn');
+      btn.disabled = true; btn.textContent = 'Posting...';
+      const { error } = await supabaseClient.from('content_comments').insert([{
+        content_id: videoId, user_name: name, comment_text: text, parent_id: null
+      }]);
+      btn.disabled = false; btn.textContent = 'Comment';
+      if (!error) {
+        document.getElementById('comment-text').value = '';
+        document.getElementById('comment-text').style.height = 'auto';
+        document.getElementById('comment-name').value = '';
+        commentActions.classList.add('hidden');
+        window.loadComments();
+      }
+    });
+
+    // ===== REPLY TOGGLE HELPERS =====
+    window.toggleReply = (id, prefill) => {
+      const box = document.getElementById(id);
+      if (!box) return;
+      const wasHidden = box.classList.contains('hidden');
+      // Close all open reply boxes
+      document.querySelectorAll('[id^="rbox"]').forEach(el => el.classList.add('hidden'));
+      if (wasHidden) {
+        box.classList.remove('hidden');
+        const ta = box.querySelector('.reply-text');
+        if (ta) {
+          if (prefill) ta.value = prefill;
+          setTimeout(() => { ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }, 50);
+        }
+      }
+    };
+
+    window.toggleReplies = (id, btn) => {
+      const container = document.getElementById(id);
+      if (!container) return;
+      const isHidden = container.classList.contains('hidden');
+      container.classList.toggle('hidden');
+      const icon = btn.querySelector('.material-symbols-outlined');
+      if (isHidden) {
+        icon.textContent = 'expand_less';
+        btn.lastChild.textContent = ' Hide replies';
+      } else {
+        icon.textContent = 'expand_more';
+        const count = container.querySelectorAll('.flex.gap-3.mt-4').length;
+        btn.lastChild.textContent = ` View ${count} ${count === 1 ? 'reply' : 'replies'}`;
+      }
+    };
+
+    window.submitVideoReply = async (btn, parentId) => {
+      const box = btn.closest('[id^="rbox"]');
+      const textInput = box.querySelector('.reply-text');
+      const nameInput = box.querySelector('.reply-name');
+      const text = textInput.value.trim();
+      const name = nameInput.value.trim() || 'Anonymous';
+      if (!text) return;
+      btn.disabled = true; btn.textContent = '...';
+      const { error } = await supabaseClient.from('content_comments').insert([{
+        content_id: videoId,
+        parent_id: parentId || null,
+        user_name: name,
+        comment_text: text
+      }]);
+      if (!error) { window.loadComments(); }
+      else { btn.disabled = false; btn.textContent = 'Reply'; }
+    };
+
+    // ===== UP NEXT =====
+    async function loadUpNext(category, currentId) {
+      const { data: related, error } = await supabaseClient
+        .from('contents')
+        .select('*')
+        .eq('type', 'video')
+        .eq('status', 'live')
+        .eq('category', category)
+        .neq('id', currentId)
+        .limit(5);
+      if (error) return;
+      const container = document.getElementById('up-next-container');
+      if (!related.length) {
+        container.innerHTML = '<p class="text-xs text-gray-400">No related videos.</p>';
+        return;
+      }
+      container.innerHTML = related.map(v => `
+    <div class="flex gap-2 group cursor-pointer hover:bg-gray-100 dark:hover:bg-white/5 rounded-lg p-1 -mx-1 transition-colors"
+      onclick="window.location.href='Video_Detail_View_Page.html?id=${v.id}'">
+      <div class="relative w-[168px] h-[94px] rounded-lg overflow-hidden flex-shrink-0 bg-black">
+        <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('${v.video_thumbnail || v.featured_image || ''}')"></div>
+        <div class="absolute bottom-1 right-1 bg-black/80 text-white text-[10px] font-bold px-1 py-0.5 rounded">${v.video_duration || ''}</div>
+      </div>
+      <div class="flex flex-col justify-start pt-0.5 flex-1 min-w-0">
+        <h4 class="text-[13px] font-semibold leading-snug line-clamp-2 text-[#0d1b12] dark:text-white group-hover:text-primary transition-colors">${v.title}</h4>
+        <p class="text-[12px] text-gray-500 mt-1">Time Task BD</p>
+        <p class="text-[12px] text-gray-400">${(v.views_count || 0).toLocaleString()} views</p>
+      </div>
+    </div>
+    `).join('');
+    }
+
+    // ===== RESOURCES & BLOG SIDEBAR =====
+    async function loadResourcesBlog() {
+      const { data: blogs, error } = await supabaseClient
+        .from('contents')
+        .select('id, title, category, created_at')
+        .eq('type', 'blog')
+        .eq('status', 'live')
+        .order('created_at', { ascending: false })
+        .limit(3);
+      const container = document.getElementById('resources-blog-list');
+      if (error || !blogs || !blogs.length) {
+        container.innerHTML = '<p class="text-xs text-gray-400">No articles available yet.</p>';
+        return;
+      }
+      container.innerHTML = blogs.map((b, i) => `
+    ${i > 0 ? '<div class="h-px bg-[#f0f4f2] dark:bg-[#2a3f30]"></div>' : ''}
+    <a class="block group" href="Blog_Post_Page.html?id=${b.id}">
+      <h4 class="text-sm font-semibold group-hover:text-primary mb-1 transition-colors">${b.title}</h4>
+      <p class="text-xs text-[#61896f]">${b.category}</p>
+    </a>`).join('');
+    }
+
+    loadVideoDetails();
+    loadComments();
+
+    // --- THEME TOGGLE LOGIC ---
+    const themeToggle = document.getElementById('theme-toggle');
+    const themeIcon = themeToggle.querySelector('.material-symbols-outlined');
+
+    function updateThemeIcon(theme) {
+      themeIcon.textContent = theme === 'dark' ? 'light_mode' : 'dark_mode';
+    }
+
+    // Initialize icon
+    updateThemeIcon(document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+
+    themeToggle.addEventListener('click', () => {
+      const isDark = document.documentElement.classList.toggle('dark');
+      const theme = isDark ? 'dark' : 'light';
+      localStorage.setItem('theme', theme);
+      updateThemeIcon(theme);
+    });
+  </script>
+  <script>
+    // Description expand/collapse
+    let descExpanded = false;
+    function toggleDesc() {
+      descExpanded = !descExpanded;
+      const content = document.getElementById('desc-content');
+      const fade = document.getElementById('desc-fade');
+      const btn = document.getElementById('desc-toggle-btn');
+      content.className = descExpanded ? 'desc-expanded' : 'desc-collapsed relative';
+      if (fade) fade.style.display = descExpanded ? 'none' : 'block';
+      btn.textContent = descExpanded ? 'Show less' : 'Show more';
+    }
+  </script>
+</body>
+
+</html>

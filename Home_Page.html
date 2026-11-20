@@ -1,0 +1,1129 @@
+<!doctype html>
+<html class="light" lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <title>Time Task BD - Turn Your Time into Earnings</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../supabase-client.js"></script>
+  <script src="../auth-helpers.js"></script>
+  <script src="../auth-listener.js"></script>
+  <script src="../auth-guard.js"></script>
+  <script src="../navbar-auth.js"></script>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap"
+    rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+    rel="stylesheet" />
+  <script>
+    if (localStorage.getItem('theme') === 'dark' || (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  </script>
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            primary: "#13ec5b",
+            secondary: "#06b6d4",
+            "deep-emerald": "#064e3b",
+            "background-light": "#f6f8f6",
+            "background-dark": "#102216",
+            "footer-light": "#f0f2f0",
+            "footer-dark": "#1a2e20",
+            "brand-bg": "#f6f8f6",
+            "card-bg": "#ffffff",
+            "card-border": "#e2e8f0",
+            "accent-green": "#13ec5b",
+            "accent-green-hover": "#0dbd49",
+            "accent-green-dim": "rgba(19, 236, 91, 0.1)",
+            "primary-text": "#1a1c1e",
+            "secondary-text": "#64748b",
+            "input-bg": "#f8fafc",
+            "deep-navy": "#f1f5f9",
+          },
+          fontFamily: {
+            display: ["Plus Jakarta Sans", "sans-serif"],
+          },
+          borderRadius: {
+            DEFAULT: "0.25rem",
+            lg: "0.5rem",
+            xl: "0.75rem",
+            "2xl": "1rem",
+            "3xl": "1.5rem",
+            full: "9999px",
+          },
+        },
+      },
+    };
+  </script>
+  <!-- supabase already loaded above -->
+  <style type="text/tailwindcss">
+    .material-symbols-outlined {
+        font-variation-settings:
+          "FILL" 0,
+          "wght" 400,
+          "GRAD" 0,
+          "opsz" 24;
+      }
+      .glass-card {
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+      }
+      .dark .glass-card {
+        background: rgba(21, 42, 28, 0.7);
+      }
+      .hex-card {
+        clip-path: polygon(
+          25% 0%,
+          75% 0%,
+          100% 50%,
+          75% 100%,
+          25% 100%,
+          0% 50%
+        );
+      }
+      .curved-card {
+        border-radius: 40% 40% 40% 40% / 15% 15% 15% 15%;
+      }
+      .network-pattern {
+        background-image: radial-gradient(
+          circle at 2px 2px,
+          #13ec5b15 1px,
+          transparent 0
+        );
+        background-size: 32px 32px;
+      }
+      .connection-lines {
+        background:
+          linear-gradient(
+            90deg,
+            transparent 49%,
+            rgba(19, 236, 91, 0.05) 50%,
+            transparent 51%
+          ),
+          linear-gradient(
+            0deg,
+            transparent 49%,
+            rgba(19, 236, 91, 0.05) 50%,
+            transparent 51%
+          );
+        background-size: 80px 80px;
+      }
+      .active-nav-link {
+        @apply text-[#0d1b12] dark:text-white font-bold relative;
+      }
+      .active-nav-link::after {
+        content: "";
+        @apply absolute -bottom-[31px] left-0 w-full h-[3px] bg-primary rounded-t-full;
+      }
+    </style>
+</head>
+
+<body
+  class="font-display bg-background-light dark:bg-background-dark text-[#0d1b12] dark:text-white transition-colors duration-200">
+  <header
+    class="sticky top-0 z-50 w-full bg-white/95 dark:bg-background-dark/95 backdrop-blur-md border-b border-[#e7f3eb] dark:border-white/10">
+    <div class="max-w-[1280px] mx-auto h-20 flex items-center justify-between">
+      <div class="flex items-center shrink-0">
+        <a class="flex items-center gap-2 group" href="#">
+          <div class="size-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
+            <span class="material-symbols-outlined text-2xl">update</span>
+          </div>
+          <span class="text-xl font-bold tracking-tight text-[#0d1b12] dark:text-white ml-1">Time Task <span
+              class="text-primary">BD</span></span>
+        </a>
+      </div>
+      <div class="flex items-center justify-end flex-grow gap-8 ml-auto">
+        <nav class="hidden lg:flex items-center gap-10">
+          <a class="text-sm active-nav-link transition-colors" href="Home_Page.html">Home</a>
+          <a class="text-sm font-medium hover:text-primary transition-colors text-[#0d1b12] dark:text-gray-300"
+            href="Blog_Page.html">Blog</a>
+          <a class="text-sm font-medium hover:text-primary transition-colors text-[#0d1b12] dark:text-gray-300"
+            href="Video_Gallery_Page.html">Video Gallery
+          </a>
+          <a class="text-sm font-medium hover:text-primary transition-colors text-[#0d1b12] dark:text-gray-300"
+            href="About_Page.html">About Us</a>
+          <a class="text-sm font-medium hover:text-primary transition-colors text-[#0d1b12] dark:text-gray-300"
+            href="Contact_Page.html">Contact Us</a>
+          <a class="text-sm font-medium hover:text-primary transition-colors text-[#0d1b12] dark:text-gray-300"
+            href="Earning_Page.html">Earning Page</a>
+        </nav>
+        <div class="flex items-center gap-3" id="navbar-auth-container">
+          <button id="theme-toggle"
+            class="p-2.5 rounded-lg hover:bg-[#e7f3eb] dark:hover:bg-white/10 transition-colors text-[#0d1b12] dark:text-white flex items-center justify-center">
+            <span class="material-symbols-outlined text-[22px]" id="theme-toggle-icon">dark_mode</span>
+          </button>
+          <div class="h-8 w-[1px] bg-[#e7f3eb] dark:bg-white/10 mx-1"></div>
+          <button onclick="window.location.href = 'Login_Page.html'"
+            class="px-4 h-10 text-sm font-bold text-[#0d1b12] dark:text-white hover:text-primary transition-colors">
+            Login
+          </button>
+          <button onclick="window.location.href = 'Register_Page.html'"
+            class="bg-primary hover:bg-[#11d853] text-black px-6 h-10 rounded-lg text-sm font-bold tracking-wide transition-all shadow-sm">
+            Register
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+  <main class="max-w-[1280px] mx-auto px-6 space-y-24 py-16">
+    <section class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+      <div class="flex flex-col gap-8">
+        <div class="space-y-4">
+          <span id="total-users-hero"
+            class="inline-block px-3 py-1 bg-primary/20 text-[#0d1b12] dark:text-primary text-xs font-bold rounded-full uppercase tracking-wider">Trusted
+            by ... Users</span>
+          <h2 class="text-4xl md:text-6xl font-black leading-[1.1] tracking-tight text-[#0d1b12] dark:text-white">
+            Turn Your Time into <span class="text-primary">Earnings</span>
+          </h2>
+          <p class="text-lg text-[#4c6655] dark:text-gray-400 max-w-lg leading-relaxed">
+            Join the most trusted platform in Bangladesh to earn daily by
+            creating and managing social media accounts. Reliable payouts,
+            24/7 support.
+          </p>
+        </div>
+        <div class="flex flex-col sm:flex-row gap-4">
+          <button
+            class="h-14 px-8 bg-primary text-[#0d1b12] font-bold text-lg rounded-xl shadow-lg shadow-primary/20 hover:scale-[1.02] transition-transform flex items-center justify-center gap-2">
+            Start Earning Now
+            <span class="material-symbols-outlined">trending_up</span>
+          </button>
+          <button
+            class="h-14 px-8 border-2 border-[#cfe7d7] dark:border-[#1d3a25] text-[#0d1b12] dark:text-white font-bold text-lg rounded-xl hover:bg-[#e7f3eb] dark:hover:bg-[#1d3a25] transition-colors">
+            How it Works
+          </button>
+        </div>
+      </div>
+      <div class="relative group">
+        <div class="absolute -inset-4 bg-primary/10 rounded-3xl blur-2xl group-hover:bg-primary/20 transition-all">
+        </div>
+        <div
+          class="relative w-full aspect-[4/3] bg-center bg-cover rounded-2xl border border-[#cfe7d7] dark:border-[#1d3a25] shadow-2xl"
+          style="
+              background-image: url(&quot;https://lh3.googleusercontent.com/aida-public/AB6AXuAexvuckFyocksJ9C-K04vHAg1ChH2IctUicuRSMwV_TYBMDO0sssEEljDg-bqRQjp90NqRMLU2rrAv3Aol_BxHBKXApfYSZ1FmlFalnU_ZBU-PycEOmPz_TjAYL2IedxzN94A6hCM3jBxhaRNt6F2cWQPs2zLNDEIdzLmQ6x3bq445BIzrW089DguoTF0S4yxDbeAivfil3oczEnomftED2JHZ5OFsfQzRCVPwyCBXAOoqkEuqksjaekx7dIMjMFHTDWetkT6f2iE1&quot;);
+            "></div>
+      </div>
+    </section>
+    <section class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div
+        class="flex flex-col gap-2 rounded-2xl p-8 border border-[#cfe7d7] dark:border-[#1d3a25] bg-white dark:bg-[#152a1c] shadow-sm hover:shadow-md transition-shadow">
+        <div class="size-10 bg-primary/20 rounded-lg flex items-center justify-center text-primary mb-2">
+          <span class="material-symbols-outlined">group</span>
+        </div>
+        <p class="text-[#4c6655] dark:text-gray-400 text-sm font-semibold uppercase tracking-wider">
+          Registered Users
+        </p>
+        <p id="total-users-count" class="text-4xl font-black text-[#0d1b12] dark:text-white">
+          ---
+        </p>
+      </div>
+      <div
+        class="flex flex-col gap-2 rounded-2xl p-8 border border-[#cfe7d7] dark:border-[#1d3a25] bg-white dark:bg-[#152a1c] shadow-sm hover:shadow-md transition-shadow">
+        <div class="size-10 bg-primary/20 rounded-lg flex items-center justify-center text-primary mb-2">
+          <span class="material-symbols-outlined">payments</span>
+        </div>
+        <p class="text-[#4c6655] dark:text-gray-400 text-sm font-semibold uppercase tracking-wider">
+          Total Payout
+        </p>
+        <p id="total-payout-count" class="text-4xl font-black text-[#0d1b12] dark:text-white">
+          ---
+        </p>
+      </div>
+      <div
+        class="flex flex-col gap-2 rounded-2xl p-8 border border-[#cfe7d7] dark:border-[#1d3a25] bg-white dark:bg-[#152a1c] shadow-sm hover:shadow-md transition-shadow">
+        <div class="size-10 bg-primary/20 rounded-lg flex items-center justify-center text-primary mb-2">
+          <span class="material-symbols-outlined">verified</span>
+        </div>
+        <p class="text-[#4c6655] dark:text-gray-400 text-sm font-semibold uppercase tracking-wider">
+          Accounts Today
+        </p>
+        <p id="accounts-today-count" class="text-4xl font-black text-[#0d1b12] dark:text-white">
+          ---
+        </p>
+      </div>
+    </section>
+    <section class="space-y-6">
+      <div class="flex items-center justify-between px-2">
+        <h3 class="text-2xl font-black flex items-center gap-2 text-[#0d1b12] dark:text-white">
+          <span class="material-symbols-outlined text-primary">analytics</span>
+          Live Market Rates
+        </h3>
+        <span class="text-xs font-bold text-[#4c6655] dark:text-gray-400 flex items-center gap-1">
+          <span class="size-2 bg-primary rounded-full animate-pulse"></span>
+          UPDATED 2 MINS AGO
+        </span>
+      </div>
+      <div
+        class="overflow-hidden rounded-2xl border border-[#cfe7d7] dark:border-[#1d3a25] bg-white dark:bg-[#152a1c] shadow-sm">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="bg-[#f8fcf9] dark:bg-[#1d3a25] border-b border-[#cfe7d7] dark:border-[#1d3a25]">
+              <th class="px-6 py-4 text-xs font-bold uppercase text-[#4c6655] dark:text-gray-400">
+                Account Type
+              </th>
+              <th class="px-6 py-4 text-xs font-bold uppercase text-[#4c6655] dark:text-gray-400">
+                Current Price
+              </th>
+              <th class="px-6 py-4 text-xs font-bold uppercase text-[#4c6655] dark:text-gray-400">
+                Regular Price
+              </th>
+              <th class="px-6 py-4 text-xs font-bold uppercase text-[#4c6655] dark:text-gray-400 text-center">
+                Market Status
+              </th>
+            </tr>
+          </thead>
+          <tbody id="market-rates-tbody" class="divide-y divide-[#cfe7d7] dark:divide-[#1d3a25]">
+            <!-- Dynamic Market Rates will be injected here -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <section class="space-y-12">
+      <div class="flex flex-col items-center text-center space-y-4">
+        <h3 class="text-4xl font-black tracking-tight text-[#0d1b12] dark:text-white flex items-center gap-3">
+          <span class="material-symbols-outlined text-primary text-5xl">rewarded_ads</span>
+          Top Earners Leaderboard
+        </h3>
+        <p class="text-[#4c6655] dark:text-gray-400 max-w-2xl text-lg">
+          Recognizing the excellence and hard work of our top-performing
+          community members this month.
+        </p>
+        <div id="top-earners-podium" class="grid grid-cols-1 md:grid-cols-3 gap-8 items-end max-w-5xl mx-auto px-4">
+          <!-- Dynamic Top Earners will be injected here -->
+        </div>
+      </div>
+    </section>
+    <section class="space-y-6">
+      <div class="flex items-center justify-between px-2">
+        <h3 class="text-2xl font-black flex items-center gap-3 text-[#0d1b12] dark:text-white">
+          Live Payout Activity
+          <span class="relative flex h-3 w-3">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
+          </span>
+        </h3>
+        <span class="text-xs font-bold text-[#4c6655] dark:text-gray-400 tracking-widest uppercase">Real-Time
+          Updates</span>
+      </div>
+      <div
+        class="overflow-hidden rounded-3xl border border-[#cfe7d7] dark:border-[#1d3a25] bg-white dark:bg-[#152a1c] shadow-lg">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="bg-[#f8fcf9] dark:bg-[#1d3a25] border-b border-[#cfe7d7] dark:border-[#1d3a25]">
+              <th class="px-8 py-5 text-xs font-bold uppercase tracking-wider text-[#4c6655] dark:text-gray-400">
+                User
+              </th>
+              <th class="px-8 py-5 text-xs font-bold uppercase tracking-wider text-[#4c6655] dark:text-gray-400">
+                Amount
+              </th>
+              <th class="px-8 py-5 text-xs font-bold uppercase tracking-wider text-[#4c6655] dark:text-gray-400">
+                Payment Method
+              </th>
+              <th class="px-8 py-5 text-xs font-bold uppercase tracking-wider text-[#4c6655] dark:text-gray-400">
+                Time Ago
+              </th>
+            </tr>
+          </thead>
+          <tbody id="live-payouts-tbody" class="divide-y divide-[#cfe7d7] dark:divide-[#1d3a25]">
+            <!-- Dynamic Live Payouts will be injected here -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <section
+      class="relative py-20 px-4 rounded-[1rem] overflow-hidden bg-white dark:bg-[#102216]/40 border border-[#cfe7d7]/50 dark:border-[#1d3a25]/50">
+      <div class="absolute inset-0 network-pattern opacity-40"></div>
+      <div class="absolute inset-0 connection-lines opacity-20"></div>
+      <div class="relative z-10 flex flex-col items-center text-center space-y-4 mb-20">
+        <h3
+          class="text-4xl md:text-5xl font-black tracking-tight text-[#0d1b12] dark:text-white flex items-center gap-4">
+          <span class="material-symbols-outlined text-secondary text-6xl">share_reviews</span>
+          Top Referrers
+        </h3>
+        <p class="text-[#4c6655] dark:text-gray-400 max-w-2xl text-lg">
+          The Network Kings: Growing our community through trust and
+          connectivity.
+        </p>
+        <div id="top-referrers-podium"
+          class="relative z-10 grid grid-cols-1 md:grid-cols-3 gap-12 items-end mx-auto px-4 pb-20 pt-[35px]">
+          <!-- Dynamic Top Referrers (1-3) will be injected here -->
+        </div>
+        <div id="top-referrers-list" class="relative z-10 grid grid-cols-2 md:grid-cols-4 gap-8 max-w-5xl mx-auto px-4">
+          <!-- Dynamic Top Referrers (4-7) will be injected here -->
+        </div>
+        <div class="flex justify-center pt-16 relative z-10">
+          <button
+            class="px-12 py-5 text-sm font-black text-white bg-secondary rounded-full shadow-2xl shadow-secondary/20 hover:shadow-secondary/40 hover:-translate-y-1 transition-all flex items-center gap-3 uppercase tracking-widest border-b-4 border-cyan-800">
+            Network Leaderboard
+            <span class="material-symbols-outlined">hub</span>
+          </button>
+        </div>
+    </section>
+    <section class="space-y-6">
+      <div class="flex items-center justify-between px-2">
+        <h3 class="text-2xl font-black flex items-center gap-3 text-[#0d1b12] dark:text-white">
+          Recent Referral Activity
+          <span class="material-symbols-outlined text-primary">diversity_3</span>
+        </h3>
+        <span class="text-xs font-bold text-[#4c6655] dark:text-gray-400 tracking-widest uppercase">Community
+          Growth</span>
+      </div>
+      <div
+        class="overflow-hidden rounded-3xl border border-[#cfe7d7] dark:border-[#1d3a25] bg-white dark:bg-[#152a1c] shadow-lg">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="bg-[#f8fcf9] dark:bg-[#1d3a25] border-b border-[#cfe7d7] dark:border-[#1d3a25]">
+              <th class="px-8 py-5 text-xs font-bold uppercase tracking-wider text-[#4c6655] dark:text-gray-400">
+                Referrer
+              </th>
+              <th class="px-8 py-5 text-xs font-bold uppercase tracking-wider text-[#4c6655] dark:text-gray-400">
+                Referred User
+              </th>
+              <th class="px-8 py-5 text-xs font-bold uppercase tracking-wider text-[#4c6655] dark:text-gray-400">
+                Bonus Earned
+              </th>
+              <th class="px-8 py-5 text-xs font-bold uppercase tracking-wider text-[#4c6655] dark:text-gray-400">
+                Join Date
+              </th>
+            </tr>
+          </thead>
+          <tbody id="referral-activity-tbody" class="divide-y divide-[#cfe7d7] dark:divide-[#1d3a25]">
+            <!-- Dynamic Referral Activity will be injected here -->
+          </tbody>
+        </table>
+        <div
+          class="p-6 border-t border-[#cfe7d7] dark:border-[#1d3a25] flex justify-center bg-[#f8fcf9] dark:bg-[#1d3a25]/30">
+          <button
+            class="px-8 py-3 bg-white dark:bg-[#152a1c] border border-[#cfe7d7] dark:border-[#1d3a25] text-sm font-black rounded-xl hover:bg-primary hover:text-[#0d1b12] transition-all shadow-sm">
+            View All Referrals
+          </button>
+        </div>
+      </div>
+    </section>
+    <section class="space-y-12">
+      <div class="text-center space-y-3">
+        <h3 class="text-3xl font-black italic">Success Full Stories</h3>
+        <p class="text-[#4c6655] dark:text-gray-400 text-lg">
+          Real Feedback from our verified user community across Bangladesh
+        </p>
+      </div>
+      <div id="reviews-container" class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <!-- Dynamic Success Stories will be injected here -->
+      </div>
+    </section>
+    <section class="rounded-[3rem] bg-primary p-16 text-[#0d1b12] text-center space-y-10 overflow-hidden relative">
+      <div class="absolute top-0 right-0 p-10 opacity-10">
+        <span class="material-symbols-outlined text-[160px]">payments</span>
+      </div>
+      <div class="relative z-10 max-w-2xl mx-auto space-y-6">
+        <h3 class="text-5xl font-black tracking-tight">
+          Ready to start earning?
+        </h3>
+        <p class="text-xl font-medium opacity-90 leading-relaxed">
+          Join 50,000+ others who are already turning their free time into a
+          stable income stream. Account creation takes less than 2 minutes.
+        </p>
+        <div class="pt-6">
+          <button
+            class="h-18 px-14 bg-[#0d1b12] text-white font-black text-2xl rounded-[1.5rem] shadow-2xl hover:scale-105 transition-all">
+            Create Free Account
+          </button>
+        </div>
+      </div>
+    </section>
+  </main>
+  <footer class="bg-footer-light dark:bg-footer-dark pt-16 pb-8 border-t border-[#e7f3eb] dark:border-white/5">
+    <div class="max-w-[1280px] mx-auto">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
+        <div class="space-y-6">
+          <div class="flex items-center gap-3">
+            <div class="size-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
+              <span class="material-symbols-outlined text-2xl">update</span>
+            </div>
+            <span class="text-xl font-bold tracking-tight text-[#0d1b12] dark:text-white">Time Task <span
+                class="text-primary">BD</span></span>
+          </div>
+          <p class="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">
+            Empowering your digital productivity through innovative task
+            management and streamlined earning opportunities.
+          </p>
+          <div class="flex gap-4">
+            <a class="size-10 rounded-xl border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-black transition-all"
+              href="#">
+              <span class="material-symbols-outlined text-[20px]">public</span>
+            </a>
+            <a class="size-10 rounded-xl border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-black transition-all"
+              href="#">
+              <span class="material-symbols-outlined text-[20px]">share</span>
+            </a>
+            <a class="size-10 rounded-xl border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-black transition-all"
+              href="#">
+              <span class="material-symbols-outlined text-[20px]">alternate_email</span>
+            </a>
+          </div>
+        </div>
+        <div>
+          <h4 class="text-sm font-bold uppercase tracking-widest mb-6 text-[#0d1b12] dark:text-white">
+            Quick Links
+          </h4>
+          <ul class="space-y-4">
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="Home_Page.html">Home</a>
+            </li>
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="Blog_Page.html">Our Blog</a>
+            </li>
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="About_Page.html">About Us</a>
+            </li>
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="Contact_Page.html">Contact Us</a>
+            </li>
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="Help_and_FAQ_Page.html">FAQ Support</a>
+            </li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="text-sm font-bold uppercase tracking-widest mb-6 text-[#0d1b12] dark:text-white">
+            Services &amp; Legal
+          </h4>
+          <ul class="space-y-4">
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="About_Page.html">About Us</a>
+            </li>
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="Privacy_Policy_Page.html">Privacy Policy</a>
+            </li>
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="Terms_of_Service_Page.html">Terms of Service</a>
+            </li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="text-sm font-bold uppercase tracking-widest mb-6 text-[#0d1b12] dark:text-white">
+            Contact Info
+          </h4>
+          <ul class="space-y-4">
+            <li class="flex items-start gap-3">
+              <span class="material-symbols-outlined text-primary text-[20px]">mail</span>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary"
+                href="mailto:support@timetaskbd.com">support@timetaskbd.com</a>
+            </li>
+            <li class="flex items-start gap-3">
+              <span class="material-symbols-outlined text-primary text-[20px]">call</span>
+              <span class="text-sm text-gray-600 dark:text-gray-400">+880 1234 567890</span>
+            </li>
+            <li class="flex items-start gap-3">
+              <span class="material-symbols-outlined text-primary text-[20px]">location_on</span>
+              <span class="text-sm text-gray-600 dark:text-gray-400">Chittagong, Bangladesh</span>
+            </li>
+          </ul>
+          <div class="mt-8 pt-8 border-t border-[#e7f3eb] dark:border-white/5">
+            <p class="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-4">
+              Social Media
+            </p>
+            <div class="flex gap-4">
+              <a class="text-[#4c9a66] hover:text-primary transition-colors" href="#">
+                <svg class="size-6" fill="currentColor" viewBox="0 0 24 24">
+                  <path
+                    d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z">
+                  </path>
+                </svg>
+              </a>
+              <a class="text-[#4c9a66] hover:text-primary transition-colors" href="#">
+                <svg class="size-6" fill="currentColor" viewBox="0 0 24 24">
+                  <path
+                    d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.84 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z">
+                  </path>
+                </svg>
+              </a>
+              <a class="text-[#4c9a66] hover:text-primary transition-colors" href="#">
+                <svg class="size-6" fill="currentColor" viewBox="0 0 24 24">
+                  <path
+                    d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z">
+                  </path>
+                </svg>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div
+        class="pt-8 border-t border-[#e7f3eb] dark:border-white/5 flex flex-col md:flex-row items-center justify-between gap-4">
+        <p class="text-sm text-gray-500 dark:text-gray-400">
+          Copyright © 2024
+          <span class="text-[#0d1b12] dark:text-white font-semibold">Time Task BD</span>. All rights reserved.
+        </p>
+        <p class="text-sm text-gray-500 dark:text-gray-400">
+          Developed with <span class="text-primary font-bold">★</span> by
+          <a class="text-primary font-medium hover:underline" href="#">Digital Dynamics Agency</a>
+        </p>
+      </div>
+    </div>
+  </footer>
+  <script>
+    const supabaseClient = window.supabaseClient;
+
+    // Helper Functions
+    const formatNumber = (num) => new Intl.NumberFormat("en-BD").format(num);
+    const formatCurrency = (num) => "৳" + formatNumber(num);
+    const avatarUrl = (profile) => {
+      if (!profile) return "https://ui-avatars.com/api/?name=User";
+      return profile.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.full_name || profile.username || 'User')}`;
+    };
+    function timeAgo(date) {
+      const seconds = Math.floor((new Date() - new Date(date)) / 1000);
+      let interval = seconds / 31536000;
+      if (interval > 1) return Math.floor(interval) + " years ago";
+      interval = seconds / 2592000;
+      if (interval > 1) return Math.floor(interval) + " months ago";
+      interval = seconds / 86400;
+      if (interval > 1) return Math.floor(interval) + " days ago";
+      interval = seconds / 3600;
+      if (interval > 1) return Math.floor(interval) + " hours ago";
+      interval = seconds / 60;
+      if (interval > 1) return Math.floor(interval) + " mins ago";
+      return Math.floor(seconds) + " seconds ago";
+    }
+
+    // Hero & Stats Sections
+    async function loadStats() {
+      try {
+        const { data, error } = await supabaseClient
+          .from("platform_stats")
+          .select("*")
+          .single();
+
+        if (error && error.code !== 'PGRST116') throw error; // Ignore no rows error
+
+        // Dynamically count real users
+        const { count: realUserCount } = await supabaseClient
+          .from("profiles")
+          .select("*", { count: "exact", head: true });
+
+        const stats = data || { total_users: 0, total_payout: 0, accounts_today: 0 };
+        const displayUsers = Math.max(stats.total_users || 0, realUserCount || 0);
+
+        document.getElementById("total-users-hero").textContent = `Trusted by ${formatNumber(displayUsers)}+ Users`;
+        document.getElementById("total-users-count").textContent = `${formatNumber(displayUsers)}+`;
+        document.getElementById("total-payout-count").textContent = formatCurrency(stats.total_payout) + "+";
+        document.getElementById("accounts-today-count").textContent = formatNumber(stats.accounts_today) + "+";
+      } catch (err) {
+        console.error("Error loading stats:", err);
+      }
+    }
+
+    // Live Market Rates Table
+    function createMarketRateRow(asset) {
+      const row = document.createElement('tr');
+      row.dataset.id = asset.id;
+      row.className = 'hover:bg-primary/5 transition-colors';
+      row.innerHTML = `
+        <td class="px-6 py-4 font-bold">
+            <div class="flex items-center gap-3">
+                <div class="size-12 rounded-lg bg-zinc-100 dark:bg-white/10 flex items-center justify-center transition-colors">
+                    ${asset.icon_svg ? asset.icon_svg.replace('<svg', '<svg class="w-6 h-6"') : ''}
+                </div>
+                <div>
+                    <h3 class="platform-name text-[#111813] dark:text-white font-bold text-lg">${asset.platform_name}</h3>
+                </div>
+            </div>
+        </td>
+        <td class="px-6 py-4">
+            <span class="current-price text-primary font-black text-lg">৳${Number(asset.current_price).toFixed(2)}</span>
+        </td>
+        <td class="px-6 py-4">
+            <span class="regular-price line-through text-[#4c6655] dark:text-gray-400">
+                ${asset.regular_price ? '৳' + Number(asset.regular_price).toFixed(2) : ''}
+            </span>
+        </td>
+        <td class="px-6 py-4 text-center">
+            <span class="market-status px-3 py-1 ${asset.market_status === 'Open' ? 'bg-primary/20 text-[#0d1b12] dark:text-primary' : 'bg-yellow-100 text-[#0d1b12]'} text-[10px] font-black rounded-full uppercase">
+                ${asset.market_status}
+            </span>
+        </td>
+      `;
+      return row;
+    }
+
+    async function loadMarketRates() {
+      try {
+        const { data, error } = await supabaseClient
+          .from("market_assets")
+          .select("*")
+          .eq("is_active", true)
+          .order("platform_name");
+
+        if (error) throw error;
+
+        const tbody = document.getElementById("market-rates-tbody");
+        if (!data || data.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="4" class="px-6 py-8 text-center text-[#4c6655] dark:text-gray-400">No active market assets available</td></tr>`;
+          return;
+        }
+
+        tbody.innerHTML = "";
+        data.forEach(asset => tbody.appendChild(createMarketRateRow(asset)));
+      } catch (err) {
+        console.error("Error loading market rates:", err);
+      }
+    }
+
+    function handleRealtimeUpdate(payload) {
+      const asset = payload.new;
+      const marketRatesTbody = document.getElementById('market-rates-tbody');
+      const row = marketRatesTbody.querySelector(`[data-id="${asset.id}"]`);
+
+      if (!asset.is_active) {
+        if (row) row.remove();
+        if (!marketRatesTbody.querySelector('tr[data-id]')) {
+          marketRatesTbody.innerHTML = `<tr><td colspan="4" class="px-6 py-8 text-center text-[#4c6655] dark:text-gray-400">No active market assets available</td></tr>`;
+        }
+        return;
+      }
+
+      if (!row) {
+        const emptyStateRow = marketRatesTbody.querySelector('tr:not([data-id])');
+        if (emptyStateRow) emptyStateRow.remove();
+        marketRatesTbody.appendChild(createMarketRateRow(asset));
+        return;
+      }
+
+      row.querySelector('.platform-name').textContent = asset.platform_name;
+      row.querySelector('.current-price').textContent = `৳${Number(asset.current_price).toFixed(2)}`;
+      row.querySelector('.regular-price').textContent = asset.regular_price ? `৳${Number(asset.regular_price).toFixed(2)}` : '';
+      const statusSpan = row.querySelector('.market-status');
+      statusSpan.textContent = asset.market_status;
+      statusSpan.className = `market-status px-3 py-1 text-[10px] font-black rounded-full uppercase ${asset.market_status === 'Open' ? 'bg-primary/20 text-[#0d1b12] dark:text-primary' : 'bg-yellow-100 text-[#0d1b12]'}`;
+    }
+
+    function subscribeToMarketAssets() {
+      supabaseClient
+        .channel('public:market_assets')
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'market_assets' }, payload => loadMarketRates())
+        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'market_assets' }, payload => handleRealtimeUpdate(payload))
+        .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'market_assets' }, payload => loadMarketRates())
+        .subscribe();
+    }
+
+    // Top Earners Leaderboard
+    async function loadTopEarners() {
+      try {
+        const { data: subs, error: subsError } = await supabaseClient
+          .from("task_submissions")
+          .select("user_id, payout_amount")
+          .eq("status", "approved");
+
+        if (subsError) throw subsError;
+
+        const totalsByUser = new Map();
+        for (const s of subs || []) {
+          const uid = s.user_id;
+          if (!uid) continue;
+          const amt = Number(s.payout_amount) || 0;
+          totalsByUser.set(uid, (totalsByUser.get(uid) || 0) + amt);
+        }
+
+        const top = [...totalsByUser.entries()]
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 3)
+          .map(([user_id, total_earned]) => ({ user_id, total_earned }));
+
+        const podium = document.getElementById("top-earners-podium");
+        if (!top || top.length === 0) {
+          podium.innerHTML = "<p class='col-span-3 text-center opacity-50'>No data available</p>";
+          return;
+        }
+
+        const topUserIds = top.map(t => t.user_id);
+        const { data: profiles, error: profError } = await supabaseClient
+          .from("profiles")
+          .select("id, full_name, username, avatar_url")
+          .in("id", topUserIds);
+
+        if (profError) throw profError;
+
+        const profileById = new Map((profiles || []).map(p => [p.id, p]));
+        const merged = top.map(t => ({ ...(profileById.get(t.user_id) || {}), id: t.user_id, total_earned: t.total_earned }));
+
+        const displayOrder = [merged[1], merged[0], merged[2]].filter(Boolean);
+
+        podium.innerHTML = displayOrder.map((user, idx) => {
+          const isFirst = user.id === merged[0].id;
+          const rankLabel = user.id === merged[0].id ? "1ST PLACE" : (merged[1] && user.id === merged[1].id ? "2nd Place" : "3rd Place");
+          const isSecond = merged[1] && user.id === merged[1].id;
+          const rankColor = isFirst ? "bg-yellow-400" : (isSecond ? "bg-gray-100" : "bg-[#fcf3e8]");
+
+          return `
+            <div class="${isFirst ? 'order-1 md:order-2 flex flex-col items-center' : (idx === 0 ? 'order-2 md:order-1' : 'order-3')} flex flex-col items-center w-full">
+              <div class="w-full ${isFirst ? 'mt-10 bg-white dark:bg-[#152a1c] rounded-[3rem] p-10 border-[6px] border-primary shadow-[0_20px_50px_rgba(19,236,91,0.15)] transform md:scale-110' : 'glass-card rounded-[2.5rem] p-8 border border-[#cfe7d7] dark:border-[#1d3a25] shadow-xl'} hover:-translate-y-2 transition-all duration-300 relative group flex flex-col items-center">
+                <div class="absolute -top-5 left-1/2 -translate-x-1/2 whitespace-nowrap z-10">
+                  <span class="${rankColor} ${isFirst ? 'text-[#0d1b12]' : 'text-gray-700 dark:text-black'} text-sm font-black px-5 py-2 rounded-full shadow-lg border border-gray-200 dark:border-white/10 transition-colors">
+                    ${rankLabel}
+                  </span>
+                </div>
+                <div class="relative ${isFirst ? 'mb-8 mt-4' : 'mb-6'}">
+                  <div class="${isFirst ? 'size-36' : 'size-24'} rounded-full p-1 bg-gradient-to-tr ${isFirst ? 'from-primary via-yellow-400 to-primary' : (idx === 0 ? 'from-gray-300 to-gray-400' : 'from-orange-300 to-orange-500')}">
+                    <div class="size-full rounded-full bg-cover bg-center border-4 border-white dark:border-[#152a1c]" style="background-image: url('${avatarUrl(user)}');"></div>
+                  </div>
+                </div>
+                <h4 class="${isFirst ? 'text-2xl' : 'text-xl'} font-bold mb-4 text-[#0d1b12] dark:text-white truncate w-full text-center">${user.full_name || user.username || 'Anonymous'}</h4>
+                <div class="text-center ${isFirst ? 'bg-primary/10 dark:bg-primary/5 border-primary/20' : 'bg-gray-50 dark:bg-black/20'} rounded-2xl px-6 py-4 w-full">
+                  <p class="text-[10px] font-bold ${isFirst ? 'text-primary' : 'text-[#4c6655] dark:text-gray-400'} uppercase tracking-[0.2em] mb-1">TOTAL EARNED</p>
+                  <p class="${isFirst ? 'text-4xl text-primary' : 'text-3xl text-[#0d1b12] dark:text-white'} font-black">৳${formatNumber(Number(user.total_earned) || 0)}</p>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join("");
+      } catch (err) {
+        console.error("Error loading top earners:", err);
+      }
+    }
+
+    // Live Payout Activity
+    function renderPayouts(payouts) {
+      const tbody = document.getElementById("live-payouts-tbody");
+      if (!payouts || payouts.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" class="px-8 py-8 text-center text-[#4c6655] dark:text-gray-400">No payout activity yet.</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = payouts.map(p => {
+        const profile = p.profiles || {};
+        const displayName = (typeof escapeHtml === 'function') ? escapeHtml(profile.full_name || profile.username || "Anonymous") : (profile.full_name || profile.username || "Anonymous");
+        return `
+            <tr class="hover:bg-primary/5 transition-colors group">
+              <td class="px-8 py-5">
+                <div class="flex items-center gap-3">
+                  <div class="size-10 rounded-full bg-cover bg-center border-2 border-white dark:border-gray-800 shadow-sm" style="background-image: url('${avatarUrl(profile)}');"></div>
+                  <span class="font-bold text-[#0d1b12] dark:text-white">${displayName}</span>
+                </div>
+              </td>
+              <td class="px-8 py-5 font-black text-primary text-xl tracking-tight">৳${formatNumber(p.amount)}</td>
+              <td class="px-8 py-5">
+                <div class="flex items-center gap-2">
+                  <span class="material-symbols-outlined ${p.method === 'bKash' ? 'text-pink-500' : 'text-orange-500'} text-xl">account_balance_wallet</span>
+                  <span class="text-sm font-bold">${p.method || '—'}</span>
+                </div>
+              </td>
+              <td class="px-8 py-5 text-sm text-[#4c6655] dark:text-gray-400 font-semibold italic">${timeAgo(p.created_at)}</td>
+            </tr>
+          `;
+      }).join("");
+    }
+
+    async function loadLivePayouts() {
+      try {
+        const { data, error } = await supabaseClient
+          .from("withdrawals")
+          .select(`amount, method, created_at, profiles ( full_name, username, avatar_url )`)
+          .order("created_at", { ascending: false })
+          .limit(10);
+        if (error) throw error;
+        renderPayouts(data);
+      } catch (err) {
+        console.error("Error loading live payouts:", err);
+      }
+    }
+
+    function subscribeToPayouts() {
+      supabaseClient
+        .channel('public:withdrawals')
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'withdrawals' }, payload => loadLivePayouts())
+        .subscribe();
+    }
+
+    // Top Referrers Leaderboard
+    async function loadTopReferrers() {
+      try {
+        const { data, error } = await supabaseClient
+          .from("profiles")
+          .select("id, full_name, username, avatar_url, total_referrals")
+          .eq("role", "User")
+          .order("total_referrals", { ascending: false })
+          .limit(7);
+
+        if (error) throw error;
+
+        const podium = document.getElementById("top-referrers-podium");
+        podium.className = "relative z-10 flex flex-col md:flex-row justify-center items-end gap-12 mx-auto px-4 pb-20 pt-[35px] w-full";
+
+        if (!data || data.length === 0) {
+          podium.innerHTML = "<div class='w-full text-center text-gray-500'>No referrers found.</div>";
+          document.getElementById("top-referrers-list").innerHTML = "";
+          return;
+        }
+
+        const top3Order = [data[1], data[0], data[2]].filter(Boolean);
+        podium.innerHTML = top3Order.map((user) => {
+          const isFirst = user.id === data[0].id;
+          const isSecond = data[1] && user.id === data[1].id;
+          const name = user.full_name || user.username || 'Anonymous';
+          const referrals = user.total_referrals || 0;
+          const wrapperClass = `w-full md:w-[30%] max-w-[380px] flex flex-col items-center ${isFirst ? 'order-1 md:order-2 z-20' : isSecond ? 'order-2 md:order-1' : 'order-3'}`;
+
+          if (isFirst) {
+            return `
+              <div class="${wrapperClass}">
+                <div class="w-full bg-white dark:bg-[#152a1c] hex-card p-12 border-[8px] border-secondary/20 shadow-[0_30px_60px_rgba(6,182,212,0.15)] hover:-translate-y-4 transition-all duration-500 relative flex flex-col items-center transform md:scale-110">
+                  <div class="absolute -top-14 left-1/2 -translate-x-1/2">
+                    <div class="size-24 flex items-center justify-center relative">
+                      <div class="absolute inset-0 bg-primary/40 blur-2xl rounded-full"></div>
+                      <span class="material-symbols-outlined text-6xl text-primary drop-shadow-[0_0_15px_rgba(19,236,91,0.8)]" style="font-variation-settings:'FILL' 1">military_tech</span>
+                    </div>
+                  </div>
+                  <div class="absolute -top-4 left-1/2 -translate-x-1/2 whitespace-nowrap">
+                    <span class="bg-primary text-[#0d1b12] text-sm font-black px-8 py-3 rounded-full shadow-xl flex items-center gap-2 border-b-4 border-[#0eb947]">
+                      KING OF REFERRALS
+                    </span>
+                  </div>
+                  <div class="relative mb-8 mt-6">
+                    <div class="size-40 rounded-full p-2 bg-gradient-to-tr from-secondary via-primary to-secondary shadow-[0_0_40px_rgba(6,182,212,0.4)]">
+                      <div class="size-full rounded-full bg-cover bg-center border-4 border-white dark:border-[#152a1c] shadow-2xl" style="background-image: url('${avatarUrl(user)}');"></div>
+                    </div>
+                  </div>
+                  <h4 class="text-3xl font-black mb-4 text-[#0d1b12] dark:text-white text-center">${name}</h4>
+                  <div class="text-center bg-secondary/5 dark:bg-secondary/10 rounded-[45px] px-10 py-6 w-full border-2 border-secondary/20 shadow-inner">
+                    <p class="text-[10px] font-bold text-secondary uppercase mb-1">NETWORK DOMINATOR</p>
+                    <p class="text-5xl font-black text-[#0d1b12] dark:text-white">${formatNumber(referrals)}</p>
+                  </div>
+                </div>
+              </div>
+            `;
+          } else if (isSecond) {
+            return `
+              <div class="${wrapperClass}">
+                <div class="w-full glass-card curved-card p-8 border-2 border-slate-200 dark:border-slate-700/50 shadow-xl hover:-translate-y-2 transition-all duration-500 relative flex flex-col items-center">
+                  <div class="absolute -top-6 left-1/2 -translate-x-1/2 whitespace-nowrap">
+                    <div class="bg-gradient-to-r from-slate-400 to-slate-200 text-slate-900 text-xs font-black px-6 py-2 rounded-full shadow-lg border border-white uppercase">
+                      Silver Networker
+                    </div>
+                  </div>
+                  <div class="relative mb-8 mt-4">
+                    <div class="size-28 rounded-3xl rotate-12 p-1.5 bg-gradient-to-br from-slate-300 to-slate-500 shadow-lg shadow-slate-200/50">
+                      <div class="size-full rounded-2xl -rotate-12 bg-cover bg-center border-4 border-white dark:border-[#152a1c]" style="background-image: url('${avatarUrl(user)}');"></div>
+                    </div>
+                  </div>
+                  <h4 class="text-xl font-black mb-4 text-[#0d1b12] dark:text-white text-center">${name}</h4>
+                  <div class="text-center bg-slate-50 dark:bg-white/10 rounded-2xl px-6 py-4 w-full border border-slate-100 dark:border-slate-800">
+                    <p class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] mb-1">TOTAL REFERRALS</p>
+                    <p class="text-3xl font-black text-slate-600 dark:text-slate-300">${formatNumber(referrals)}</p>
+                  </div>
+                </div>
+              </div>
+            `;
+          } else {
+            return `
+              <div class="${wrapperClass}">
+                <div class="w-full glass-card curved-card p-8 border-2 border-orange-200 dark:border-orange-900/30 shadow-xl hover:-translate-y-2 transition-all duration-500 relative flex flex-col items-center">
+                  <div class="absolute -top-6 left-1/2 -translate-x-1/2 whitespace-nowrap">
+                    <div class="bg-gradient-to-r from-orange-500 to-orange-300 text-white text-xs font-black px-6 py-2 rounded-full shadow-lg border border-white uppercase tracking-widest">
+                      Bronze Master
+                    </div>
+                  </div>
+                  <div class="relative mb-8 mt-4">
+                    <div class="size-28 rounded-3xl -rotate-12 p-1.5 bg-gradient-to-br from-orange-400 to-orange-600 shadow-lg shadow-orange-200/50">
+                      <div class="size-full rounded-2xl rotate-12 bg-cover bg-center border-4 border-white dark:border-[#152a1c]" style="background-image: url('${avatarUrl(user)}');"></div>
+                    </div>
+                  </div>
+                  <h4 class="text-xl font-bold mb-4 text-[#0d1b12] dark:text-white text-center">${name}</h4>
+                  <div class="text-center bg-orange-50 dark:bg-orange-900/20 rounded-2xl px-6 py-4 w-full border border-orange-100 dark:border-orange-900/30">
+                    <p class="text-[10px] font-bold text-orange-600 dark:text-orange-400 uppercase tracking-[0.2em] mb-1">TOTAL REFERRALS</p>
+                    <p class="text-3xl font-black text-orange-700 dark:text-orange-300">${formatNumber(referrals)}</p>
+                  </div>
+                </div>
+              </div>
+            `;
+          }
+        }).join("");
+
+        // Ring list (4-7)
+        const listContainer = document.getElementById("top-referrers-list");
+        const pool4to7 = data.slice(3);
+        const topReferralCount = data[0].total_referrals || 1;
+
+        if (pool4to7.length === 0) {
+          listContainer.innerHTML = '';
+        } else {
+          listContainer.innerHTML = pool4to7.map((user, idx) => {
+            const name = user.full_name || user.username || 'Anonymous';
+            const referrals = user.total_referrals || 0;
+            const strokeOffset = 276 - (276 * (referrals / topReferralCount));
+
+            return `
+              <div class="flex flex-col items-center group cursor-pointer">
+                <div class="relative mb-4">
+                  <svg class="size-24 transform -rotate-90">
+                    <circle class="text-gray-200 dark:text-gray-800" cx="48" cy="48" fill="transparent" r="44" stroke="currentColor" stroke-width="6"></circle>
+                    <circle class="text-secondary" cx="48" cy="48" fill="transparent" r="44" stroke="currentColor" stroke-dasharray="276" stroke-dashoffset="${strokeOffset}" stroke-width="6"></circle>
+                  </svg>
+                  <div class="absolute inset-2 rounded-full bg-cover bg-center border-4 border-white dark:border-gray-900 shadow-md group-hover:scale-105 transition-transform" style="background-image: url('${avatarUrl(user)}');"></div>
+                  <div class="absolute -bottom-1 -right-1 size-8 rounded-full bg-deep-emerald text-white flex items-center justify-center text-xs font-black border-2 border-white shadow-lg">#${idx + 4}</div>
+                </div>
+                <h5 class="font-black text-sm text-[#0d1b12] dark:text-white">${name}</h5>
+                <p class="text-xs font-bold text-secondary">${formatNumber(referrals)} Referrals</p>
+              </div>
+            `;
+          }).join("");
+        }
+      } catch (err) {
+        console.error("Error loading top referrers:", err);
+      }
+    }
+
+    // Recent Referral Activity
+    async function loadRecentReferrals() {
+      try {
+        const { data, error } = await supabaseClient
+          .from("referrals")
+          .select(`bonus_amount, created_at, referrer:profiles!referrer_id ( full_name, username, avatar_url ), referred:profiles!referred_user_id ( full_name, username )`)
+          .order("created_at", { ascending: false })
+          .limit(5);
+
+        if (error) throw error;
+
+        const tbody = document.getElementById("referral-activity-tbody");
+        if (!data || data.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="4" class="px-8 py-8 text-center text-[#4c6655] dark:text-gray-400">No referral activity yet.</td></tr>`;
+          return;
+        }
+
+        tbody.innerHTML = data.map(r => {
+          const referrer = r.referrer || {};
+          const referred = r.referred || {};
+          const refName = (typeof escapeHtml === 'function') ? escapeHtml(referrer.full_name || referrer.username || "Anonymous") : (referrer.full_name || referrer.username || "Anonymous");
+          const targetName = (typeof escapeHtml === 'function') ? escapeHtml(referred.full_name || referred.username || "Anonymous") : (referred.full_name || referred.username || "Anonymous");
+
+          return `
+            <tr class="hover:bg-primary/5 transition-colors group">
+              <td class="px-8 py-5">
+                <div class="flex items-center gap-3">
+                  <div class="size-10 rounded-full bg-cover bg-center border-2 border-white dark:border-gray-800 shadow-sm" style="background-image: url('${avatarUrl(referrer)}');"></div>
+                  <span class="font-bold text-[#0d1b12] dark:text-white">${refName}</span>
+                </div>
+              </td>
+              <td class="px-8 py-5">
+                <span class="font-semibold text-[#4c6655] dark:text-gray-300">${targetName}</span>
+              </td>
+              <td class="px-8 py-5 font-black text-primary text-xl tracking-tight">৳${formatNumber(Number(r.bonus_amount) || 0)}</td>
+              <td class="px-8 py-5 text-sm text-[#4c6655] dark:text-gray-400 font-semibold">${new Date(r.created_at).toLocaleDateString()}</td>
+            </tr>
+          `;
+        }).join("");
+      } catch (err) {
+        console.error("Error loading recent referrals:", err);
+      }
+    }
+
+    // Success Stories
+    async function loadReviews() {
+      try {
+        const { data, error } = await supabaseClient
+          .from("reviews")
+          .select(`rating, comment, profiles!user_id ( full_name, username, role )`)
+          .eq("is_approved", true)
+          .order("created_at", { ascending: false })
+          .limit(3);
+
+        if (error) throw error;
+
+        const container = document.getElementById("reviews-container");
+        if (!data || data.length === 0) {
+          container.innerHTML = "<p class='col-span-1 md:col-span-3 text-center text-gray-500 italic'>No success stories available yet.</p>";
+          return;
+        }
+
+        container.innerHTML = data.map((rev, idx) => {
+          const profile = rev.profiles || {};
+          const safeName = (typeof escapeHtml === 'function') ? escapeHtml(profile.full_name || profile.username || "Anonymous User") : (profile.full_name || profile.username || "Anonymous User");
+          const safeComment = (typeof escapeHtml === 'function') ? escapeHtml(rev.comment || "") : (rev.comment || "");
+          const initials = safeName.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
+          const stars = Array(5).fill(0).map((_, i) => `<span class="material-symbols-outlined text-primary" style="font-variation-settings:'FILL' ${i < rev.rating ? 1 : 0},'wght' 400,'GRAD' 0,'opsz' 24">star</span>`).join("");
+
+          return `
+            <div class="p-8 rounded-3xl ${idx === 0 ? 'bg-[#e7f3eb] dark:bg-[#152a1c] border border-transparent' : 'border border-[#cfe7d7] dark:border-[#1d3a25] bg-white dark:bg-[#102216]'} hover:border-primary/20 transition-all">
+              <div class="flex gap-1 text-primary mb-5">${stars}</div>
+              <p class="italic text-lg mb-8 leading-relaxed font-medium">"${safeComment}"</p>
+              <div class="flex items-center gap-4">
+                <div class="size-12 rounded-full bg-primary/30 flex items-center justify-center font-black text-primary">${initials}</div>
+                <div>
+                  <h5 class="font-bold text-base">${safeName}</h5>
+                  <p class="text-xs font-semibold opacity-60">${profile.role || 'Verified User'}</p>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join("");
+      } catch (err) {
+        console.error("Error loading reviews:", err);
+      }
+    }
+
+    // Button Wiring
+    function initButtons() {
+      const heroButtons = document.querySelectorAll('main section:first-of-type button');
+      heroButtons.forEach(btn => {
+        const text = btn.textContent.trim();
+        if (text.startsWith('Start Earning Now')) btn.addEventListener('click', () => { window.location.href = 'Register_Page.html'; });
+        else if (text.startsWith('How it Works')) btn.addEventListener('click', () => { window.location.href = 'About_Page.html'; });
+      });
+
+      document.querySelectorAll('main section button').forEach(btn => {
+        if (btn.textContent.trim().startsWith('Create Free Account')) {
+          btn.addEventListener('click', () => { window.location.href = 'Register_Page.html'; });
+        }
+      });
+    }
+
+    // Theme Toggle
+    function initThemeToggle() {
+      const themeToggle = document.getElementById('theme-toggle');
+      const themeToggleIcon = document.getElementById('theme-toggle-icon');
+      function updateThemeIcon() {
+        const isDark = document.documentElement.classList.contains('dark');
+        themeToggleIcon.textContent = isDark ? 'light_mode' : 'dark_mode';
+      }
+      if (themeToggle) {
+        updateThemeIcon();
+        themeToggle.addEventListener('click', () => {
+          document.documentElement.classList.toggle('dark');
+          localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+          updateThemeIcon();
+        });
+      }
+    }
+
+    // Initialization
+    document.addEventListener("DOMContentLoaded", () => {
+      loadStats();
+      loadMarketRates();
+      loadTopEarners();
+      loadLivePayouts();
+      subscribeToPayouts();
+      subscribeToMarketAssets();
+      loadTopReferrers();
+      loadRecentReferrals();
+      loadReviews();
+      initButtons();
+      initThemeToggle();
+    });
+  </script>
+</body>
+</html>

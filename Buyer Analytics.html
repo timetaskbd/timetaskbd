@@ -1,0 +1,859 @@
+<!doctype html>
+<html class="light" lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <title>Buyer Analytics - Time Task BD</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+    rel="stylesheet" />
+  <script>
+    (function () {
+      const savedTheme = localStorage.getItem("theme") || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+      if (savedTheme === "dark") {
+        document.documentElement.classList.add("dark");
+        document.documentElement.classList.remove("light");
+      } else {
+        document.documentElement.classList.add("light");
+        document.documentElement.classList.remove("dark");
+      }
+    })();
+  </script>
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            primary: "#13ec5b",
+            "background-light": "#f6f8f6",
+            "background-dark": "#0d1b12",
+            "sidebar-deep": "#102216",
+          },
+          fontFamily: { display: ["Manrope"] },
+          borderRadius: { DEFAULT: "0.25rem", lg: "0.5rem", xl: "0.75rem", "2xl": "1rem", full: "9999px" },
+        },
+      },
+    };
+  </script>
+  <style type="text/tailwindcss">
+    @layer base { body { @apply font-display bg-background-light dark:bg-background-dark text-slate-900 dark:text-white transition-colors duration-300; } }
+      .sidebar-transition { @apply transition-all duration-300 ease-in-out; }
+      .sidebar-item-active {
+        @apply bg-background-light text-sidebar-deep font-bold relative !important;
+        border-radius: 40px 0 0 40px; margin-left: 10px; width: calc(100% - 10px) !important;
+      }
+      .sidebar-item-active::before {
+        content: ""; position: absolute; right: 0; top: -40px; width: 40px; height: 40px;
+        background: transparent; border-radius: 50%; box-shadow: 20px 20px 0 0 #f6f8f6; pointer-events: none;
+      }
+      .sidebar-item-active::after {
+        content: ""; position: absolute; right: 0; bottom: -40px; width: 40px; height: 40px;
+        background: transparent; border-radius: 50%; box-shadow: 20px -20px 0 0 #f6f8f6; pointer-events: none;
+      }
+      .dark .sidebar-item-active::before { box-shadow: 20px 20px 0 0 #0d1b12; }
+      .dark .sidebar-item-active::after  { box-shadow: 20px -20px 0 0 #0d1b12; }
+      .dark .sidebar-item-active { @apply bg-background-dark text-white !important; }
+      .sidebar-item { @apply flex items-center py-4 text-white/70 hover:text-white transition-all duration-200 cursor-pointer w-full relative; }
+      .sidebar-item .material-symbols-outlined { @apply font-light text-[24px]; }
+      .sidebar-item-active .material-symbols-outlined { @apply text-sidebar-deep; }
+      .dark .sidebar-item-active .material-symbols-outlined { @apply text-primary; }
+      .nav-tooltip { @apply invisible absolute left-full ml-4 px-2 py-1 bg-sidebar-deep text-white text-[10px] rounded whitespace-nowrap opacity-0 transition-opacity z-50 pointer-events-none; }
+      .sidebar-collapsed { @apply w-20 pl-0; }
+      .sidebar-collapsed .logo-text, .sidebar-collapsed .item-text,
+      .sidebar-collapsed .menu-label, .sidebar-collapsed .system-card-text { @apply hidden; }
+      .sidebar-collapsed .sidebar-item { @apply justify-center px-0; }
+      .sidebar-collapsed .sidebar-item:hover .nav-tooltip { @apply visible opacity-100; }
+      .sidebar-collapsed .sidebar-header { @apply px-0 justify-center; }
+      .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+      .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+      .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+      .active-tab-nav { @apply bg-primary text-slate-900 dark:text-white shadow-lg shadow-primary/20; }
+      .skeleton { @apply bg-slate-200 dark:bg-slate-800 rounded animate-pulse; }
+      .active-range {background: white;box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);color: #0d1b12 !important;}
+      .dark .active-range {background: #13ec5b;box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);color: #fff !important;}
+    </style>
+</head>
+
+<body class="flex min-h-screen overflow-hidden">
+
+  <!-- Sidebar -->
+  <aside id="mainSidebar"
+    class="w-72 bg-sidebar-deep flex-shrink-0 flex flex-col h-screen sticky top-0 sidebar-transition pl-2">
+    <div class="sidebar-header p-6 pb-12 flex items-center gap-3 transition-all">
+      <div
+        class="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20 flex-shrink-0">
+        <span class="material-symbols-outlined text-sidebar-deep font-bold text-2xl">update</span>
+      </div>
+      <div class="flex flex-col logo-text overflow-hidden">
+        <span class="text-white font-extrabold text-lg leading-tight tracking-tight whitespace-nowrap">Time Task
+          BD</span>
+        <span class="text-primary/60 text-[10px] font-bold uppercase tracking-widest whitespace-nowrap">Admin
+          Control</span>
+      </div>
+    </div>
+    <nav class="flex-1">
+      <div class="px-8 mb-4 menu-label">
+        <p class="text-[10px] font-bold text-white/40 uppercase tracking-[0.2em]">Main Menu</p>
+      </div>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Admin Index.html">
+        <span class="material-symbols-outlined">dashboard</span>
+        <span class="text-sm item-text ml-4">Dashboard</span>
+        <span class="nav-tooltip">Dashboard</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/System Health.html">
+        <span class="material-symbols-outlined">monitor_heart</span>
+        <span class="text-sm item-text ml-4">System Monitoring</span>
+        <span class="nav-tooltip">Security &amp; System Monitoring</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/KYC Review.html">
+        <span class="material-symbols-outlined">manage_accounts</span>
+        <span class="text-sm item-text ml-4">Management</span>
+        <span class="nav-tooltip">User &amp; Buyer Management</span>
+      </a>
+      <a class="sidebar-item sidebar-item-active px-8 group" href="/Admin Dashboard/User Analytics.html">
+        <span class="material-symbols-outlined">analytics</span>
+        <span class="text-sm item-text ml-4">Analytics Section</span>
+        <span class="nav-tooltip">Analytics Section</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/User Referral Tree.html">
+        <span class="material-symbols-outlined">hub</span>
+        <span class="text-sm item-text ml-4">Referral System</span>
+        <span class="nav-tooltip">Referral System</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Market Asset Price.html">
+        <span class="material-symbols-outlined">trending_up</span>
+        <span class="text-sm item-text ml-4">Market Asset Prices</span>
+        <span class="nav-tooltip">Market Asset Prices</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Live Support.html">
+        <span class="material-symbols-outlined">support_agent</span>
+        <span class="text-sm item-text ml-4">Live Support</span>
+        <span class="nav-tooltip">Live Support</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Buyer Communication.html">
+        <span class="material-symbols-outlined">forum</span>
+        <span class="text-sm item-text ml-4">Communication</span>
+        <span class="nav-tooltip">Communication</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/System Announcemeeent.html">
+        <span class="material-symbols-outlined">campaign</span>
+        <span class="text-sm item-text ml-4">System Announcement</span>
+        <span class="nav-tooltip">System Announcement</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Invoice Management.html">
+        <span class="material-symbols-outlined">description</span>
+        <span class="text-sm item-text ml-4">Invoice Management</span>
+        <span class="nav-tooltip">Invoice Management</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Create Content.html">
+        <span class="material-symbols-outlined">edit_note</span>
+        <span class="text-sm item-text ml-4">Content Management</span>
+        <span class="nav-tooltip">Content Management</span>
+      </a>
+    </nav>
+    <div class="px-6 py-8">
+      <button id="logoutBtn"
+        class="w-full h-10 flex items-center justify-center bg-primary text-sidebar-deep font-bold text-xs rounded-lg hover:brightness-110 transition-all shadow-lg shadow-primary/10 group relative">
+        <span class="material-symbols-outlined text-[20px]">logout</span>
+        <span class="ml-2 system-card-text">Logout</span>
+        <span class="nav-tooltip !left-full !ml-6">Logout</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <div class="flex-1 flex flex-col h-screen overflow-hidden bg-background-light dark:bg-background-dark">
+
+    <!-- Header -->
+    <header
+      class="h-20 bg-white dark:bg-[#111f16] border-b border-slate-100 dark:border-white/10 px-6 flex items-center justify-between flex-shrink-0 z-40 transition-colors duration-300">
+      <div class="flex items-center gap-6">
+        <button id="sidebarToggle"
+          class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-white/70 hover:text-sidebar-deep dark:hover:text-primary hover:bg-primary/10 transition-all">
+          <span class="material-symbols-outlined">menu</span>
+        </button>
+        <div class="relative w-96 group">
+          <span
+            class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-sidebar-deep dark:group-focus-within:text-primary transition-colors">search</span>
+          <input
+            class="w-full bg-slate-100 dark:bg-white/5 border-none rounded-xl pl-10 pr-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 dark:text-white transition-all"
+            placeholder="Search buyers..." type="text" />
+        </div>
+      </div>
+      <div class="flex items-center gap-6">
+        <div class="flex items-center gap-2">
+          <button
+            class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-white/70 hover:bg-primary/10 transition-all relative">
+            <span class="material-symbols-outlined">notifications</span>
+            <span
+              class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-[#111f16]"></span>
+          </button>
+          <button id="darkModeToggle"
+            class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-white/70 hover:text-sidebar-deep dark:hover:text-primary hover:bg-primary/10 transition-all">
+            <span id="darkIcon" class="material-symbols-outlined">light_mode</span>
+          </button>
+        </div>
+        <div class="h-10 w-px bg-slate-200 dark:bg-white/10"></div>
+        <div class="flex items-center gap-3 cursor-pointer group">
+          <div class="text-right">
+            <p id="adminName"
+              class="text-sm font-bold text-slate-900 dark:text-white group-hover:text-primary transition-colors">Super
+              Admin</p>
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">System Manager</p>
+          </div>
+          <div
+            class="w-12 h-12 rounded-xl border-2 border-primary/20 p-0.5 overflow-hidden group-hover:border-primary transition-all">
+            <img id="adminAvatar" alt="Admin Profile" class="w-full h-full object-cover rounded-lg"
+              src="https://lh3.googleusercontent.com/aida-public/AB6AXuDI3q59cS__AXyYcqFQtKZ2-e__roEJ3Cic28K7cd-6tYYxzLfpTArNsAJE3UypttzDIKS6SoNy85-jDLh0ZMbLqXr0NEEjrbCPSgoCJZyYc4W89P8djmlf34I_NEoa2vfl5IS3jHwLSZZ6lgtwguAje5Lv9h9RbZ2fJqb36M_tmZc-iJY-XxAXsCDxVyU1bONcO3AV5LZgB1o5wURKpB9w2XEN6iWAILVT7fIzOkl2pQ4lJb5WxYgkvuNIlKakHZWN1e4bzfo25zYy" />
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Sub Navigation Tabs -->
+    <nav
+      class="sticky top-0 bg-white/50 dark:bg-[#111f16]/50 border-b border-gray-100 dark:border-white/10 backdrop-blur-sm relative z-30 rounded-l-[30px] ml-80 transition-colors duration-300">
+      <div class="mx-auto w-full px-4">
+        <div id="tabsContainer" class="flex gap-4 overflow-x-auto no-scrollbar py-3">
+          <a class="flex items-center gap-2 px-4 py-2 rounded-[30px] text-sm font-semibold text-gray-700 dark:text-slate-300 hover:bg-white dark:hover:bg-white/5 hover:shadow-sm whitespace-nowrap transition-all"
+            href="/Admin Dashboard/User Analytics.html">
+            <span class="material-symbols-outlined text-[20px]">groups</span> User Analytics
+          </a>
+          <a class="flex items-center gap-2 px-4 py-2 rounded-[30px] text-sm font-semibold active-tab-nav whitespace-nowrap transition-all"
+            href="/Admin Dashboard/Buyer Analytics.html">
+            <span class="material-symbols-outlined text-[20px]">groups</span> Buyer Analytics
+          </a>
+          <a class="flex items-center gap-2 px-4 py-2 rounded-[30px] text-sm font-semibold text-gray-700 dark:text-slate-300 hover:bg-white dark:hover:bg-white/5 hover:shadow-sm whitespace-nowrap transition-all"
+            href="/Admin Dashboard/Marketplace Analytics.html">
+            <span class="material-symbols-outlined text-[20px]">trending_up</span> Marketplace Analytics
+          </a>
+          <a class="flex items-center gap-2 px-4 py-2 rounded-[30px] text-sm font-semibold text-gray-700 dark:text-slate-300 hover:bg-white dark:hover:bg-white/5 hover:shadow-sm whitespace-nowrap transition-all"
+            href="/Admin Dashboard/Financial Overview.html">
+            <span class="material-symbols-outlined text-[20px]">account_balance</span> Financials Overview
+          </a>
+          <a class="flex items-center gap-2 px-4 py-2 rounded-[30px] text-sm font-semibold text-gray-700 dark:text-slate-300 hover:bg-white dark:hover:bg-white/5 hover:shadow-sm whitespace-nowrap transition-all"
+            href="/Admin Dashboard/Financial Revenue Analytics.html">
+            <span class="material-symbols-outlined text-[20px]">query_stats</span> Financials &amp; Revenue
+          </a>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-8 max-w-full">
+      <div class="max-w-[1600px] mx-auto w-full space-y-8">
+
+        <!-- Top Bar -->
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-2xl font-bold dark:text-white">Buyer Analytics</h2>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Live data — refreshed <span id="lastRefreshed"
+                class="font-semibold text-slate-700 dark:text-slate-200"></span></p>
+          </div>
+          <div class="flex items-center gap-3">
+            <!-- Time Range Filter -->
+            <div class="flex h-10 items-center rounded-lg bg-[#e7f3eb] dark:bg-[#1a2e1f] p-1 gap-1">
+              <button data-range="today" onclick="setRange('today')"
+                class="range-btn h-full px-4 rounded-lg text-sm font-medium text-[#4c9a66] transition-all">Today</button>
+              <button data-range="7" onclick="setRange('7')"
+                class="range-btn h-full px-4 rounded-lg text-sm font-medium text-[#4c9a66] transition-all active-range">7
+                Days</button>
+              <button data-range="30" onclick="setRange('30')"
+                class="range-btn h-full px-4 rounded-lg text-sm font-medium text-[#4c9a66] transition-all">30
+                Days</button>
+            </div>
+            <button onclick="loadAll()"
+              class="flex items-center gap-2 px-4 py-2 bg-primary dark:text-white text-sidebar-deep font-bold text-sm rounded-xl hover:bg-primary/20 transition-all">
+              <span class="material-symbols-outlined text-[18px]">refresh</span> Refresh
+            </button>
+          </div>
+        </div>
+
+        <!-- KPI Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <!-- Total Buyers -->
+          <div
+            class="bg-white dark:bg-[#1a2e1f] p-6 rounded-xl border border-[#cfe7d7] dark:border-white/10 shadow-sm flex flex-col gap-2">
+            <div class="flex justify-between items-start">
+              <p class="text-[#4c9a66] text-sm font-medium uppercase tracking-wider">Total Buyers</p>
+              <span class="material-symbols-outlined text-primary">groups</span>
+            </div>
+            <p id="kpi-total-buyers" class="text-3xl font-extrabold">—</p>
+            <span id="kpi-total-buyers-sub" class="text-[#4c9a66] font-normal text-xs">Loading...</span>
+          </div>
+          <!-- Active Buyers -->
+          <div
+            class="bg-white dark:bg-[#1a2e1f] p-6 rounded-xl border border-[#cfe7d7] dark:border-white/10 shadow-sm flex flex-col gap-2">
+            <div class="flex justify-between items-start">
+              <p class="text-[#4c9a66] text-sm font-medium uppercase tracking-wider">Active Buyers</p>
+              <span class="material-symbols-outlined text-[#ffc107]">person_check</span>
+            </div>
+            <p id="kpi-active-buyers" class="text-3xl font-extrabold">—</p>
+            <span id="kpi-active-buyers-sub" class="text-[#4c9a66] font-normal text-xs">Loading...</span>
+          </div>
+          <!-- Total Orders -->
+          <div
+            class="bg-white dark:bg-[#1a2e1f] p-6 rounded-xl border border-[#cfe7d7] dark:border-white/10 shadow-sm flex flex-col gap-2">
+            <div class="flex justify-between items-start">
+              <p class="text-[#4c9a66] text-sm font-medium uppercase tracking-wider">Total Orders</p>
+              <span class="material-symbols-outlined text-blue-500">shopping_cart</span>
+            </div>
+            <p id="kpi-total-orders" class="text-3xl font-extrabold">—</p>
+            <span id="kpi-total-orders-sub" class="text-[#4c9a66] font-normal text-xs">Loading...</span>
+          </div>
+          <!-- Total Revenue -->
+          <div
+            class="bg-white dark:bg-[#1a2e1f] p-6 rounded-xl border border-[#cfe7d7] dark:border-white/10 shadow-sm flex flex-col gap-4">
+            <div>
+              <div class="flex justify-between items-start mb-1">
+                <p class="text-[#4c9a66] text-sm font-medium uppercase tracking-wider">Total Revenue</p>
+                <span id="kpi-aov" class="text-sm font-bold text-[#078829] dark:text-primary">—</span>
+              </div>
+              <div class="h-2 rounded-full bg-[#cfe7d7] dark:bg-white/10 overflow-hidden">
+                <div id="kpi-aov-bar" class="h-full bg-primary rounded-full transition-all duration-700"
+                  style="width:0%"></div>
+              </div>
+            </div>
+            <p id="kpi-revenue-sub" class="text-xs text-[#4c9a66] dark:text-slate-400 leading-tight">Loading revenue
+              data...</p>
+          </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <!-- Spending Trends — Chart.js Line -->
+          <div
+            class="lg:col-span-2 bg-white dark:bg-[#1a2e1f] p-6 rounded-xl border border-[#cfe7d7] dark:border-white/10 shadow-sm transition-colors duration-300">
+            <div class="flex items-center justify-between mb-6">
+              <div>
+                <h3 class="font-bold text-lg dark:text-white">Buyer Spending Trends</h3>
+                <p class="text-sm text-slate-500 dark:text-slate-400">Daily order revenue in selected range</p>
+              </div>
+              <div class="flex items-center gap-2 text-xs text-[#4c9a66] dark:text-primary">
+                <span class="size-3 bg-primary rounded-full inline-block"></span> Revenue (৳)
+              </div>
+            </div>
+            <div class="relative h-64 w-full">
+              <canvas id="spendingLineChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Platform Order Share — Chart.js Doughnut -->
+          <div
+            class="bg-white dark:bg-[#1a2e1f] p-6 rounded-xl border border-[#cfe7d7] dark:border-white/10 shadow-sm flex flex-col transition-colors duration-300">
+            <h3 class="font-bold text-lg mb-1 dark:text-white">Platform Order Share</h3>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mb-4">Order volume by platform</p>
+            <div class="flex-1 flex flex-col items-center justify-center">
+              <div class="relative w-48 h-48">
+                <canvas id="platformDoughnutChart"></canvas>
+                <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                  <p id="doughnutCenter" class="text-2xl font-bold dark:text-white">—</p>
+                  <p class="text-[10px] text-[#4c9a66] dark:text-primary uppercase font-bold">Total</p>
+                </div>
+              </div>
+              <div id="platformLegend" class="grid grid-cols-2 gap-2 mt-6 w-full text-xs dark:text-slate-300">
+                <!-- filled by JS -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bottom Row: Top Buyers + Retention Metrics -->
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+
+          <!-- Top Buyers Table -->
+          <div
+            class="lg:col-span-3 bg-white dark:bg-[#1a2e1f] rounded-xl border border-[#cfe7d7] dark:border-white/10 shadow-sm overflow-hidden transition-colors duration-300">
+            <div class="p-6 border-b border-[#e7f3eb] dark:border-white/5 flex justify-between items-center">
+              <h3 class="font-bold text-lg dark:text-white">Top Buyers by Total Spending</h3>
+              <span class="text-xs text-[#4c9a66] dark:text-primary font-medium">By approved order value</span>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left">
+                <thead
+                  class="bg-[#f8fcf9] dark:bg-white/5 text-[10px] uppercase text-[#4c9a66] dark:text-primary font-bold">
+                  <tr>
+                    <th class="px-6 py-3">Rank</th>
+                    <th class="px-6 py-3">Buyer</th>
+                    <th class="px-6 py-3 text-center">Orders</th>
+                    <th class="px-6 py-3 text-right">Total Spending</th>
+                    <th class="px-6 py-3">Status</th>
+                  </tr>
+                </thead>
+                <tbody id="topBuyersBody" class="divide-y divide-[#e7f3eb] dark:divide-white/5">
+                  <tr>
+                    <td colspan="5" class="px-6 py-8">
+                      <div class="flex flex-col items-center gap-2">
+                        <div class="w-48 h-3 skeleton"></div>
+                        <div class="w-36 h-3 skeleton"></div>
+                        <div class="w-40 h-3 skeleton"></div>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Retention Metrics -->
+          <div class="flex flex-col gap-6">
+            <!-- Retention Index -->
+            <div
+              class="flex-1 bg-white dark:bg-[#1a2e1f] p-6 rounded-xl border border-[#cfe7d7] dark:border-white/10 shadow-sm transition-colors duration-300">
+              <h4 class="font-bold text-sm text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-4">Retention
+                Index</h4>
+              <div class="mb-6">
+                <p class="text-xs font-bold text-slate-400 dark:text-slate-500 mb-1">Repeat Buyer Rate</p>
+                <div class="flex items-end gap-2">
+                  <span id="repeatBuyerRate" class="text-3xl font-extrabold dark:text-white">—</span>
+                  <span id="repeatBuyerTrend"
+                    class="text-xs font-bold text-[#4c9a66] dark:text-primary mb-1">calculating...</span>
+                </div>
+                <div class="w-full h-1.5 bg-slate-100 dark:bg-white/10 rounded-full mt-3 overflow-hidden">
+                  <div id="repeatBuyerBar" class="h-full bg-primary rounded-full transition-all duration-700"
+                    style="width:0%"></div>
+                </div>
+              </div>
+              <div>
+                <p class="text-xs font-bold text-slate-400 dark:text-slate-500 mb-1">Avg. Order Value (AOV)</p>
+                <div class="flex items-end gap-2">
+                  <span id="aovValue" class="text-2xl font-extrabold dark:text-white">—</span>
+                </div>
+                <p id="aovSub" class="text-[10px] text-slate-500 dark:text-slate-400 mt-2 font-medium">Loading order
+                  data...</p>
+              </div>
+            </div>
+            <!-- Smart Insights -->
+            <div
+              class="bg-primary/5 dark:bg-primary/10 p-6 rounded-xl border border-primary/20 flex flex-col items-center text-center transition-colors duration-300">
+              <span class="material-symbols-outlined text-primary text-3xl mb-2">auto_awesome</span>
+              <h5 class="font-bold text-sm dark:text-white">Smart Insights</h5>
+              <p id="smartInsight" class="text-xs text-slate-600 dark:text-slate-400 mt-2 leading-relaxed">Loading
+                insights...</p>
+            </div>
+          </div>
+        </div>
+
+        <footer class="pt-16 pb-8 border-t border-slate-200 dark:border-white/10 mt-12 transition-colors duration-300">
+          <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+            <div
+              class="flex items-center gap-8 text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+              <a class="hover:text-primary transition-colors" href="#">Privacy Policy</a>
+              <a class="hover:text-primary transition-colors" href="#">Terms of Service</a>
+              <a class="hover:text-primary transition-colors" href="#">Documentation</a>
+            </div>
+            <p class="text-[11px] font-bold text-slate-400 dark:text-slate-500">© 2024 TIME TASK BD. ALL RIGHTS
+              RESERVED.</p>
+          </div>
+        </footer>
+
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../supabase-client.js"></script>
+  <script>
+    // ─── Sidebar Toggle ────────────────────────────────────────────────────────
+    document.getElementById('sidebarToggle').addEventListener('click', () => {
+      document.getElementById('mainSidebar').classList.toggle('sidebar-collapsed');
+    });
+
+    // ─── Dark Mode Toggle ─────────────────────────────────────────────────────
+    const themeToggle = document.getElementById('darkModeToggle');
+    const darkIcon = document.getElementById('darkIcon');
+
+    function updateThemeUI(theme) {
+      if (theme === 'dark') {
+        document.documentElement.classList.add('dark');
+        document.documentElement.classList.remove('light');
+        darkIcon.textContent = 'dark_mode';
+      } else {
+        document.documentElement.classList.add('light');
+        document.documentElement.classList.remove('dark');
+        darkIcon.textContent = 'light_mode';
+      }
+      // Re-render charts with new theme colors
+      if (lineChartInst || doughnutChartInst) {
+        loadLineChart();
+        loadDoughnutChart();
+      }
+    }
+
+    themeToggle.addEventListener('click', () => {
+      const isDark = document.documentElement.classList.contains('dark');
+      const newTheme = isDark ? 'light' : 'dark';
+      localStorage.setItem('theme', newTheme);
+      updateThemeUI(newTheme);
+    });
+
+    // ─── Chart Colors Helper ──────────────────────────────────────────────────
+    function getChartTheme() {
+      const isDark = document.documentElement.classList.contains('dark');
+      return {
+        gridColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)',
+        textColor: isDark ? '#94a3b8' : '#64748b',
+        borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)'
+      };
+    }
+
+    // ─── Supabase ─────────────────────────────────────────────────────────────
+    const _sb = window.supabaseClient ||
+      supabase.createClient(
+        'https://kdoouzlmncekkozjrsdf.supabase.co',
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtkb291emxtbmNla2tvempyc2RmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5ODY5MjIsImV4cCI6MjA4NjU2MjkyMn0.7lsbYQ594Ix8LSXLs6RHYfljiO2A5P70XAjPsqWo8bs'
+      );
+
+    // ─── State ────────────────────────────────────────────────────────────────
+    let currentRange = '7';
+    let lineChartInst = null, doughnutChartInst = null;
+    const COLORS = ['#13ec5b', '#0ea5e9', '#f59e0b', '#8b5cf6', '#ef4444', '#10b981', '#f97316', '#6366f1'];
+
+    // ─── Helpers ──────────────────────────────────────────────────────────────
+    const fmtNum = n => (parseFloat(n) || 0).toLocaleString('en-US');
+    const fmtBDT = n => '৳' + (parseFloat(n) || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    function todayISO() { return new Date().toISOString().split('T')[0]; }
+    function daysAgoISO(n) { const d = new Date(); d.setDate(d.getDate() - n); return d.toISOString().split('T')[0]; }
+    function rangeStart() {
+      if (currentRange === 'today') return todayISO() + 'T00:00:00';
+      return daysAgoISO(parseInt(currentRange)) + 'T00:00:00';
+    }
+    function rangeDays() { return currentRange === 'today' ? 1 : parseInt(currentRange); }
+
+    // ─── Auth Guard ───────────────────────────────────────────────────────────
+    async function checkAuth() {
+      const { data: { session } } = await _sb.auth.getSession();
+      if (!session) { window.location.href = 'Admin_Login.html'; return null; }
+      const { data: p } = await _sb.from('profiles').select('role,full_name,avatar_url').eq('id', session.user.id).single();
+      if (p?.role !== 'Admin') {
+        alert('Access Denied.'); await _sb.auth.signOut(); window.location.href = 'Admin_Login.html'; return null;
+      }
+      if (p.full_name) document.getElementById('adminName').textContent = p.full_name;
+      if (p.avatar_url) document.getElementById('adminAvatar').src = p.avatar_url;
+      return session;
+    }
+
+    // ─── Logout ───────────────────────────────────────────────────────────────
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+      await _sb.auth.signOut(); window.location.href = 'Admin_Login.html';
+    });
+
+    // ─── Range Switcher ───────────────────────────────────────────────────────
+    function setRange(r) {
+      currentRange = r;
+      document.querySelectorAll('.range-btn').forEach(b => {
+        b.classList.toggle('active-range', b.dataset.range === r);
+      });
+      loadAll();
+    }
+
+    // ─── KPI Cards ────────────────────────────────────────────────────────────
+    async function loadKPIs() {
+      const since = rangeStart();
+
+      // 1. Total Buyers (role = 'Buyer', all-time)
+      const { count: totalBuyers } = await _sb.from('profiles')
+        .select('id', { count: 'exact', head: true }).eq('role', 'Buyer');
+      document.getElementById('kpi-total-buyers').textContent = fmtNum(totalBuyers || 0);
+      document.getElementById('kpi-total-buyers-sub').textContent = 'All registered buyers';
+
+      // 2. Active Buyers — distinct buyer_ids with orders in range
+      const { data: activeBuyerRows } = await _sb.from('orders')
+        .select('buyer_id').gte('created_at', since);
+      const uniqueBuyers = new Set((activeBuyerRows || []).map(r => r.buyer_id)).size;
+      document.getElementById('kpi-active-buyers').textContent = fmtNum(uniqueBuyers);
+      document.getElementById('kpi-active-buyers-sub').textContent =
+        currentRange === 'today' ? 'Buyers who ordered today' : `Buyers active in last ${currentRange} days`;
+
+      // 3. Total Orders in range
+      const { count: totalOrders } = await _sb.from('orders')
+        .select('id', { count: 'exact', head: true }).gte('created_at', since);
+      document.getElementById('kpi-total-orders').textContent = fmtNum(totalOrders || 0);
+      document.getElementById('kpi-total-orders-sub').textContent =
+        currentRange === 'today' ? 'Orders placed today' : `Orders in last ${currentRange} days`;
+
+      // 4. Total Revenue (sum of orders.total_cost) & AOV
+      const { data: revenueData } = await _sb.from('orders')
+        .select('total_cost').gte('created_at', since);
+      const totalRevenue = (revenueData || []).reduce((s, r) => s + (parseFloat(r.total_cost) || 0), 0);
+      const aov = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+      // Use a simple scale relative to 1M for the bar
+      const barPct = Math.min(Math.round((totalRevenue / 1_000_000) * 100), 100);
+      document.getElementById('kpi-aov').textContent = fmtBDT(totalRevenue);
+      document.getElementById('kpi-aov-bar').style.width = barPct + '%';
+      document.getElementById('kpi-revenue-sub').textContent =
+        `AOV: ${fmtBDT(aov)} · ${fmtNum(totalOrders || 0)} orders`;
+    }
+
+    // ─── Line Chart: Spending Trends ──────────────────────────────────────────
+    async function loadLineChart() {
+      const days = rangeDays();
+      const since = currentRange === 'today' ? todayISO() + 'T00:00:00' : daysAgoISO(days) + 'T00:00:00';
+      const { data: orders } = await _sb.from('orders').select('created_at, total_cost').gte('created_at', since);
+
+      let labels = [], dataPoints = [];
+
+      if (currentRange === 'today') {
+        const now = new Date();
+        for (let h = 0; h <= now.getHours(); h++) {
+          labels.push(String(h).padStart(2, '0') + ':00');
+          dataPoints.push(0);
+        }
+        (orders || []).forEach(r => {
+          const h = new Date(r.created_at).getHours();
+          if (dataPoints[h] !== undefined) dataPoints[h] += parseFloat(r.total_cost) || 0;
+        });
+      } else {
+        const countMap = {};
+        for (let i = days - 1; i >= 0; i--) {
+          const d = daysAgoISO(i);
+          countMap[d] = 0;
+          labels.push(d.slice(5));
+        }
+        (orders || []).forEach(r => {
+          const day = r.created_at.split('T')[0];
+          if (countMap[day] !== undefined) countMap[day] += parseFloat(r.total_cost) || 0;
+        });
+        dataPoints = Object.values(countMap);
+      }
+
+      const theme = getChartTheme();
+      const ctx = document.getElementById('spendingLineChart').getContext('2d');
+      if (lineChartInst) lineChartInst.destroy();
+
+      // Gradient fill
+      const gradient = ctx.createLinearGradient(0, 0, 0, 256);
+      gradient.addColorStop(0, 'rgba(19,236,91,0.35)');
+      gradient.addColorStop(1, 'rgba(19,236,91,0)');
+
+      lineChartInst = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Revenue (৳)',
+            data: dataPoints,
+            borderColor: '#13ec5b',
+            borderWidth: 2.5,
+            pointRadius: days <= 7 ? 4 : 2,
+            pointBackgroundColor: '#13ec5b',
+            pointBorderColor: document.documentElement.classList.contains('dark') ? '#1a2e1f' : '#fff',
+            pointBorderWidth: 2,
+            fill: true,
+            backgroundColor: gradient,
+            tension: 0.4,
+          }],
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: { callbacks: { label: c => ` ৳${c.parsed.y.toLocaleString('en-US', { minimumFractionDigits: 2 })}` } }
+          },
+          scales: {
+            x: { grid: { color: theme.gridColor }, ticks: { color: theme.textColor, font: { size: 10 }, maxRotation: 45, maxTicksLimit: 15 } },
+            y: { beginAtZero: true, grid: { color: theme.gridColor }, ticks: { color: theme.textColor, font: { size: 10 }, callback: v => '৳' + (v >= 1000 ? (v / 1000).toFixed(0) + 'k' : v) } },
+          },
+        },
+      });
+    }
+
+    // ─── Doughnut Chart: Platform Order Share ─────────────────────────────────
+    async function loadDoughnutChart() {
+      const since = rangeStart();
+      const { data: orders } = await _sb.from('orders').select('platform').gte('created_at', since);
+
+      const map = {};
+      (orders || []).forEach(o => {
+        const p = o.platform || 'Unknown';
+        map[p] = (map[p] || 0) + 1;
+      });
+      const platforms = Object.keys(map).sort((a, b) => map[b] - map[a]);
+      const total = platforms.reduce((s, p) => s + map[p], 0);
+
+      document.getElementById('doughnutCenter').textContent = fmtNum(total);
+
+      if (platforms.length === 0) {
+        document.getElementById('platformLegend').innerHTML =
+          '<p class="col-span-2 text-center text-slate-400 text-sm py-4">No orders in range</p>';
+        return;
+      }
+
+      const ctx = document.getElementById('platformDoughnutChart').getContext('2d');
+      if (doughnutChartInst) doughnutChartInst.destroy();
+      doughnutChartInst = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: platforms,
+          datasets: [{
+            data: platforms.map(p => map[p]),
+            backgroundColor: platforms.map((_, i) => COLORS[i % COLORS.length]),
+            borderWidth: 3,
+            borderColor: document.documentElement.classList.contains('dark') ? '#1a2e1f' : '#fff',
+            hoverOffset: 6,
+          }],
+        },
+        options: {
+          responsive: true, cutout: '70%',
+          plugins: {
+            legend: { display: false },
+            tooltip: { callbacks: { label: c => ` ${c.label}: ${fmtNum(c.parsed)} (${total > 0 ? Math.round(c.parsed / total * 100) : 0}%)` } }
+          },
+        },
+      });
+
+      document.getElementById('platformLegend').innerHTML = platforms.map((p, i) =>
+        `<div class="flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background:${COLORS[i % COLORS.length]}"></span>
+            <span class="truncate">${p} (${total > 0 ? Math.round(map[p] / total * 100) : 0}%)</span>
+          </div>`
+      ).join('');
+    }
+
+    // ─── Top Buyers Table ─────────────────────────────────────────────────────
+    async function loadTopBuyers() {
+      const since = rangeStart();
+      const { data: orders } = await _sb.from('orders')
+        .select('buyer_id, total_cost').gte('created_at', since);
+
+      if (!orders || orders.length === 0) {
+        document.getElementById('topBuyersBody').innerHTML =
+          '<tr><td colspan="5" class="px-6 py-8 text-center text-slate-400 text-sm">No orders in this range</td></tr>';
+        return;
+      }
+
+      // Aggregate
+      const buyerMap = {};
+      orders.forEach(o => {
+        if (!o.buyer_id) return;
+        if (!buyerMap[o.buyer_id]) buyerMap[o.buyer_id] = { total: 0, count: 0 };
+        buyerMap[o.buyer_id].total += parseFloat(o.total_cost) || 0;
+        buyerMap[o.buyer_id].count++;
+      });
+
+      const top10 = Object.entries(buyerMap)
+        .sort((a, b) => b[1].total - a[1].total)
+        .slice(0, 10);
+
+      if (top10.length === 0) {
+        document.getElementById('topBuyersBody').innerHTML =
+          '<tr><td colspan="5" class="px-6 py-6 text-center text-slate-400">No data</td></tr>';
+        return;
+      }
+
+      // Fetch profiles
+      const uids = top10.map(([id]) => id);
+      const { data: profiles } = await _sb.from('profiles')
+        .select('id, full_name, email, company_name, status').in('id', uids);
+      const pm = {};
+      (profiles || []).forEach(p => { pm[p.id] = p; });
+
+      document.getElementById('topBuyersBody').innerHTML = top10.map(([uid, d], i) => {
+        const p = pm[uid];
+        const displayName = p?.company_name || p?.full_name || p?.email || uid.slice(0, 8) + '…';
+        const initials = displayName.slice(0, 2).toUpperCase();
+        const bg = COLORS[i % COLORS.length];
+        const isActive = !p?.status || p?.status === 'active';
+        const statusBadge = isActive
+          ? `<span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-primary/10 text-primary uppercase">Active</span>`
+          : `<span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-slate-100 text-slate-400 uppercase">Inactive</span>`;
+
+        return `<tr class="hover:bg-primary/5 dark:hover:bg-primary/10 transition-colors">
+            <td class="px-6 py-4 text-sm font-bold text-slate-400 dark:text-slate-500">#${i + 1}</td>
+            <td class="px-6 py-4">
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
+                     style="background:${bg}">${initials}</div>
+                <div>
+                  <p class="text-sm font-bold dark:text-white">${displayName}</p>
+                  <p class="text-[10px] text-[#4c9a66] dark:text-primary">ID: ${uid.slice(0, 8)}</p>
+                </div>
+              </div>
+            </td>
+            <td class="px-6 py-4 text-sm text-center font-medium dark:text-slate-300">${fmtNum(d.count)}</td>
+            <td class="px-6 py-4 text-right text-sm font-bold text-primary">${fmtBDT(d.total)}</td>
+            <td class="px-6 py-4">${statusBadge}</td>
+          </tr>`;
+      }).join('');
+    }
+
+    // ─── Retention Metrics ────────────────────────────────────────────────────
+    async function loadRetention() {
+      const since = rangeStart();
+
+      // All buyers
+      const { count: totalBuyers } = await _sb.from('profiles')
+        .select('id', { count: 'exact', head: true }).eq('role', 'Buyer');
+
+      // Buyers with >1 order (repeat buyers)
+      const { data: allOrders } = await _sb.from('orders')
+        .select('buyer_id').gte('created_at', since);
+      const ordersByBuyer = {};
+      (allOrders || []).forEach(o => {
+        if (o.buyer_id) ordersByBuyer[o.buyer_id] = (ordersByBuyer[o.buyer_id] || 0) + 1;
+      });
+      const repeatCount = Object.values(ordersByBuyer).filter(c => c > 1).length;
+      const totalActive = Object.keys(ordersByBuyer).length;
+      const repeatRate = totalActive > 0 ? (repeatCount / totalActive * 100) : 0;
+
+      document.getElementById('repeatBuyerRate').textContent = repeatRate.toFixed(1) + '%';
+      document.getElementById('repeatBuyerBar').style.width = repeatRate.toFixed(1) + '%';
+      document.getElementById('repeatBuyerTrend').textContent =
+        `${repeatCount} of ${totalActive} active buyers`;
+
+      // AOV
+      const { data: revenueRows } = await _sb.from('orders')
+        .select('total_cost').gte('created_at', since);
+      const totalRev = (revenueRows || []).reduce((s, r) => s + (parseFloat(r.total_cost) || 0), 0);
+      const orderCount = revenueRows?.length || 0;
+      const aov = orderCount > 0 ? totalRev / orderCount : 0;
+
+      document.getElementById('aovValue').textContent = fmtBDT(aov);
+      document.getElementById('aovSub').textContent =
+        `Based on ${fmtNum(orderCount)} orders · ${fmtNum(totalBuyers || 0)} total buyers`;
+
+      // Smart Insight
+      const topPlatform = Object.entries(
+        (allOrders || []).reduce((acc, o) => { /* using platform from top buyers */ acc; return acc; }, {})
+      );
+      document.getElementById('smartInsight').textContent =
+        repeatRate > 50
+          ? `${repeatRate.toFixed(0)}% of active buyers are repeat customers — strong retention signal this period.`
+          : totalActive === 0
+            ? 'No orders in this period yet. Retention data will appear once buyers place orders.'
+            : `${repeatRate.toFixed(0)}% repeat buyer rate. Encourage returning buyers with targeted offers to improve retention.`;
+    }
+
+    // ─── Timestamp ────────────────────────────────────────────────────────────
+    function updateTimestamp() {
+      document.getElementById('lastRefreshed').textContent =
+        new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    }
+
+    // ─── Load All ─────────────────────────────────────────────────────────────
+    async function loadAll() {
+      updateTimestamp();
+      await Promise.all([
+        loadKPIs(),
+        loadLineChart(),
+        loadDoughnutChart(),
+        loadTopBuyers(),
+        loadRetention(),
+      ]);
+    }
+
+    // ─── Init ─────────────────────────────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', async () => {
+      const savedTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      updateThemeUI(savedTheme);
+      const session = await checkAuth();
+      if (session) await loadAll();
+    });
+  </script>
+</body>
+
+</html>

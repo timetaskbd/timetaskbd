@@ -1,0 +1,1239 @@
+<!doctype html>
+<html class="light" lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <title>Time Task BD - Buyer Profile Settings</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400;500;600;700&amp;display=swap"
+    rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&amp;display=swap"
+    rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+    rel="stylesheet" />
+  <!-- Supabase Client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="../supabase-client.js"></script>
+  <script src="../auth-guard.js"></script>
+  <script src="../navbar-auth.js"></script>
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            primary: "#13ec5b",
+            "background-light": "#f6f8f6",
+            "background-dark": "#102216",
+            "footer-light": "#f0f2f0",
+            "footer-dark": "#1a2e20",
+            "brand-bg": "#f6f8f6",
+            "card-bg": "#ffffff",
+            "card-border": "#e2e8f0",
+            "accent-green": "#13ec5b",
+            "accent-green-hover": "#0dbd49",
+            "accent-green-dim": "rgba(19, 236, 91, 0.1)",
+            "primary-text": "#1a1c1e",
+            "secondary-text": "#64748b",
+            "input-bg": "#f8fafc",
+            "deep-navy": "#f1f5f9",
+          },
+          fontFamily: {
+            display: ["Manrope", "sans-serif"],
+          },
+          borderRadius: {
+            DEFAULT: "0.25rem",
+            lg: "0.5rem",
+            xl: "0.75rem",
+            "2xl": "1rem",
+            "3xl": "1.5rem",
+            full: "9999px",
+          },
+        },
+      },
+    };
+  </script>
+  <style type="text/tailwindcss">
+    :root {
+        --brand-bg: #f6f8f6;
+        --card-bg: #ffffff;
+        --accent-green: #13ec5b;
+        --accent-glow: rgba(19, 236, 91, 0.15);
+        --glass-bg: rgba(255, 255, 255, 0.8);
+        --glass-border: rgba(19, 236, 91, 0.3);
+      }
+      .material-symbols-outlined {
+        font-variation-settings:
+          "FILL" 0,
+          "wght" 400,
+          "GRAD" 0,
+          "opsz" 24;
+      }
+      body {
+        font-family: "Manrope", sans-serif;
+        background-color: var(--brand-bg);
+        color: #1a1c1e;
+      }
+      .no-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+      .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+      .premium-card {
+        background-color: var(--card-bg);
+        border: 1px solid rgba(226, 232, 240, 0.8);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow:
+          0 4px 6px -1px rgba(0, 0, 0, 0.05),
+          0 2px 4px -1px rgba(0, 0, 0, 0.03);
+      }
+      .premium-card:hover {
+        border-color: rgba(19, 236, 91, 0.4);
+        box-shadow:
+          0 20px 25px -5px rgba(0, 0, 0, 0.05),
+          0 10px 10px -5px rgba(0, 0, 0, 0.02);
+      }
+      .btn-primary {
+        background: linear-gradient(135deg, #13ec5b 0%, #0dbd49 100%);
+        transition: all 0.3s ease;
+        color: #ffffff;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+      }
+      .btn-primary:hover {
+        filter: brightness(1.05);
+        box-shadow: 0 10px 15px -3px rgba(19, 236, 91, 0.3);
+      }
+      .gateway-card-glass {
+        background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(19, 236, 91, 0.2);
+        position: relative;
+        overflow: hidden;
+      }
+      #gateway-1:checked ~ .carousel-track {
+        transform: translateX(0%);
+      }
+      #gateway-2:checked ~ .carousel-track {
+        transform: translateX(-100%);
+      }
+      #gateway-3:checked ~ .carousel-track {
+        transform: translateX(-200%);
+      }
+      #gateway-4:checked ~ .carousel-track {
+        transform: translateX(-300%);
+      }
+      #gateway-5:checked ~ .carousel-track {
+        transform: translateX(-400%);
+      }
+      #tab-task:checked ~ .table-container #task-history-table {
+        display: block;
+      }
+      #tab-task:checked ~ .table-container #payout-history-table {
+        display: none;
+      }
+      #tab-payout:checked ~ .table-container #task-history-table {
+        display: none;
+      }
+      #tab-payout:checked ~ .table-container #payout-history-table {
+        display: block;
+      }
+      /* Modified active class for sidebar links */
+      .sidebar-nav-link {
+        @apply flex items-center gap-3 px-3 py-3 rounded-lg text-[#4c9a66] hover:bg-[#f6f8f6] dark:hover:bg-[#223d2b] transition-colors;
+      }
+      .sidebar-nav-link.active {
+        @apply bg-primary/10 text-[#0d1b12] dark:text-white border-l-4 border-primary;
+      }
+      .sidebar-nav-link.active .material-symbols-outlined {
+        font-variation-settings: "FILL" 1; /* Apply fill to active icon */
+        @apply text-primary;
+      }
+      .sidebar-nav-link.active p {
+        @apply font-bold;
+      }
+
+      /* --- END ADDED CSS --- */
+    </style>
+</head>
+
+<body class="bg-background-light dark:bg-background-dark text-[#0d1b12] dark:text-white min-h-screen flex flex-col">
+  <!-- Navbar is handled locally now -->
+  <header id="main-header"
+    class="sticky top-0 z-50 w-full bg-white/95 dark:bg-background-dark/95 backdrop-blur-md border-b border-[#e7f3eb] dark:border-white/10">
+    <div class="max-w-[1280px] mx-auto h-20 flex items-center justify-between px-4 lg:px-0">
+      <div class="flex items-center shrink-0">
+        <a class="flex items-center gap-2 group" href="#">
+          <div class="size-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
+            <span class="material-symbols-outlined text-2xl">update</span>
+          </div>
+          <span class="text-xl font-bold tracking-tight text-[#0d1b12] dark:text-white ml-1">Time Task <span
+              class="text-primary">BD</span></span>
+        </a>
+      </div>
+      <div class="flex items-center justify-end flex-grow gap-8 ml-auto">
+        <nav class="hidden lg:flex items-center gap-10">
+          <a class="text-sm font-medium hover:text-primary transition-colors text-[#0d1b12] dark:text-gray-300"
+            href="/Web Dashboard/Home_Page.html">Home</a>
+          <a class="text-sm font-medium hover:text-primary transition-colors text-[#0d1b12] dark:text-gray-300"
+            href="/Web Dashboard/Blog_Page.html">Blog</a>
+          <a class="text-sm font-medium hover:text-primary transition-colors text-[#0d1b12] dark:text-gray-300"
+            href="Video_Gallery_Page.html">Video Gallery
+          </a>
+          <a class="text-sm font-medium hover:text-primary transition-colors text-[#0d1b12] dark:text-gray-300"
+            href="/Web Dashboard/About_Page.html">About Us</a>
+          <a class="text-sm font-medium hover:text-primary transition-colors text-[#0d1b12] dark:text-gray-300"
+            href="/Web Dashboard/Contact_Page.html">Contact Us</a>
+        </nav>
+        <!-- Auth Container (Targeted by navbar-auth.js) -->
+        <div class="flex items-center gap-3" id="navbar-auth-container">
+          <!-- navbar-auth.js will inject Dark Mode and Profile here -->
+        </div>
+      </div>
+    </div>
+  </header>
+  <main class="mx-auto max-w-[1280px] px-6 py-8">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <aside class="lg:col-span-3 lg:sticky lg:top-[6.3rem] self-start flex flex-col gap-6">
+        <div class="bg-white dark:bg-white/5 rounded-xl p-6 shadow-sm border border-[#e7f3eb] dark:border-white/10">
+          <div class="flex items-center gap-3 pb-4 border-b border-[#e7f3eb] dark:border-[#223d2b]"
+            bis_skin_checked="1">
+            <div id="sidebar-avatar"
+              class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-12 shadow-inner"
+              data-alt="User avatar for sidebar"
+              style="background-image: url(&quot;https://lh3.googleusercontent.com/aida-public/AB6AXuCP6RueKzbhNbTYiVu86tWg8LiFtXJ6O7McRvc1fiTrpqQ_xa57Fle1WI8sXVo2UwkjGTbfmcVbV1FOu4NMSGh0Mcon6Fx3mV4U791db1nJKlOH_rBB9yLMBU4eRaCFH_a-6LSmezY1LAZVx8e8GEqKp2idURynqG-FXqoNMXDZetm2ZWGbfq9Seq3BrFHzEg0-9cnizsJhiPo5tAiHcjQzz2wWAo65MXGel_yqwglnD5lUCPKA6XafAcefjYYusv7boaOUHmaEY9tA&quot;);"
+              bis_skin_checked="1"></div>
+            <div class="flex flex-col" bis_skin_checked="1">
+              <h1 id="sidebar-fullname" class="text-[#0d1b12] dark:text-white text-base font-bold leading-none">Bikash
+                Bowmick 5</h1>
+              <p id="sidebar-uid" class="text-primary text-xs font-semibold mt-1">ID: bikashbowmick</p>
+            </div>
+          </div>
+          <nav class="flex flex-col gap-1 mt-4" id="sidebar-nav">
+            <a class="sidebar-nav-link active" href="#personal-info">
+              <span class="material-symbols-outlined">person</span>
+              <p class="text-sm font-medium">Personal Info</p>
+            </a>
+            <a class="sidebar-nav-link" href="#security">
+              <span class="material-symbols-outlined">shield</span>
+              <p class="text-sm font-medium">Security</p>
+            </a>
+          </nav>
+          <button onclick="window.location.href = 'Buyer_Index.html'"
+            class="mt-4 flex items-center justify-center gap-2 w-full py-3 bg-[#e7f3eb] dark:bg-white/5 text-[#0d1b12] dark:text-white rounded-lg text-sm font-bold hover:bg-[#d5e9db] transition-colors">
+            <span class="material-symbols-outlined text-sm">arrow_back</span>
+            Back to Dashboard
+          </button>
+        </div>
+        <div class="bg-primary/5 rounded-xl p-4 border border-primary/20">
+          <p class="text-xs text-[#4c9a66] font-medium leading-relaxed">
+            Upgrade your plan to unlock premium support and faster delivery
+            times.
+          </p>
+          <button class="mt-3 w-full py-2 bg-primary text-background-dark font-bold text-sm rounded-lg">
+            Upgrade Now
+          </button>
+        </div>
+      </aside>
+      <div class="lg:col-span-9 space-y-8 scrollable-content-area">
+        <!-- Added scrollable-content-area class -->
+        <section id="personal-info"
+          class="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-[#e7f3eb] dark:border-white/10 overflow-hidden">
+          <!-- Header Section -->
+          <div
+            class="p-6 border-b border-[#e7f3eb] dark:border-[#223d2b] flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+            <h2 class="text-lg font-bold text-[#0d1b12] dark:text-white">Personal Information</h2>
+            <div class="flex gap-3 items-center">
+              <!-- Edit Button -->
+              <button id="edit-profile-btn"
+                class="bg-white dark:bg-[#102216] hover:bg-gray-50 dark:hover:bg-[#1a3321] text-[#0d1b12] dark:text-white text-sm font-bold flex items-center gap-1.5 border border-[#e7f3eb] dark:border-[#223d2b] px-4 py-2 rounded-full transition-colors">
+                <span class="material-symbols-outlined text-[18px]">edit</span> Edit Profile
+              </button>
+              <!-- Save Button -->
+              <button id="save-profile-btn"
+                class="bg-primary hover:bg-[#11d852] text-[#0d1b12] text-sm font-bold hidden flex items-center gap-1.5 border border-primary px-5 py-2 rounded-full shadow-sm transition-colors">
+                <span class="material-symbols-outlined text-[18px]">save</span> Save
+              </button>
+            </div>
+          </div>
+          <div class="p-8 flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-[#e7f3eb]">
+            <div class="flex items-center gap-6">
+              <div class="relative group">
+                <div class="size-24 md:size-32 rounded-full bg-cover bg-center border-4 border-primary/20" style="
+                      background-image: url(&quot;https://lh3.googleusercontent.com/aida-public/AB6AXuCP6RueKzbhNbTYiVu86tWg8LiFtXJ6O7McRvc1fiTrpqQ_xa57Fle1WI8sXVo2UwkjGTbfmcVbV1FOu4NMSGh0Mcon6Fx3mV4U791db1nJKlOH_rBB9yLMBU4eRaCFH_a-6LSmezY1LAZVx8e8GEqKp2idURynqG-FXqoNMXDZetm2ZWGbfq9Seq3BrFHzEg0-9cnizsJhiPo5tAiHcjQzz2wWAo65MXGel_yqwglnD5lUCPKA6XafAcefjYYusv7boaOUHmaEY9tA&quot;);
+                    "></div>
+                <div id="avatar-container"
+                  class="absolute inset-0 bg-black/20 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                  <span class="material-symbols-outlined text-white">camera_alt</span>
+                  <input type="file" id="avatar-input" class="hidden" accept="image/*" />
+                </div>
+              </div>
+              <div>
+                <h1 id="page-title" class="text-2xl font-extrabold dark:text-white">
+                  John Doe
+                </h1>
+                <div class="flex flex-col gap-2 mt-1">
+                  <span id="verification-badge"
+                    class="w-[110px] px-3 py-1 bg-red-100 dark:bg-red-900/50 text-red-600 dark:text-red-400 text-[10px] font-extrabold rounded uppercase tracking-wider flex items-center gap-1.5">
+                    <span class="size-1.5 rounded-full bg-red-500"></span>
+                    NOT VERIFIED
+                  </span>
+                  <span id="member-since" class="text-[#4c9a66] text-sm font-medium">Member since Jan 2023</span>
+                </div>
+              </div>
+            </div>
+            <div class="flex items-center gap-6">
+              <button onclick="window.location.href = '/Web Dashboard/Identity Verification.html'"
+                class="w-full md:w-auto px-8 py-4 bg-primary text-background-dark font-extrabold rounded-xl shadow-xl shadow-primary/20 hover:scale-[1.02] transition-transform flex items-center justify-center gap-2">
+                <span class="material-symbols-outlined">verified_user</span>
+                Verify Identity Now
+              </button>
+            </div>
+          </div>
+          <!--Personal Info-->
+          <div class="p-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="space-y-2">
+              <label class="text-sm font-bold text-[#4c9a66]">Full Name</label>
+              <input id="input-fullname"
+                class="w-full bg-[#f8fcf9] dark:bg-white/5 border border-[#e7f3eb] dark:border-white/10 rounded-lg px-4 py-3 focus:ring-primary focus:border-primary text-sm font-medium dark:text-white transition-all duration-300 ease-in-out"
+                type="text" value="John Doe" />
+            </div>
+            <div class="space-y-2">
+              <label class="text-sm font-bold text-[#4c9a66]">User Name</label>
+              <input id="input-username"
+                class="w-full bg-[#f8fcf9] dark:bg-white/5 border border-[#e7f3eb] dark:border-white/10 rounded-lg px-4 py-3 focus:ring-primary focus:border-primary text-sm font-medium dark:text-white transition-all duration-300 ease-in-out"
+                type="text" value="johndoe24" />
+            </div>
+            <div class="space-y-2">
+              <label class="text-sm font-bold text-[#4c9a66] flex items-center gap-2">
+                Email Address
+              </label>
+              <input id="input-email"
+                class="w-full bg-[#f8fcf9] dark:bg-white/5 border border-[#e7f3eb] dark:border-white/10 rounded-lg px-4 py-3 focus:ring-primary focus:border-primary text-sm font-medium dark:text-white transition-all duration-300 ease-in-out"
+                type="email" value="john.doe@example.com" disabled />
+            </div>
+            <div class="space-y-2">
+              <label class="text-sm font-bold text-[#4c9a66]">WhatsApp Number</label>
+              <input id="input-whatsapp"
+                class="w-full bg-[#f8fcf9] dark:bg-white/5 border border-[#e7f3eb] dark:border-white/10 rounded-lg px-4 py-3 focus:ring-primary focus:border-primary text-sm font-medium dark:text-white transition-all duration-300 ease-in-out"
+                type="tel" value="+880 1711-223344" />
+            </div>
+            <div class="space-y-2">
+              <label class="text-sm font-bold text-[#4c9a66]">Company Name (Optional)</label>
+              <input id="input-company"
+                class="w-full bg-[#f8fcf9] dark:bg-white/5 border border-[#e7f3eb] dark:border-white/10 rounded-lg px-4 py-3 focus:ring-primary focus:border-primary text-sm font-medium dark:text-white transition-all duration-300 ease-in-out"
+                placeholder="e.g. Acme Creative" type="text" />
+            </div>
+            <div class="space-y-2">
+              <label class="text-sm font-bold text-[#4c9a66]">Country</label>
+              <select id="input-country"
+                class="w-full bg-[#f8fcf9] dark:bg-white/5 border border-[#e7f3eb] dark:border-white/10 rounded-lg px-4 py-3 focus:ring-primary focus:border-primary text-sm font-medium dark:text-white transition-all duration-300 ease-in-out">
+                <option>Bangladesh</option>
+                <option>United States</option>
+                <option>United Kingdom</option>
+                <option>Canada</option>
+              </select>
+            </div>
+            <div class="md:col-span-2 space-y-2">
+              <label class="text-sm font-bold text-[#4c9a66]">Address</label>
+              <input id="input-address"
+                class="w-full bg-[#f8fcf9] dark:bg-white/5 border border-[#e7f3eb] dark:border-white/10 rounded-lg px-4 py-3 focus:ring-primary focus:border-primary text-sm font-medium dark:text-white transition-all duration-300 ease-in-out"
+                type="text" value="Plot 15, Road 27, Gulshan 1" />
+            </div>
+            <div class="space-y-2">
+              <label class="text-sm font-bold text-[#4c9a66]">City</label>
+              <input id="input-city"
+                class="w-full bg-[#f8fcf9] dark:bg-white/5 border border-[#e7f3eb] dark:border-white/10 rounded-lg px-4 py-3 focus:ring-primary focus:border-primary text-sm font-medium dark:text-white transition-all duration-300 ease-in-out"
+                type="text" value="Dhaka" />
+            </div>
+            <div class="space-y-2">
+              <div class="grid grid-cols-2 gap-4">
+                <div class="space-y-2">
+                  <label class="text-sm font-bold text-[#4c9a66]">State/Province</label>
+                  <input id="input-state"
+                    class="w-full bg-[#f8fcf9] dark:bg-white/5 border border-[#e7f3eb] dark:border-white/10 rounded-lg px-4 py-3 focus:ring-primary focus:border-primary text-sm font-medium dark:text-white transition-all duration-300 ease-in-out"
+                    type="text" value="Dhaka" />
+                </div>
+                <div class="space-y-2">
+                  <label class="text-sm font-bold text-[#4c9a66]">ZIP/Postal Code</label>
+                  <input id="input-zip"
+                    class="w-full bg-[#f8fcf9] dark:bg-white/5 border border-[#e7f3eb] dark:border-white/10 rounded-lg px-4 py-3 focus:ring-primary focus:border-primary text-sm font-medium dark:text-white transition-all duration-300 ease-in-out"
+                    type="text" value="1212" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+        <section id="security"
+          class="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-[#e7f3eb] dark:border-white/10 overflow-hidden">
+          <div class="p-6 border-b border-[#e7f3eb] dark:border-white/10">
+            <h2 class="text-lg font-bold dark:text-white">
+              Security Settings
+            </h2>
+          </div>
+          <div class="p-8 space-y-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div class="space-y-2">
+                <label class="text-sm font-bold text-[#4c9a66]">Current Password</label>
+                <div class="relative">
+                  <input id="input-current-password"
+                    class="w-full bg-[#f8fcf9] dark:bg-white/5 border border-[#e7f3eb] dark:border-white/10 rounded-lg px-4 py-3 focus:ring-primary focus:border-primary text-sm font-medium dark:text-white"
+                    maxlength="6" placeholder="Current Password" type="password" />
+                  <div class="absolute inset-y-0 right-0 flex items-center pr-4 cursor-pointer toggle-pin-visibility"
+                    data-target="current-pin">
+                    <span
+                      class="material-symbols-outlined text-gray-400 hover:text-primary transition-colors">visibility</span>
+                  </div>
+                </div>
+              </div>
+              <div class="space-y-2">
+                <label class="text-sm font-bold text-[#4c9a66]">New Password</label>
+                <div class="relative">
+                  <input id="input-new-password"
+                    class="w-full bg-[#f8fcf9] dark:bg-white/5 border border-[#e7f3eb] dark:border-white/10 rounded-lg px-4 py-3 focus:ring-primary focus:border-primary text-sm font-medium dark:text-white"
+                    maxlength="6" placeholder="New Password" type="password" />
+                  <div class="absolute inset-y-0 right-0 flex items-center pr-4 cursor-pointer toggle-pin-visibility"
+                    data-target="current-pin">
+                    <span
+                      class="material-symbols-outlined text-gray-400 hover:text-primary transition-colors">visibility</span>
+                  </div>
+                </div>
+              </div>
+              <div class="space-y-2">
+                <label class="text-sm font-bold text-[#4c9a66]">Confirm New Password</label>
+                <div class="relative">
+                  <input id="input-confirm-password"
+                    class="w-full bg-[#f8fcf9] dark:bg-white/5 border border-[#e7f3eb] dark:border-white/10 rounded-lg px-4 py-3 focus:ring-primary focus:border-primary text-sm font-medium dark:text-white"
+                    maxlength="6" placeholder="Confirm Password" type="password" />
+                  <div class="absolute inset-y-0 right-0 flex items-center pr-4 cursor-pointer toggle-pin-visibility"
+                    data-target="current-pin">
+                    <span
+                      class="material-symbols-outlined text-gray-400 hover:text-primary transition-colors">visibility</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="flex items-center justify-between p-4 bg-primary/5 rounded-lg border border-primary/20">
+              <div class="flex items-center gap-4">
+                <span class="material-symbols-outlined text-primary text-3xl">lock_person</span>
+                <div>
+                  <h4 class="font-bold text-sm dark:text-white">
+                    Two-Factor Authentication
+                  </h4>
+                  <p class="text-xs text-[#4c9a66]">
+                    Add an extra layer of security to your account.
+                  </p>
+                </div>
+              </div>
+              <!-- এই অংশটি আপনার ফাইলের Security Settings সেকশনে আছে -->
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input id="twoFactorToggle" class="sr-only peer" type="checkbox" />
+                <!-- checked সরিয়ে দিয়েছি কারণ ভেরিফাই করার আগে অন হওয়া উচিত নয় -->
+                <div
+                  class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary">
+                </div>
+              </label>
+            </div>
+            <div
+              class="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 bg-white dark:bg-white/5 rounded-xl shadow-sm border border-[#e7f3eb] dark:border-white/10 overflow-hidden">
+              <p class="text-sm text-[#4c9a66] font-medium">
+                Last updated: Just now
+              </p>
+              <div class="flex gap-4 w-full sm:w-auto">
+                <button
+                  class="flex-1 sm:flex-none px-8 py-3 bg-[#e7f3eb] dark:bg-white/5 text-[#0d1b12] dark:text-white font-bold rounded-lg hover:bg-gray-200 transition-colors">
+                  Discard
+                </button>
+                <button id="save-security-btn"
+                  class="flex-1 sm:flex-none px-12 py-3 bg-primary text-background-dark font-extrabold rounded-lg shadow-lg shadow-primary/20 hover:scale-[1.02] transition-transform">
+                  Save All Changes
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <!-- Universal Footer -->
+  <footer class="bg-footer-light dark:bg-footer-dark pt-16 pb-8 border-t border-[#e7f3eb] dark:border-white/5">
+    <div class="max-w-[1280px] mx-auto">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
+        <div class="space-y-6">
+          <div class="flex items-center gap-3">
+            <div class="size-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
+              <span class="material-symbols-outlined text-2xl">update</span>
+            </div>
+            <span class="text-xl font-bold tracking-tight text-[#0d1b12] dark:text-white">Time Task <span
+                class="text-primary">BD</span></span>
+          </div>
+          <p class="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">
+            Empowering your digital productivity through innovative task
+            management and streamlined earning opportunities.
+          </p>
+          <div class="flex gap-4">
+            <a class="size-10 rounded-xl border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-black transition-all"
+              href="#">
+              <span class="material-symbols-outlined text-[20px]">public</span>
+            </a>
+            <a class="size-10 rounded-xl border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-black transition-all"
+              href="#">
+              <span class="material-symbols-outlined text-[20px]">share</span>
+            </a>
+            <a class="size-10 rounded-xl border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-black transition-all"
+              href="#">
+              <span class="material-symbols-outlined text-[20px]">alternate_email</span>
+            </a>
+          </div>
+        </div>
+        <div>
+          <h4 class="text-sm font-bold uppercase tracking-widest mb-6 text-[#0d1b12] dark:text-white">
+            Quick Links
+          </h4>
+          <ul class="space-y-4">
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="/Web Dashboard/Home_Page.html">Home</a>
+            </li>
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="/Web Dashboard/Blog_Page.html">Our Blog</a>
+            </li>
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="/Web Dashboard/About_Page.html">About Us</a>
+            </li>
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="/Web Dashboard/Contact_Page.html">Contact</a>
+            </li>
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="/Web Dashboard/Help_and_FAQ_Page.html">FAQ Support</a>
+            </li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="text-sm font-bold uppercase tracking-widest mb-6 text-[#0d1b12] dark:text-white">
+            Services &amp; Legal
+          </h4>
+          <ul class="space-y-4">
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="/Web Dashboard/Navbar/About_Page.html">About Us</a>
+            </li>
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="/Web Dashboard/Navbar/Privacy_Policy_Page.html">Privacy Policy</a>
+            </li>
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="/Web Dashboard/Navbar/Terms_of_Service_Page.html">Terms of Service</a>
+            </li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="text-sm font-bold uppercase tracking-widest mb-6 text-[#0d1b12] dark:text-white">
+            Contact Info
+          </h4>
+          <ul class="space-y-4">
+            <li class="flex items-start gap-3">
+              <span class="material-symbols-outlined text-primary text-[20px]">mail</span>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary"
+                href="mailto:support@timetaskbd.com">support@timetaskbd.com</a>
+            </li>
+            <li class="flex items-start gap-3">
+              <span class="material-symbols-outlined text-primary text-[20px]">call</span>
+              <span class="text-sm text-gray-600 dark:text-gray-400">+880 1234 567890</span>
+            </li>
+            <li class="flex items-start gap-3">
+              <span class="material-symbols-outlined text-primary text-[20px]">location_on</span>
+              <span class="text-sm text-gray-600 dark:text-gray-400">Dhaka, Bangladesh</span>
+            </li>
+          </ul>
+          <div class="mt-8 pt-8 border-t border-[#e7f3eb] dark:border-white/5">
+            <p class="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-4">
+              Social Media
+            </p>
+            <div class="flex gap-4">
+              <a class="text-[#4c9a66] hover:text-primary transition-colors" href="#">
+                <svg class="size-6" fill="currentColor" viewBox="0 0 24 24">
+                  <path
+                    d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z">
+                  </path>
+                </svg>
+              </a>
+              <a class="text-[#4c9a66] hover:text-primary transition-colors" href="#">
+                <svg class="size-6" fill="currentColor" viewBox="0 0 24 24">
+                  <path
+                    d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.84 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z">
+                  </path>
+                </svg>
+              </a>
+              <a class="text-[#4c9a66] hover:text-primary transition-colors" href="#">
+                <svg class="size-6" fill="currentColor" viewBox="0 0 24 24">
+                  <path
+                    d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z">
+                  </path>
+                </svg>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div
+        class="pt-8 border-t border-[#e7f3eb] dark:border-white/5 flex flex-col md:flex-row items-center justify-between gap-4">
+        <p class="text-sm text-gray-500 dark:text-gray-400">
+          Copyright © 2024
+          <span class="text-[#0d1b12] dark:text-white font-semibold">Time Task BD</span>. All rights reserved.
+        </p>
+        <p class="text-sm text-gray-500 dark:text-gray-400">
+          Developed with <span class="text-primary font-bold">★</span> by
+          <a class="text-primary font-medium hover:underline" href="#">Digital Dynamics Agency</a>
+        </p>
+      </div>
+    </div>
+  </footer>
+  <!-- 2FA Modal -->
+  <div id="twoFactorModal"
+    class="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 hidden">
+    <div
+      class="bg-white dark:bg-[#102216] w-full max-w-[435px] rounded-2xl shadow-2xl border border-[#e7f3eb] dark:border-white/10 overflow-hidden">
+      <!-- Header -->
+      <div class="flex items-center justify-between p-6 border-b border-[#e7f3eb] dark:border-white/10">
+        <h3 id="mfa-modal-title" class="text-xl font-extrabold text-[#0d1b12] dark:text-white">
+          Enable Two-Factor Authentication
+        </h3>
+        <button class="close-2fa">
+          <span
+            class="material-symbols-outlined p-2 hover:bg-gray-100 dark:hover:bg-white/5 rounded-full transition-colors text-gray-500 dark:text-gray-400">close</span>
+        </button>
+      </div>
+
+      <!-- Body -->
+      <div class="px-8 pb-8 pt-4 space-y-8">
+        <div class="text-center md:text-left">
+          <p id="mfa-modal-desc" class="text-sm font-medium text-[#4c9a66]">
+            Secure your account by adding an extra layer of security. Use an authenticator app like Google Authenticator
+            or Authy to scan the QR code below.
+          </p>
+        </div>
+
+        <div id="mfa-qr-section" class="flex flex-col gap-8 items-center">
+          <div class="shrink-0 bg-white p-2 border-2 border-primary/20 rounded-xl">
+            <div id="mfa-qr-container"
+              class="size-40 bg-white flex items-center justify-center overflow-hidden rounded-lg">
+              <!-- QR Code SVG -->
+              <svg class="w-full h-full" fill="black" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <rect fill="black" height="30" width="30" x="10" y="10"></rect>
+                <rect fill="black" height="30" width="30" x="60" y="10"></rect>
+                <rect fill="black" height="30" width="30" x="10" y="60"></rect>
+                <rect fill="white" height="20" width="20" x="15" y="15"></rect>
+                <rect fill="white" height="20" width="20" x="65" y="15"></rect>
+                <rect fill="white" height="20" width="20" x="15" y="65"></rect>
+                <rect fill="black" height="10" width="10" x="20" y="20"></rect>
+                <rect fill="black" height="10" width="10" x="70" y="20"></rect>
+                <rect fill="black" height="10" width="10" x="20" y="70"></rect>
+                <rect fill="black" height="10" width="10" x="50" y="50"></rect>
+                <rect fill="black" height="10" width="10" x="60" y="60"></rect>
+                <rect fill="black" height="10" width="10" x="50" y="70"></rect>
+                <rect fill="black" height="10" width="10" x="70" y="50"></rect>
+                <rect fill="black" height="10" width="10" x="80" y="80"></rect>
+                <rect fill="black" height="10" width="10" x="45" y="10"></rect>
+                <rect fill="black" height="10" width="10" x="10" y="45"></rect>
+              </svg>
+            </div>
+          </div>
+
+          <div class="flex-1 space-y-4 w-full">
+            <div>
+              <h4 class="text-sm font-bold text-[#0d1b12] dark:text-white mb-2">Can't scan the code?</h4>
+              <p class="text-xs text-[#4c9a66] mb-3">Enter the following code manually.</p>
+              <div
+                class="flex items-center gap-2 p-3 bg-[#f8fcf9] dark:bg-white/5 border border-[#e7f3eb] dark:border-white/10 rounded-lg group cursor-pointer hover:border-primary/50 transition-colors">
+                <span id="mfa-secret-text"
+                  class="font-mono text-sm font-bold text-[#0d1b12] dark:text-white tracking-widest truncate">J2K4
+                  M5N6 P7Q8 R9S0</span>
+                <span
+                  class="material-symbols-outlined text-primary text-sm ml-auto group-hover:scale-110 transition-transform">content_copy</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Inputs Section (Centered as requested) -->
+        <div class="space-y-4">
+          <label class="block text-sm font-bold text-[#0d1b12] dark:text-white">Enter Verification Code</label>
+          <div class="flex justify-center items-center w-full">
+            <div class="flex flex-wrap justify-center gap-2 md:gap-3">
+              <input
+                class="size-10 md:size-12 text-center text-xl font-bold rounded-lg border border-[#e7f3eb] dark:border-white/10 bg-[#f8fcf9] dark:bg-white/5 focus:ring-2 focus:ring-primary focus:border-primary transition-all outline-none text-[#0d1b12] dark:text-white"
+                maxlength="1" placeholder="•" type="text" />
+              <input
+                class="size-10 md:size-12 text-center text-xl font-bold rounded-lg border border-[#e7f3eb] dark:border-white/10 bg-[#f8fcf9] dark:bg-white/5 focus:ring-2 focus:ring-primary focus:border-primary transition-all outline-none text-[#0d1b12] dark:text-white"
+                maxlength="1" placeholder="•" type="text" />
+              <input
+                class="size-10 md:size-12 text-center text-xl font-bold rounded-lg border border-[#e7f3eb] dark:border-white/10 bg-[#f8fcf9] dark:bg-white/5 focus:ring-2 focus:ring-primary focus:border-primary transition-all outline-none text-[#0d1b12] dark:text-white"
+                maxlength="1" placeholder="•" type="text" />
+              <input
+                class="size-10 md:size-12 text-center text-xl font-bold rounded-lg border border-[#e7f3eb] dark:border-white/10 bg-[#f8fcf9] dark:bg-white/5 focus:ring-2 focus:ring-primary focus:border-primary transition-all outline-none text-[#0d1b12] dark:text-white"
+                maxlength="1" placeholder="•" type="text" />
+              <input
+                class="size-10 md:size-12 text-center text-xl font-bold rounded-lg border border-[#e7f3eb] dark:border-white/10 bg-[#f8fcf9] dark:bg-white/5 focus:ring-2 focus:ring-primary focus:border-primary transition-all outline-none text-[#0d1b12] dark:text-white"
+                maxlength="1" placeholder="•" type="text" />
+              <input
+                class="size-10 md:size-12 text-center text-xl font-bold rounded-lg border border-[#e7f3eb] dark:border-white/10 bg-[#f8fcf9] dark:bg-white/5 focus:ring-2 focus:ring-primary focus:border-primary transition-all outline-none text-[#0d1b12] dark:text-white"
+                maxlength="1" placeholder="•" type="text" />
+            </div>
+          </div>
+          <p class="text-xs text-[#4c9a66]">Enter the 6-digit code from your app.</p>
+        </div>
+      </div>
+
+      <!-- Footer Buttons -->
+      <div
+        class="p-6 bg-[#f8fcf9] dark:bg-white/5 border-t border-[#e7f3eb] dark:border-white/10 flex justify-end gap-4">
+        <button
+          class="close-2fa px-6 py-2.5 rounded-lg text-sm font-bold text-[#4c9a66] hover:bg-gray-100 dark:hover:bg-white/10 transition-colors">
+          Cancel
+        </button>
+        <button id="verify-2fa-btn"
+          class="px-6 py-2.5 bg-primary text-background-dark text-sm font-bold rounded-lg hover:shadow-lg hover:shadow-primary/20 hover:scale-[1.02] transition-all">
+          Verify & Enable
+        </button>
+      </div>
+    </div>
+  </div>
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      // --- UI INITIALIZATION (Sidebar Scroll & Active State) ---
+      function initStaticUI() {
+        const header = document.getElementById("main-header");
+        const headerHeight = header ? header.offsetHeight : 80;
+        const sidebarNav = document.getElementById("sidebar-nav");
+        if (!sidebarNav) return;
+
+        const navLinks = sidebarNav.querySelectorAll(".sidebar-nav-link");
+        const sections = document.querySelectorAll("main section[id]");
+
+        const setActiveLink = (id) => {
+          navLinks.forEach((link) => {
+            link.classList.remove("active");
+            if (link.getAttribute("href") === `#${id}`) {
+              link.classList.add("active");
+            }
+          });
+        };
+
+        navLinks.forEach((link) => {
+          link.addEventListener("click", function (e) {
+            e.preventDefault();
+            const targetId = this.getAttribute("href").substring(1);
+            const targetSection = document.getElementById(targetId);
+            if (targetSection) {
+              const scrollPosition = targetSection.getBoundingClientRect().top + window.pageYOffset - (headerHeight + 20);
+              window.scrollTo({
+                top: scrollPosition,
+                behavior: "smooth"
+              });
+              setActiveLink(targetId);
+            }
+          });
+        });
+
+        const observerOptions = {
+          root: null,
+          rootMargin: `-${headerHeight + 30}px 0px -50% 0px`,
+          threshold: 0,
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              setActiveLink(entry.target.id);
+            }
+          });
+        }, observerOptions);
+
+        sections.forEach((section) => observer.observe(section));
+      }
+
+      initStaticUI();
+
+      const _supabase = window.supabaseClient;
+      if (!_supabase) return;
+
+      // --- 1. Initial Auth Check ---
+      const { data: { session } } = await _supabase.auth.getSession();
+      if (!session) {
+        window.location.href = '../Web Dashboard/Login_Page.html';
+        return;
+      }
+      const user = session.user;
+
+      // --- 2. Element Selectors ---
+      const els = {
+        fullName: document.getElementById('input-fullname'),
+        username: document.getElementById('input-username'),
+        email: document.getElementById('input-email'),
+        whatsapp: document.getElementById('input-whatsapp'),
+        company: document.getElementById('input-company'),
+        country: document.getElementById('input-country'),
+        address: document.getElementById('input-address'),
+        city: document.getElementById('input-city'),
+        state: document.getElementById('input-state'),
+        zip: document.getElementById('input-zip'),
+        avatarImg: document.querySelector('.size-24.rounded-full'), // Profile Pic
+        sidebarAvatar: document.getElementById('sidebar-avatar'),
+        sidebarFullName: document.getElementById('sidebar-fullname'),
+        sidebarUid: document.getElementById('sidebar-uid'),
+        headerAvatar: document.getElementById('header-avatar'),
+        saveBtn: document.getElementById('save-profile-btn'),
+        editBtn: document.getElementById('edit-profile-btn'),
+        pageTitle: document.getElementById('page-title'),
+        memberSince: document.getElementById('member-since')
+      };
+
+      const profileInputs = [
+        els.fullName, els.username, els.whatsapp, els.company,
+        els.country, els.address, els.city, els.state, els.zip
+      ].filter(Boolean);
+
+      // Initial State: Disable all inputs so the Edit button works correctly on first click
+      profileInputs.forEach(i => i.disabled = true);
+
+      // --- 3. Profile Initialization ---
+      async function loadProfile() {
+        const { data, error } = await _supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+
+        if (data) {
+          if (els.pageTitle) els.pageTitle.innerText = data.full_name || 'User';
+          if (els.sidebarFullName) els.sidebarFullName.innerText = data.full_name || 'User';
+          if (els.sidebarUid) els.sidebarUid.innerText = data.username ? `ID: ${data.username}` : 'ID: user';
+          if (els.memberSince && data.created_at) {
+            const date = new Date(data.created_at);
+            const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+            els.memberSince.innerText = `Member since ${monthNames[date.getMonth()]} ${date.getFullYear()}`;
+          }
+          if (els.fullName) els.fullName.value = data.full_name || '';
+          if (els.username) els.username.value = data.username || '';
+          if (els.email) els.email.value = user.email;
+          if (els.whatsapp) els.whatsapp.value = data.whatsapp_number || '';
+          if (els.company) els.company.value = data.company_name || '';
+          if (els.country) els.country.value = data.country || 'Bangladesh';
+          if (els.address) els.address.value = data.address_line1 || '';
+          if (els.city) els.city.value = data.city || '';
+          if (els.state) els.state.value = data.state || '';
+          if (els.zip) els.zip.value = data.zip_code || '';
+
+          if (data.avatar_url) {
+            const url = data.avatar_url;
+            if (els.avatarImg) els.avatarImg.style.backgroundImage = `url('${url}')`;
+            if (els.headerAvatar) els.headerAvatar.style.backgroundImage = `url('${url}')`;
+            if (els.sidebarAvatar) els.sidebarAvatar.style.backgroundImage = `url('${url}')`;
+          }
+
+          // Update Verification Status Badge
+          const badge = document.getElementById('verification-badge');
+          if (data.verification_status === 'verified') {
+            badge.className = "w-[110px] px-3 py-1 bg-primary/20 text-primary text-[10px] font-extrabold rounded uppercase tracking-wider flex items-center gap-1.5";
+            badge.innerHTML = '<span class="material-symbols-outlined text-xs">verified</span> VERIFIED';
+          } else if (data.verification_status === 'pending') {
+            badge.className = "w-[110px] px-3 py-1 bg-yellow-100 dark:bg-yellow-900/50 text-yellow-600 dark:text-yellow-400 text-[10px] font-extrabold rounded uppercase tracking-wider flex items-center gap-1.5";
+            badge.innerHTML = '<span class="size-1.5 rounded-full bg-yellow-500"></span> PENDING';
+          } else {
+            badge.className = "w-[110px] px-3 py-1 bg-red-100 dark:bg-red-900/50 text-red-600 dark:text-red-400 text-[10px] font-extrabold rounded uppercase tracking-wider flex items-center gap-1.5";
+            badge.innerHTML = '<span class="size-1.5 rounded-full bg-red-500"></span> NOT VERIFIED';
+          }
+
+          // Update 2FA Toggle State
+          const toggle2FA = document.getElementById('twoFactorToggle');
+          const { data: factorsData } = await _supabase.auth.mfa.listFactors();
+          const isVerifiedMFA = factorsData?.all?.some(f => f.status === 'verified');
+          if (toggle2FA) {
+            toggle2FA.checked = isVerifiedMFA;
+          }
+        }
+      }
+      await loadProfile();
+
+      // --- 4. Edit/Save Profile Logic ---
+      els.editBtn?.addEventListener('click', () => {
+        const isEditing = !profileInputs[0].disabled;
+        profileInputs.forEach(i => i.disabled = isEditing);
+        els.editBtn.innerHTML = isEditing ? '<span class="material-symbols-outlined text-[18px]">edit</span> Edit Profile' : '<span class="material-symbols-outlined text-[18px]">close</span> Cancel';
+        els.saveBtn.classList.toggle('hidden', isEditing);
+      });
+
+      els.saveBtn?.addEventListener('click', async () => {
+        const originalBtnContent = els.saveBtn.innerHTML;
+        els.saveBtn.disabled = true;
+        els.saveBtn.textContent = 'Saving...';
+
+        const { error } = await _supabase.from('profiles').update({
+          full_name: els.fullName.value,
+          username: els.username.value,
+          whatsapp_number: els.whatsapp.value,
+          company_name: els.company.value,
+          country: els.country.value,
+          address_line1: els.address.value,
+          city: els.city.value,
+          state: els.state.value,
+          zip_code: els.zip.value,
+          updated_at: new Date()
+        }).eq('id', user.id);
+
+        if (!error) {
+          // Update Titles if full name changed
+          if (els.pageTitle) els.pageTitle.innerText = els.fullName.value;
+          if (els.sidebarFullName) els.sidebarFullName.innerText = els.fullName.value;
+          if (els.sidebarUid && els.username) els.sidebarUid.innerText = `ID: ${els.username.value}`;
+
+          // Update UI State instead of reloading
+          profileInputs.forEach(i => i.disabled = true);
+          els.editBtn.innerHTML = '<span class="material-symbols-outlined text-[18px]">edit</span> Edit Profile';
+          els.saveBtn.classList.add('hidden');
+
+          // Show success feedback
+          alert('Profile saved successfully!');
+        } else {
+          alert(error.message);
+        }
+
+        // Reset button state
+        els.saveBtn.disabled = false;
+        els.saveBtn.innerHTML = originalBtnContent;
+      });
+
+      // --- 5. Avatar Upload Logic ---
+      const avatarInput = document.getElementById('avatar-input');
+      const avatarContainer = document.getElementById('avatar-container');
+
+      avatarContainer?.addEventListener('click', () => avatarInput.click());
+
+      avatarInput?.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        try {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            els.avatarImg.style.backgroundImage = `url('${e.target.result}')`;
+          };
+          reader.readAsDataURL(file);
+
+          const fileExt = file.name.split('.').pop();
+          const filePath = `${user.id}/avatar_${Date.now()}.${fileExt}`;
+
+          const { error: uploadError } = await _supabase.storage
+            .from('avatars')
+            .upload(filePath, file, { upsert: true });
+
+          if (uploadError) throw uploadError;
+
+          const { data: { publicUrl } } = _supabase.storage
+            .from('avatars')
+            .getPublicUrl(filePath);
+
+          const { error: updateError } = await _supabase
+            .from('profiles')
+            .update({ avatar_url: publicUrl })
+            .eq('id', user.id);
+
+          if (updateError) throw updateError;
+
+          alert('Avatar updated successfully!');
+          if (els.headerAvatar) els.headerAvatar.style.backgroundImage = `url('${publicUrl}')`;
+          if (els.sidebarAvatar) els.sidebarAvatar.style.backgroundImage = `url('${publicUrl}')`;
+        } catch (err) {
+          console.error(err);
+          alert('Error uploading avatar: ' + err.message);
+        }
+      });
+
+      // --- 5. Security: Change Password ---
+      const saveSecurityBtn = document.getElementById('save-security-btn');
+
+      saveSecurityBtn?.addEventListener('click', async () => {
+        const currentPassInput = document.getElementById('input-current-password');
+        const newPassInput = document.getElementById('input-new-password');
+        const confirmPassInput = document.getElementById('input-confirm-password');
+
+        if (!currentPassInput.value || !newPassInput.value) {
+          alert("Please enter both current and new passwords.");
+          return;
+        }
+
+        if (newPassInput.value !== confirmPassInput.value) {
+          alert("Passwords don't match");
+          return;
+        }
+
+        const originalBtnContent = saveSecurityBtn.innerHTML;
+        saveSecurityBtn.disabled = true;
+        saveSecurityBtn.textContent = 'Updating...';
+
+        try {
+          // 1. Verify current password by attempting sign-in
+          const { error: authError } = await _supabase.auth.signInWithPassword({
+            email: user.email,
+            password: currentPassInput.value
+          });
+
+          if (authError) {
+            alert("Incorrect Current Password");
+            return;
+          }
+
+          // 2. Update to new password
+          const { error: updateError } = await _supabase.auth.updateUser({ password: newPassInput.value });
+
+          if (!updateError) {
+            alert("Password Updated");
+            // Clear fields
+            currentPassInput.value = '';
+            newPassInput.value = '';
+            confirmPassInput.value = '';
+            location.reload();
+          } else {
+            alert(updateError.message);
+          }
+        } catch (err) {
+          console.error(err);
+          alert("An error occurred during password update.");
+        } finally {
+          saveSecurityBtn.disabled = false;
+          saveSecurityBtn.innerHTML = originalBtnContent;
+        }
+      });
+
+      // --- 6. Native 2FA (MFA) Flow ---
+      const toggle2FA = document.getElementById('twoFactorToggle');
+      const modal2FA = document.getElementById('twoFactorModal');
+      const verifyBtn2FA = document.getElementById('verify-2fa-btn');
+      const otpInputs = modal2FA.querySelectorAll('input[type="text"]');
+      let factorId = null;
+      let mfaMode = 'enroll'; // 'enroll' or 'disable'
+
+      toggle2FA?.addEventListener('change', async (e) => {
+        const isChecking = e.target.checked;
+
+        try {
+          // List factors to check current state
+          const { data: fData, error: fError } = await _supabase.auth.mfa.listFactors();
+          if (fError) throw fError;
+
+          const existingFactors = fData?.all || [];
+          const verifiedFactor = existingFactors.find(f => f.status === 'verified');
+
+          if (isChecking) {
+            mfaMode = 'enroll';
+            e.target.checked = false; // Stay off until verified
+
+            // Aggressive Cleanup: Unenroll ALL existing factors (verified or unverified) 
+            // before starting a new enrollment to avoid "friendly name already exists" errors
+            if (existingFactors.length > 0) {
+              console.log("Cleaning up existing factors before new enrollment...");
+              for (const f of existingFactors) {
+                await _supabase.auth.mfa.unenroll({ factorId: f.id });
+              }
+            }
+
+            // Reset Modal UI for Enrollment
+            document.getElementById('mfa-modal-title').innerText = "Enable Two-Factor Authentication";
+            document.getElementById('mfa-modal-desc').innerText = "Secure your account by adding an extra layer of security. Use an authenticator app like Google Authenticator or Authy to scan the QR code below.";
+            document.getElementById('mfa-qr-section').classList.remove('hidden');
+            verifyBtn2FA.textContent = 'Verify & Enable';
+            modal2FA.classList.remove('hidden');
+
+            // Enroll in TOTP with a unique-ish friendly name for this session
+            const timestamp = new Date().getTime().toString().slice(-4);
+            const { data, error } = await _supabase.auth.mfa.enroll({
+              factorType: 'totp',
+              friendlyName: `TimeTask Auth ${timestamp}`
+            });
+
+            if (error) {
+              console.error("Enrollment error:", error);
+              // Handle "MFA enroll is disabled for TOTP" explicitly for user feedback
+              if (error.message.includes('disabled for TOTP')) {
+                alert("MFA enrollment is disabled. Please ensure that MFA (TOTP) is enabled in your Supabase project settings (Dashboard > Auth > Providers > MFA).");
+              } else {
+                alert("Enrollment failed: " + error.message);
+              }
+              modal2FA.classList.add('hidden');
+              return;
+            }
+
+            factorId = data.id;
+            const qrContainer = document.getElementById('mfa-qr-container');
+            const secretText = document.getElementById('mfa-secret-text');
+
+            if (qrContainer) {
+              qrContainer.innerHTML = ''; // Clear placeholder
+
+              // Handle both raw SVG and Data URL from Supabase, 
+              // but use qrcode.js as a robust fallback/alternative if uri is available
+              if (data.totp.uri) {
+                new QRCode(qrContainer, {
+                  text: data.totp.uri,
+                  width: 160,
+                  height: 160,
+                  colorDark: "#000000",
+                  colorLight: "#ffffff",
+                  correctLevel: QRCode.CorrectLevel.H
+                });
+
+                // qrcode.js adds an img or canvas. Let's make sure it fills effectively.
+                const generatedImg = qrContainer.querySelector('img');
+                if (generatedImg) generatedImg.classList.add('w-full', 'h-full', 'rounded-lg');
+              } else if (data.totp.qr_code) {
+                // Fallback to supabase provided qr_code if uri is missing
+                if (data.totp.qr_code.startsWith('data:')) {
+                  qrContainer.innerHTML = `<img src="${data.totp.qr_code}" class="w-full h-full rounded-lg" />`;
+                } else {
+                  qrContainer.innerHTML = data.totp.qr_code;
+                  const svg = qrContainer.querySelector('svg');
+                  if (svg) {
+                    svg.setAttribute('width', '100%');
+                    svg.setAttribute('height', '100%');
+                    svg.classList.add('w-full', 'h-full');
+                  }
+                }
+              }
+            }
+            if (secretText) secretText.textContent = data.totp.secret;
+          } else {
+            // DISABLE 2FA
+            if (verifiedFactor) {
+              // Always require OTP if a factor is verified
+              if (confirm("Are you sure you want to disable Two-Factor Authentication? This will make your account less secure.")) {
+                mfaMode = 'disable';
+                factorId = verifiedFactor.id;
+
+                // Update Modal UI for Security Verification
+                document.getElementById('mfa-modal-title').innerText = "Security Verification Required";
+                document.getElementById('mfa-modal-desc').innerText = "Please enter the 6-digit code from your authenticator app to confirm deactivation.";
+                document.getElementById('mfa-qr-section').classList.add('hidden');
+                verifyBtn2FA.textContent = 'Verify & Disable';
+
+                // Reset and Focus OTP inputs
+                otpInputs.forEach(input => input.value = '');
+                modal2FA.classList.remove('hidden');
+                setTimeout(() => otpInputs[0].focus(), 100);
+
+                e.target.checked = true; // Stay checked until verified
+              } else {
+                e.target.checked = true; // Revert toggle if cancelled
+              }
+            } else {
+              // No verified factor found, just clean up any unverified factors
+              await performUnenroll(existingFactors);
+            }
+          }
+        } catch (err) {
+          console.error(err);
+          alert("An error occurred: " + err.message);
+          e.target.checked = !isChecking;
+        }
+      });
+
+      async function performUnenroll(factors) {
+        try {
+          let lastError = null;
+          // Unenroll ALL factors (verified and unverified) for a truly clean slate
+          for (const f of factors) {
+            const { error } = await _supabase.auth.mfa.unenroll({ factorId: f.id });
+            if (error) {
+              console.error(`Failed to unenroll factor ${f.id}:`, error);
+              lastError = error;
+            }
+          }
+
+          if (lastError && factors.some(f => f.status === 'verified')) {
+            alert("Error disabling 2FA: " + lastError.message);
+            toggle2FA.checked = true;
+            return;
+          }
+
+          const { error: dbError } = await _supabase.from('profiles').update({ is_2fa_enabled: false }).eq('id', user.id);
+          if (dbError) throw dbError;
+
+          alert("2FA Disabled successfully.");
+          location.reload();
+        } catch (err) {
+          console.error(err);
+          alert("An error occurred while disabling 2FA.");
+          toggle2FA.checked = true;
+        }
+      }
+
+      // Handle 6-digit input auto-focus
+      otpInputs.forEach((input, idx) => {
+        input.addEventListener('input', (e) => {
+          if (e.target.value && idx < 5) otpInputs[idx + 1].focus();
+        });
+        input.addEventListener('keydown', (e) => {
+          if (e.key === 'Backspace' && !e.target.value && idx > 0) otpInputs[idx - 1].focus();
+        });
+      });
+
+      verifyBtn2FA?.addEventListener('click', async () => {
+        const code = Array.from(otpInputs).map(i => i.value).join('');
+        if (code.length < 6) return;
+
+        verifyBtn2FA.disabled = true;
+        verifyBtn2FA.textContent = 'Verifying...';
+
+        try {
+          // Verify with challengeAndVerify
+          const { error: verifyError } = await _supabase.auth.mfa.challengeAndVerify({
+            factorId,
+            code: code
+          });
+
+          if (verifyError) {
+            alert("Invalid OTP Code. Please try again.");
+            verifyBtn2FA.disabled = false;
+            verifyBtn2FA.textContent = mfaMode === 'enroll' ? 'Verify & Enable' : 'Verify & Disable';
+          } else {
+            if (mfaMode === 'enroll') {
+              // Update profile table flag
+              await _supabase.from('profiles').update({ is_2fa_enabled: true }).eq('id', user.id);
+              alert("2FA Enabled");
+              location.reload();
+            } else {
+              // After verifying to disable, we are now AAL2 (for this session) - Proceed to unenroll
+              const { data: fData } = await _supabase.auth.mfa.listFactors();
+              await performUnenroll(fData?.all || []);
+            }
+          }
+        } catch (err) {
+          console.error(err);
+          alert("An error occurred during verification.");
+          verifyBtn2FA.disabled = false;
+        }
+      });
+
+      // Close Modal Logic
+      document.querySelectorAll('.close-2fa').forEach(btn => {
+        btn.addEventListener('click', () => {
+          modal2FA.classList.add('hidden');
+          // Only unenroll if we were in the middle of a FRESH enrollment
+          if (factorId && mfaMode === 'enroll') _supabase.auth.mfa.unenroll({ factorId });
+        });
+      });
+    });
+  </script>
+</body>
+
+</html>

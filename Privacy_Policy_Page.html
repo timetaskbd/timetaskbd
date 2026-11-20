@@ -1,0 +1,806 @@
+<!doctype html>
+<html class="light" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Time Task BD - Privacy Policy</title>
+    <!-- Supabase Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../supabase-client.js"></script>
+    <script src="../navbar-auth.js"></script>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400;500;600;700&amp;display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+      rel="stylesheet"
+    />
+    <script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              primary: "#13ec5b",
+              "background-light": "#f6f8f6",
+              "background-dark": "#102216",
+              "footer-light": "#f0f2f0",
+              "footer-dark": "#1a2e20",
+              charcoal:
+                "#1a1a1a" /* Keep charcoal from original Privacy Policy */,
+            },
+            fontFamily: {
+              display: ["Work Sans"] /* Changed to Work Sans for consistency */,
+            },
+            borderRadius: {
+              DEFAULT: "0.25rem",
+              lg: "0.5rem",
+              xl: "0.75rem",
+              full: "9999px",
+            },
+          },
+        },
+      };
+    </script>
+    <style type="text/tailwindcss">
+      body {
+        font-family:
+          "Work Sans", sans-serif; /* Changed to Work Sans for consistency */
+      }
+      .material-symbols-outlined {
+        font-variation-settings:
+          "FILL" 0,
+          "wght" 400,
+          "GRAD" 0,
+          "opsz" 24;
+      }
+      .active-nav-link {
+        @apply text-[#0d1b12] dark:text-white font-bold relative;
+      }
+      .active-nav-link::after {
+        content: "";
+        @apply absolute -bottom-[31px] left-0 w-full h-[3px] bg-primary rounded-t-full;
+      }
+      .sidebar-sticky {
+        position: sticky;
+        top: 2rem;
+      }
+    </style>
+  </head>
+  <body
+    class="bg-background-light dark:bg-background-dark text-[#0d1b12] dark:text-white min-h-screen flex flex-col"
+  >
+    <!-- Universal Header from Header_Footer.html -->
+    <header
+      class="sticky top-0 z-50 w-full bg-white/95 dark:bg-background-dark/95 backdrop-blur-md border-b border-[#e7f3eb] dark:border-white/10"
+    >
+      <div
+        class="max-w-[1280px] mx-auto h-20 flex items-center justify-between"
+      >
+        <div class="flex items-center shrink-0">
+          <a class="flex items-center gap-2 group" href="#">
+            <div
+              class="size-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary"
+            >
+              <span class="material-symbols-outlined text-2xl">update</span>
+            </div>
+            <span
+              class="text-xl font-bold tracking-tight text-[#0d1b12] dark:text-white ml-1"
+              >Time Task <span class="text-primary">BD</span></span
+            >
+          </a>
+        </div>
+        <div class="flex items-center justify-end flex-grow gap-8 ml-auto">
+          <nav class="hidden lg:flex items-center gap-10">
+            <a
+              class="text-sm font-medium hover:text-primary transition-colors text-[#0d1b12] dark:text-gray-300"
+              href="Home_Page.html"
+              >Home</a
+            >
+            <a
+              class="text-sm font-medium hover:text-primary transition-colors text-[#0d1b12] dark:text-gray-300"
+              href="Blog_Page.html"
+              >Blog</a
+            >
+            <a
+              class="text-sm font-medium hover:text-primary transition-colors text-[#0d1b12] dark:text-gray-300"
+              href="Video_Gallery_Page.html"
+              >Video Gallery
+            </a>
+            <a
+              class="text-sm font-medium hover:text-primary transition-colors text-[#0d1b12] dark:text-gray-300"
+              href="About_Page.html"
+              >About Us</a
+            >
+            <a
+              class="text-sm font-medium hover:text-primary transition-colors text-[#0d1b12] dark:text-gray-300"
+              href="Contact_Page.html"
+              >Contact Us</a
+            >
+            <a
+              class="text-sm font-medium hover:text-primary transition-colors text-[#0d1b12] dark:text-gray-300"
+              href="Earning_Page.html"
+              >Earning Page</a
+            >
+          </nav>
+          <div class="flex items-center gap-3">
+            <button
+              class="p-2.5 rounded-lg hover:bg-[#e7f3eb] dark:hover:bg-white/10 transition-colors text-[#0d1b12] dark:text-white flex items-center justify-center"
+            >
+              <span class="material-symbols-outlined text-[22px]"
+                >dark_mode</span
+              >
+            </button>
+            <div class="h-8 w-[1px] bg-[#e7f3eb] dark:bg-white/10 mx-1"></div>
+            <button
+              onclick="window.location.href = 'Login_Page.html'"
+              class="px-4 h-10 text-sm font-bold text-[#0d1b12] dark:text-white hover:text-primary transition-colors"
+            >
+              Login
+            </button>
+            <button
+              onclick="window.location.href = 'Register_Page.html'"
+              class="bg-primary hover:bg-[#11d853] text-black px-6 h-10 rounded-lg text-sm font-bold tracking-wide transition-all shadow-sm"
+            >
+              Register
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="min-h-screen">
+      <section class="relative w-full py-20 bg-gray-900 overflow-hidden">
+        <div
+          class="absolute inset-0 opacity-40 bg-[url('https://placeholder.pics/svg/1200x400')] bg-cover bg-center"
+          data-alt="Abstract dark geometric pattern with subtle green glow"
+        ></div>
+        <div
+          class="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/60 to-transparent"
+        ></div>
+        <div class="relative z-10 max-w-7xl mx-auto px-4 text-center">
+          <div
+            class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/20 border border-primary/30 text-primary text-xs font-bold uppercase tracking-wider mb-6"
+          >
+            <span class="material-symbols-outlined text-sm">verified_user</span>
+            Updated Policy
+          </div>
+          <h1
+            class="text-4xl md:text-6xl font-extrabold text-white tracking-tight mb-4"
+          >
+            Privacy Policy
+          </h1>
+          <p class="text-lg text-gray-300 font-medium max-w-2xl mx-auto mb-8">
+            Effective Date: May 24, 2024. We are committed to protecting your
+            data and your privacy.
+          </p>
+          <div class="flex justify-center gap-4">
+            <button
+              class="flex items-center gap-2 bg-primary text-black px-6 py-3 rounded-lg font-bold hover:bg-primary/90 transition-all"
+            >
+              <span class="material-symbols-outlined">download</span>
+              Download PDF
+            </button>
+            <button
+              class="flex items-center gap-2 bg-white/10 text-white px-6 py-3 rounded-lg font-bold hover:bg-white/20 transition-all backdrop-blur-sm border border-white/20"
+            >
+              <span class="material-symbols-outlined">print</span>
+              Print
+            </button>
+          </div>
+        </div>
+      </section>
+      <div class="max-w-7xl mx-auto px-4 py-12">
+        <div class="flex flex-col lg:flex-row gap-12">
+          <aside class="w-full lg:w-72 flex-shrink-0">
+            <div class="sidebar-sticky">
+              <div
+                class="bg-white dark:bg-gray-800/50 p-6 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm"
+              >
+                <h3
+                  class="text-gray-400 dark:text-gray-500 text-xs font-bold uppercase tracking-widest mb-6"
+                >
+                  Navigation
+                </h3>
+                <nav class="space-y-1">
+                  <a
+                    class="group flex items-center gap-3 px-4 py-3 rounded-lg bg-primary/10 text-primary font-bold transition-all"
+                    href="#data-collect"
+                  >
+                    <span class="material-symbols-outlined text-xl"
+                      >database</span
+                    >
+                    <span class="text-sm">Data We Collect</span>
+                  </a>
+                  <a
+                    class="group flex items-center gap-3 px-4 py-3 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700/50 font-medium transition-all"
+                    href="#data-use"
+                  >
+                    <span
+                      class="material-symbols-outlined text-xl group-hover:text-primary transition-colors"
+                      >monitoring</span
+                    >
+                    <span
+                      class="text-sm group-hover:text-charcoal dark:group-hover:text-white"
+                      >How We Use Your Data</span
+                    >
+                  </a>
+                  <a
+                    class="group flex items-center gap-3 px-4 py-3 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700/50 font-medium transition-all"
+                    href="#sharing"
+                  >
+                    <span
+                      class="material-symbols-outlined text-xl group-hover:text-primary transition-colors"
+                      >share</span
+                    >
+                    <span
+                      class="text-sm group-hover:text-charcoal dark:group-hover:text-white"
+                      >Information Sharing</span
+                    >
+                  </a>
+                  <a
+                    class="group flex items-center gap-3 px-4 py-3 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700/50 font-medium transition-all"
+                    href="#security"
+                  >
+                    <span
+                      class="material-symbols-outlined text-xl group-hover:text-primary transition-colors"
+                      >shield</span
+                    >
+                    <span
+                      class="text-sm group-hover:text-charcoal dark:group-hover:text-white"
+                      >Data Security</span
+                    >
+                  </a>
+                  <a
+                    class="group flex items-center gap-3 px-4 py-3 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700/50 font-medium transition-all"
+                    href="#rights"
+                  >
+                    <span
+                      class="material-symbols-outlined text-xl group-hover:text-primary transition-colors"
+                      >person</span
+                    >
+                    <span
+                      class="text-sm group-hover:text-charcoal dark:group-hover:text-white"
+                      >Your Rights</span
+                    >
+                  </a>
+                </nav>
+                <div
+                  class="mt-8 pt-8 border-t border-gray-100 dark:border-gray-800"
+                >
+                  <div class="flex flex-col gap-4">
+                    <div class="flex items-center gap-3">
+                      <span class="material-symbols-outlined text-primary"
+                        >lock</span
+                      >
+                      <span
+                        class="text-xs font-bold text-gray-500 dark:text-gray-400"
+                        >SSL ENCRYPTED</span
+                      >
+                    </div>
+                    <div class="flex items-center gap-3">
+                      <span class="material-symbols-outlined text-primary"
+                        >gpp_good</span
+                      >
+                      <span
+                        class="text-xs font-bold text-gray-500 dark:text-gray-400"
+                        >GDPR COMPLIANT</span
+                      >
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </aside>
+          <article class="flex-1 max-w-4xl space-y-12">
+            <section class="scroll-mt-24" id="introduction">
+              <p
+                class="text-lg leading-relaxed text-gray-600 dark:text-gray-400"
+              >
+                At Time Task BD, we recognize that privacy is a fundamental
+                human right. This Privacy Policy outlines how we collect, use,
+                and safeguard your information when you use our task management
+                platform. We strive to be transparent about our data practices
+                and ensure you remain in control of your personal information.
+              </p>
+            </section>
+            <section class="scroll-mt-24 space-y-6" id="data-collect">
+              <div
+                class="flex items-center gap-3 border-b border-gray-100 dark:border-gray-800 pb-4"
+              >
+                <h2
+                  class="text-2xl font-extrabold text-charcoal dark:text-white"
+                >
+                  1. Data We Collect
+                </h2>
+              </div>
+              <p
+                class="text-base text-gray-700 dark:text-gray-300 leading-relaxed"
+              >
+                We collect information you provide directly to us when you
+                create an account, complete profile settings, or interact with
+                our platform.
+              </p>
+              <div
+                class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6"
+              >
+                <div
+                  class="p-5 bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700"
+                >
+                  <div
+                    class="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center text-primary mb-4"
+                  >
+                    <span class="material-symbols-outlined">badge</span>
+                  </div>
+                  <h4 class="font-bold mb-2">Identity Verification Data</h4>
+                  <p class="text-sm text-gray-500 dark:text-gray-400">
+                    We securely collect Birth Registration Numbers, Date of
+                    Birth, and front/back images of National IDs (NID) to verify
+                    user identity and ensure platform integrity.
+                  </p>
+                </div>
+                <div
+                  class="p-5 bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700"
+                >
+                  <div
+                    class="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center text-primary mb-4"
+                  >
+                    <span class="material-symbols-outlined">payments</span>
+                  </div>
+                  <h4 class="font-bold mb-2">Financial Information</h4>
+                  <p class="text-sm text-gray-500 dark:text-gray-400">
+                    To facilitate payouts, we collect payment details for
+                    <strong>bKash, Nagad, or Rocket</strong>. We also collect
+                    and encrypt a 6-digit Withdrawal Security PIN for payout
+                    authorization.
+                  </p>
+                </div>
+                <div
+                  class="p-5 bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700"
+                >
+                  <div
+                    class="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center text-primary mb-4"
+                  >
+                    <span class="material-symbols-outlined"
+                      >social_distance</span
+                    >
+                  </div>
+                  <h4 class="font-bold mb-2">Social Media Data</h4>
+                  <p class="text-sm text-gray-500 dark:text-gray-400">
+                    We may collect profile information, email, and verification
+                    status when you link social media accounts for
+                    authentication.
+                  </p>
+                </div>
+              </div>
+            </section>
+            <section class="scroll-mt-24 space-y-6" id="data-use">
+              <div
+                class="flex items-center gap-3 border-b border-gray-100 dark:border-gray-800 pb-4"
+              >
+                <h2
+                  class="text-2xl font-extrabold text-charcoal dark:text-white"
+                >
+                  2. How We Use Your Data
+                </h2>
+              </div>
+              <p
+                class="text-base text-gray-700 dark:text-gray-300 leading-relaxed"
+              >
+                Your information is utilized solely to provide and improve our
+                services. This includes:
+              </p>
+              <ul class="space-y-4">
+                <li class="flex gap-3">
+                  <span class="material-symbols-outlined text-primary text-xl"
+                    >check_circle</span
+                  >
+                  <span class="text-gray-600 dark:text-gray-400 font-semibold"
+                    >Identity verification and account compliance.</span
+                  >
+                </li>
+                <li class="flex gap-3">
+                  <span class="material-symbols-outlined text-primary text-xl"
+                    >check_circle</span
+                  >
+                  <span class="text-gray-600 dark:text-gray-400"
+                    >Verifying task completion and distributing rewards.</span
+                  >
+                </li>
+                <li class="flex gap-3">
+                  <span class="material-symbols-outlined text-primary text-xl"
+                    >check_circle</span
+                  >
+                  <span class="text-gray-600 dark:text-gray-400"
+                    >Processing secure financial transactions through local
+                    mobile financial services using your encrypted Security
+                    PIN.</span
+                  >
+                </li>
+                <li class="flex gap-3">
+                  <span class="material-symbols-outlined text-primary text-xl"
+                    >check_circle</span
+                  >
+                  <span class="text-gray-600 dark:text-gray-400"
+                    >Improving platform security and preventing fraudulent
+                    activity.</span
+                  >
+                </li>
+                <li class="flex gap-3">
+                  <span class="material-symbols-outlined text-primary text-xl"
+                    >check_circle</span
+                  >
+                  <span class="text-gray-600 dark:text-gray-400"
+                    >Sending critical updates regarding your account or policy
+                    changes.</span
+                  >
+                </li>
+              </ul>
+            </section>
+            <section class="scroll-mt-24 space-y-6" id="sharing">
+              <div
+                class="flex items-center gap-3 border-b border-gray-100 dark:border-gray-800 pb-4"
+              >
+                <h2
+                  class="text-2xl font-extrabold text-charcoal dark:text-white"
+                >
+                  3. Information Sharing
+                </h2>
+              </div>
+              <div
+                class="bg-primary/5 border-l-4 border-primary p-6 rounded-r-xl"
+              >
+                <p class="text-charcoal dark:text-gray-200 italic font-medium">
+                  "We do not sell, rent, or trade your personal data to third
+                  parties for marketing purposes."
+                </p>
+              </div>
+              <p
+                class="text-base text-gray-700 dark:text-gray-300 leading-relaxed"
+              >
+                We only share information with third-party vendors and service
+                providers who perform services for us, such as payment
+                processors (bKash/Nagad APIs) and hosting providers. These
+                partners are legally bound to protect your data.
+              </p>
+            </section>
+            <section class="scroll-mt-24 space-y-6" id="security">
+              <div
+                class="flex items-center gap-3 border-b border-gray-100 dark:border-gray-800 pb-4"
+              >
+                <h2
+                  class="text-2xl font-extrabold text-charcoal dark:text-white"
+                >
+                  4. Data Security
+                </h2>
+              </div>
+              <p
+                class="text-base text-gray-700 dark:text-gray-300 leading-relaxed"
+              >
+                Time Task BD employs industry-standard security measures to
+                safeguard your information. This includes high-level AES-256
+                encryption for sensitive data, secure socket layer (SSL)
+                technology, and restricted internal access protocols for stored
+                identification documents (such as NID images).
+              </p>
+              <div
+                class="flex flex-wrap gap-6 items-center justify-center p-8 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700"
+              >
+                <div class="text-center">
+                  <span
+                    class="material-symbols-outlined text-4xl text-primary mb-2"
+                    >encrypted</span
+                  >
+                  <p class="text-xs font-bold text-gray-400">
+                    AES-256 ENCRYPTION
+                  </p>
+                </div>
+                <div class="w-px h-12 bg-gray-100 dark:bg-gray-700"></div>
+                <div class="text-center">
+                  <span
+                    class="material-symbols-outlined text-4xl text-primary mb-2"
+                    >verified</span
+                  >
+                  <p class="text-xs font-bold text-gray-400">NID PROTECTION</p>
+                </div>
+                <div class="w-px h-12 bg-gray-100 dark:bg-gray-700"></div>
+                <div class="text-center">
+                  <span
+                    class="material-symbols-outlined text-4xl text-primary mb-2"
+                    >admin_panel_settings</span
+                  >
+                  <p class="text-xs font-bold text-gray-400">
+                    RESTRICTED ACCESS
+                  </p>
+                </div>
+              </div>
+            </section>
+            <section class="scroll-mt-24 space-y-6" id="rights">
+              <div
+                class="flex items-center gap-3 border-b border-gray-100 dark:border-gray-800 pb-4"
+              >
+                <h2
+                  class="text-2xl font-extrabold text-charcoal dark:text-white"
+                >
+                  5. Your Rights
+                </h2>
+              </div>
+              <p
+                class="text-base text-gray-700 dark:text-gray-300 leading-relaxed"
+              >
+                Depending on your location, you have rights regarding your
+                personal data:
+              </p>
+              <div class="space-y-4">
+                <details
+                  class="group bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl"
+                >
+                  <summary
+                    class="flex items-center justify-between p-4 cursor-pointer font-bold text-charcoal dark:text-white list-none"
+                  >
+                    <span>Right to Access &amp; Rectify</span>
+                    <span
+                      class="material-symbols-outlined group-open:rotate-180 transition-transform"
+                      >expand_more</span
+                    >
+                  </summary>
+                  <div
+                    class="px-4 pb-4 text-sm text-gray-500 dark:text-gray-400"
+                  >
+                    You can access your account settings at any time to review
+                    or update your personal information, including identity and
+                    financial details.
+                  </div>
+                </details>
+                <details
+                  class="group bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl"
+                >
+                  <summary
+                    class="flex items-center justify-between p-4 cursor-pointer font-bold text-charcoal dark:text-white list-none"
+                  >
+                    <span>Right to Erasure</span>
+                    <span
+                      class="material-symbols-outlined group-open:rotate-180 transition-transform"
+                      >expand_more</span
+                    >
+                  </summary>
+                  <div
+                    class="px-4 pb-4 text-sm text-gray-500 dark:text-gray-400"
+                  >
+                    You may request the permanent deletion of your account and
+                    all associated data, including identification images, by
+                    contacting our support team.
+                  </div>
+                </details>
+              </div>
+            </section>
+          </article>
+        </div>
+      </div>
+    </main>
+
+    <!-- Universal Footer from Header_Footer.html -->
+    <footer
+      class="bg-footer-light dark:bg-footer-dark pt-16 pb-8 border-t border-[#e7f3eb] dark:border-white/5"
+    >
+      <div class="max-w-[1280px] mx-auto">
+        <div
+          class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16"
+        >
+          <div class="space-y-6">
+            <div class="flex items-center gap-3">
+              <div
+                class="size-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary"
+              >
+                <span class="material-symbols-outlined text-2xl">update</span>
+              </div>
+              <span
+                class="text-xl font-bold tracking-tight text-[#0d1b12] dark:text-white"
+                >Time Task <span class="text-primary">BD</span></span
+              >
+            </div>
+            <p class="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">
+              Empowering your digital productivity through innovative task
+              management and streamlined earning opportunities.
+            </p>
+            <div class="flex gap-4">
+              <a
+                class="size-10 rounded-xl border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-black transition-all"
+                href="#"
+              >
+                <span class="material-symbols-outlined text-[20px]"
+                  >public</span
+                >
+              </a>
+              <a
+                class="size-10 rounded-xl border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-black transition-all"
+                href="#"
+              >
+                <span class="material-symbols-outlined text-[20px]">share</span>
+              </a>
+              <a
+                class="size-10 rounded-xl border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-black transition-all"
+                href="#"
+              >
+                <span class="material-symbols-outlined text-[20px]"
+                  >alternate_email</span
+                >
+              </a>
+            </div>
+          </div>
+          <div>
+            <h4
+              class="text-sm font-bold uppercase tracking-widest mb-6 text-[#0d1b12] dark:text-white"
+            >
+              Quick Links
+            </h4>
+            <ul class="space-y-4">
+              <li>
+                <a
+                  class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                  href="Home_Page.html"
+                  >Home</a
+                >
+              </li>
+              <li>
+                <a
+                  class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                  href="Blog_Page.html"
+                  >Our Blog</a
+                >
+              </li>
+              <li>
+                <a
+                  class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                  href="About_Page.html"
+                  >About Us</a
+                >
+              </li>
+              <li>
+                <a
+                  class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                  href="Contact_Page.html"
+                  >Contact Us</a
+                >
+              </li>
+              <li>
+                <a
+                  class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                  href="Help_and_FAQ_Page.html"
+                  >Help Center &amp; FAQ</a
+                >
+              </li>
+            </ul>
+          </div>
+          <div>
+            <h4
+              class="text-sm font-bold uppercase tracking-widest mb-6 text-[#0d1b12] dark:text-white"
+            >
+              Services &amp; Legal
+            </h4>
+            <ul class="space-y-4">
+              <li>
+                <a
+                  class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                  href="About_Page.html"
+                  >About Us</a
+                >
+              </li>
+              <li>
+                <a
+                  class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                  href="Privacy_Policy_Page.html"
+                  >Privacy Policy</a
+                >
+              </li>
+              <li>
+                <a
+                  class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                  href="Terms_of_Service_Page.html"
+                  >Terms of Service</a
+                >
+              </li>
+            </ul>
+          </div>
+          <div>
+            <h4
+              class="text-sm font-bold uppercase tracking-widest mb-6 text-[#0d1b12] dark:text-white"
+            >
+              Contact Info
+            </h4>
+            <ul class="space-y-4">
+              <li class="flex items-start gap-3">
+                <span class="material-symbols-outlined text-primary text-[20px]"
+                  >mail</span
+                >
+                <a
+                  class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary"
+                  href="mailto:support@timetaskbd.com"
+                  >support@timetaskbd.com</a
+                >
+              </li>
+              <li class="flex items-start gap-3">
+                <span class="material-symbols-outlined text-primary text-[20px]"
+                  >call</span
+                >
+                <span class="text-sm text-gray-600 dark:text-gray-400"
+                  >+880 1234 567890</span
+                >
+              </li>
+              <li class="flex items-start gap-3">
+                <span class="material-symbols-outlined text-primary text-[20px]"
+                  >location_on</span
+                >
+                <span class="text-sm text-gray-600 dark:text-gray-400"
+                  >Dhaka, Bangladesh</span
+                >
+              </li>
+            </ul>
+            <div
+              class="mt-8 pt-8 border-t border-[#e7f3eb] dark:border-white/5"
+            >
+              <p
+                class="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-4"
+              >
+                Social Media
+              </p>
+              <div class="flex gap-4">
+                <a
+                  class="text-[#4c9a66] hover:text-primary transition-colors"
+                  href="#"
+                >
+                  <svg class="size-6" fill="currentColor" viewBox="0 0 24 24">
+                    <path
+                      d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"
+                    ></path>
+                  </svg>
+                </a>
+                <a
+                  class="text-[#4c9a66] hover:text-primary transition-colors"
+                  href="#"
+                >
+                  <svg class="size-6" fill="currentColor" viewBox="0 0 24 24">
+                    <path
+                      d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.84 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"
+                    ></path>
+                  </svg>
+                </a>
+                <a
+                  class="text-[#4c9a66] hover:text-primary transition-colors"
+                  href="#"
+                >
+                  <svg class="size-6" fill="currentColor" viewBox="0 0 24 24">
+                    <path
+                      d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"
+                    ></path>
+                  </svg>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div
+          class="pt-8 border-t border-[#e7f3eb] dark:border-white/5 flex flex-col md:flex-row items-center justify-between gap-4"
+        >
+          <p class="text-sm text-gray-500 dark:text-gray-400">
+            Copyright © 2024
+            <span class="text-[#0d1b12] dark:text-white font-semibold"
+              >Time Task BD</span
+            >. All rights reserved.
+          </p>
+          <p class="text-sm text-gray-500 dark:text-gray-400">
+            Developed with <span class="text-primary font-bold">★</span> by
+            <a class="text-primary font-medium hover:underline" href="#"
+              >Digital Dynamics Agency</a
+            >
+          </p>
+        </div>
+      </div>
+    </footer>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../supabase-client.js"></script>
+<script src="../auth-guard.js"></script>
+  </body>
+</html>

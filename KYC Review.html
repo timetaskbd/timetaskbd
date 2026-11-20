@@ -1,0 +1,1211 @@
+<!doctype html>
+<html class="light" lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https://*.supabase.co https://lh3.googleusercontent.com https://via.placeholder.com; connect-src 'self' https://*.supabase.co; font-src 'self' https://fonts.gstatic.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self';" />
+  <meta http-equiv="X-Frame-Options" content="DENY" />
+  <meta name="referrer" content="no-referrer" />
+  <title>Admin Panel - Time Task BD</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+    rel="stylesheet" />
+  <script id="tailwind-config">
+    // Immediately apply theme to avoid flash
+    (function () {
+      const theme = localStorage.getItem("theme");
+      if (
+        theme === "dark" ||
+        (!theme && window.matchMedia("(prefers-color-scheme: dark)").matches)
+      ) {
+        document.documentElement.classList.add("dark");
+      } else {
+        document.documentElement.classList.remove("dark");
+      }
+    })();
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            primary: "#13ec5b",
+            "background-light": "#f6f8f6",
+            "background-dark": "#0d1b12",
+            "sidebar-deep": "#102216",
+            "accent-green": "#13ec5b",
+          },
+          fontFamily: {
+            display: ["Manrope"],
+          },
+          borderRadius: {
+            DEFAULT: "0.25rem",
+            lg: "0.5rem",
+            xl: "0.75rem",
+            "2xl": "1rem",
+            full: "9999px",
+          },
+        },
+      },
+    };
+  </script>
+  <style type="text/tailwindcss">
+    @layer base {
+        body {
+          @apply font-display bg-background-light dark:bg-background-dark text-slate-900 dark:text-white;
+        }
+      }
+      body.auth-loading {
+        visibility: hidden !important;
+      }
+
+      /* Sidebar Transitions */
+      .sidebar-transition {
+        @apply transition-all duration-300 ease-in-out;
+      }
+
+      /* Active Tab Notch Logic */
+      .sidebar-item-active {
+        @apply bg-background-light text-sidebar-deep font-bold relative !important;
+        border-radius: 40px 0 0 40px;
+        margin-left: 10px;
+        width: calc(100% - 10px) !important;
+      }
+
+      .sidebar-item-active::before {
+        content: "";
+        position: absolute;
+        right: 0;
+        top: -40px;
+        width: 40px;
+        height: 40px;
+        background: transparent;
+        border-radius: 50%;
+        box-shadow: 20px 20px 0 0 #f6f8f6;
+        pointer-events: none;
+      }
+      .sidebar-item-active::after {
+        content: "";
+        position: absolute;
+        right: 0;
+        bottom: -40px;
+        width: 40px;
+        height: 40px;
+        background: transparent;
+        border-radius: 50%;
+        box-shadow: 20px -20px 0 0 #f6f8f6;
+        pointer-events: none;
+      }
+
+      .dark .sidebar-item-active::before { box-shadow: 20px 20px 0 0 #0d1b12; }
+      .dark .sidebar-item-active::after  { box-shadow: 20px -20px 0 0 #0d1b12; }
+      .dark .sidebar-item-active { @apply bg-background-dark text-white !important; }
+
+      .sidebar-item {
+        @apply flex items-center py-4 text-white/70 hover:text-white transition-all duration-200 cursor-pointer w-full relative;
+      }
+
+      .sidebar-item .material-symbols-outlined {
+        @apply font-light text-[24px];
+      }
+
+      .sidebar-item-active .material-symbols-outlined {
+        @apply text-sidebar-deep;
+      }
+      .dark .sidebar-item-active .material-symbols-outlined { @apply text-primary; }
+
+      /* Tooltip Logic - Show only when collapsed */
+      .nav-tooltip {
+        @apply invisible absolute left-full ml-4 px-2 py-1 bg-sidebar-deep text-white text-[10px] rounded whitespace-nowrap opacity-0 transition-opacity z-50 pointer-events-none;
+      }
+
+      /* Collapsed Sidebar States */
+      .sidebar-collapsed {
+        @apply w-20 pl-0;
+      }
+      .sidebar-collapsed .logo-text,
+      .sidebar-collapsed .item-text,
+      .sidebar-collapsed .menu-label,
+      .sidebar-collapsed .system-card-text {
+        @apply hidden;
+      }
+      .sidebar-collapsed .sidebar-item {
+        @apply justify-center px-0;
+      }
+      .sidebar-collapsed .sidebar-item:hover .nav-tooltip {
+        @apply visible opacity-100;
+      }
+      .sidebar-collapsed .sidebar-header {
+        @apply px-0 justify-center;
+      }
+
+      /* Custom Scrollbar */
+      .custom-scrollbar::-webkit-scrollbar {
+        width: 4px;
+      }
+      .custom-scrollbar::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+      }
+
+      .active-tab-nav {
+        @apply bg-primary text-slate-900 dark:text-white shadow-lg shadow-primary/20;
+      }
+    </style>
+</head>
+
+<body class="auth-loading flex min-h-screen overflow-hidden">
+  <!-- Sidebar -->
+  <aside id="mainSidebar"
+    class="w-72 bg-sidebar-deep flex-shrink-0 flex flex-col h-screen sticky top-0 sidebar-transition pl-2">
+    <!-- Logo Section -->
+    <div class="sidebar-header p-6 pb-12 flex items-center gap-3 transition-all">
+      <div
+        class="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20 flex-shrink-0">
+        <span class="material-symbols-outlined text-sidebar-deep font-bold text-2xl">update</span>
+      </div>
+      <div class="flex flex-col logo-text overflow-hidden">
+        <span class="text-white font-extrabold text-lg leading-tight tracking-tight whitespace-nowrap">Time Task
+          BD</span>
+        <span class="text-primary/60 text-[10px] font-bold uppercase tracking-widest whitespace-nowrap">Admin
+          Control</span>
+      </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="flex-1">
+      <div class="px-8 mb-4 menu-label">
+        <p class="text-[10px] font-bold text-white/40 uppercase tracking-[0.2em]">
+          Main Menu
+        </p>
+      </div>
+
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Admin Index.html">
+        <span class="material-symbols-outlined">dashboard</span>
+        <span class="text-sm item-text ml-4">Dashboard</span>
+        <span class="nav-tooltip">Dashboard</span>
+      </a>
+
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/System Health.html">
+        <span class="material-symbols-outlined">monitor_heart</span>
+        <span class="text-sm item-text ml-4">System Monitoring</span>
+        <span class="nav-tooltip">Security & System Monitoring</span>
+      </a>
+
+      <a class="sidebar-item sidebar-item-active px-8 group" href="/Admin Dashboard/KYC Review.html">
+        <span class="material-symbols-outlined">manage_accounts</span>
+        <span class="text-sm item-text ml-4">Management</span>
+        <span class="nav-tooltip">User & Buyer Management</span>
+      </a>
+
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/User Analytics.html">
+        <span class="material-symbols-outlined">analytics</span>
+        <span class="text-sm item-text ml-4">Analytics Section</span>
+        <span class="nav-tooltip">Analytics Section</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/User Referral Tree.html">
+        <span class="material-symbols-outlined">hub</span>
+        <span class="text-sm item-text ml-4">Referral System</span>
+        <span class="nav-tooltip">Referral System</span>
+      </a>
+
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Market Asset Price.html">
+        <span class="material-symbols-outlined">trending_up</span>
+        <span class="text-sm item-text ml-4">Market Asset Prices</span>
+        <span class="nav-tooltip">Market Asset Prices</span>
+      </a>
+
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Live Support.html">
+        <span class="material-symbols-outlined">support_agent</span>
+        <span class="text-sm item-text ml-4">Live Support</span>
+        <span class="nav-tooltip">Live Support</span>
+      </a>
+
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Buyer Communication.html">
+        <span class="material-symbols-outlined">forum</span>
+        <span class="text-sm item-text ml-4">Communication</span>
+        <span class="nav-tooltip">Communication</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/System Announcement.html">
+        <span class="material-symbols-outlined">forum</span>
+        <span class="text-sm item-text ml-4">System Announcement</span>
+        <span class="nav-tooltip">System Announcement</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Invoice Management.html">
+        <span class="material-symbols-outlined">description</span>
+        <span class="text-sm item-text ml-4">Invoice Management</span>
+        <span class="nav-tooltip">Invoice Management</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Create Content.html">
+        <span class="material-symbols-outlined">edit_note</span>
+        <span class="text-sm item-text ml-4">Content Management</span>
+        <span class="nav-tooltip">Content Management</span>
+      </a>
+    </nav>
+
+    <div class="px-6 py-8">
+      <button id="logoutBtn"
+        class="w-full h-10 flex items-center justify-center bg-primary text-sidebar-deep font-bold text-xs rounded-lg hover:brightness-110 transition-all shadow-lg shadow-primary/10 group relative">
+        <span class="material-symbols-outlined text-[20px] system-icon">logout</span>
+        <span class="ml-2 system-card-text">Logout</span>
+        <span class="nav-tooltip !left-full !ml-6">Logout</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main Content wrapper -->
+  <div class="flex-1 flex flex-col h-screen overflow-hidden bg-background-light dark:bg-background-dark">
+    <!-- Header -->
+    <header
+      class="h-20 bg-white dark:bg-sidebar-deep border-b border-slate-100 dark:border-white/10 px-6 flex items-center justify-between flex-shrink-0 z-40">
+      <div class="flex items-center gap-6">
+        <button id="sidebarToggle"
+          class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 hover:text-sidebar-deep dark:hover:text-primary hover:bg-primary/10 transition-all">
+          <span class="material-symbols-outlined">menu</span>
+        </button>
+        <div class="relative w-96 group">
+          <span
+            class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-sidebar-deep transition-colors">search</span>
+          <input
+            class="w-full bg-slate-100 dark:bg-white/5 border-none rounded-xl pl-10 pr-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 transition-all dark:text-white dark:placeholder-slate-500"
+            placeholder="Search system records..." type="text" />
+        </div>
+      </div>
+
+      <div class="flex items-center gap-6">
+        <div class="flex items-center gap-2">
+          <button
+            class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 hover:text-sidebar-deep dark:hover:text-primary hover:bg-primary/10 transition-all relative">
+            <span class="material-symbols-outlined">notifications</span>
+            <span
+              class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-sidebar-deep"></span>
+          </button>
+          <button id="darkModeToggle"
+            class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 hover:text-sidebar-deep dark:hover:text-primary hover:bg-primary/10 transition-all">
+            <span id="darkIcon" class="material-symbols-outlined">light_mode</span>
+          </button>
+        </div>
+        <div class="h-10 w-px bg-slate-200 dark:bg-white/10"></div>
+        <div class="flex items-center gap-3 cursor-pointer group">
+          <div class="text-right">
+            <p class="text-sm font-bold text-slate-900 dark:text-white group-hover:text-primary transition-colors">
+              Super Admin
+            </p>
+            <p class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-tighter">
+              System Manager
+            </p>
+          </div>
+          <div
+            class="w-12 h-12 rounded-xl border-2 border-primary/20 p-0.5 overflow-hidden group-hover:border-primary transition-all">
+            <img alt="Admin Profile" class="w-full h-full object-cover rounded-lg"
+              src="https://lh3.googleusercontent.com/aida-public/AB6AXuDI3q59cS__AXyYcqFQtKZ2-e__roEJ3Cic28K7cd-6tYYxzLfpTArNsAJE3UypttzDIKS6SoNy85-jDLh0ZMbLqXr0NEEjrbCPSgoCJZyYc4W89P8djmlf34I_NEoa2vfl5IS3jHwLSZZ6lgtwguAje5Lv9h9RbZ2fJqb36M_tmZc-iJY-XxAXcCDxVyU1bONcO3AV5LZgB1o5wURKpB9w2XEN6iWAILVT7fIzOkl2pQ4lJb5WxYgkvuNIlKakHZWN1e4bzfo25zYy" />
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Sub Navigation Tabs -->
+    <nav
+      class="sticky top-0 bg-white/50 dark:bg-background-dark/50 border-b border-gray-100 dark:border-white/10 backdrop-blur-sm relative z-30 rounded-l-[30px] ml-[110px]">
+      <div class="mx-auto w-full px-4">
+        <div id="tabsContainer" class="flex gap-4 overflow-x-auto no-scrollbar py-3">
+          <a class="flex items-center gap-2 px-4 py-2 rounded-[30px] text-sm font-semibold active-tab-nav whitespace-nowrap transition-all"
+            href="/Admin Dashboard/KYC Review.html">
+            <span class="material-symbols-outlined text-[20px]">shield_person</span>
+            KYC Review
+          </a>
+          <a class="flex items-center gap-2 px-4 py-2 rounded-[30px] text-sm font-semibold text-gray-700 dark:text-slate-400 hover:bg-white dark:hover:bg-white/5 hover:shadow-sm whitespace-nowrap transition-all"
+            href="/Admin Dashboard/User Access.html">
+            <span class="material-symbols-outlined text-[20px]">manage_accounts</span>
+            User Access Management
+          </a>
+          <a class="flex items-center gap-2 px-4 py-2 rounded-[30px] text-sm font-semibold text-gray-700 dark:text-slate-400 hover:bg-white dark:hover:bg-white/5 hover:shadow-sm whitespace-nowrap transition-all"
+            href="/Admin Dashboard/Buyer Deposit Requests.html">
+            <span class="material-symbols-outlined text-[20px]">account_balance_wallet</span>
+            Buyer Deposit Requests
+          </a>
+          <a class="flex items-center gap-2 px-4 py-2 rounded-[30px] text-sm font-semibold text-gray-700 dark:text-slate-400 hover:bg-white dark:hover:bg-white/5 hover:shadow-sm whitespace-nowrap transition-all"
+            href="/Admin Dashboard/Buyer Order Management.html">
+            <span class="material-symbols-outlined text-[20px]">receipt_long</span>
+            Buyer Order Management
+          </a>
+          <a class="flex items-center gap-2 px-4 py-2 rounded-[30px] text-sm font-semibold text-gray-700 dark:text-slate-400 hover:bg-white dark:hover:bg-white/5 hover:shadow-sm whitespace-nowrap transition-all"
+            href="/Admin Dashboard/User Task Verification.html">
+            <span class="material-symbols-outlined text-[20px]">task_alt</span>
+            Task Verification
+          </a>
+          <a class="flex items-center gap-2 px-4 py-2 rounded-[30px] text-sm font-semibold text-gray-700 dark:text-slate-400 hover:bg-white dark:hover:bg-white/5 hover:shadow-sm whitespace-nowrap transition-all"
+            href="/Admin Dashboard/User Payout Request.html">
+            <span class="material-symbols-outlined text-[20px]">payments</span>
+            Payout Request
+          </a>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main Dashboard Content -->
+    <main class="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-8 max-w-full">
+      <div class="max-w-[1600px] mx-auto w-full space-y-8">
+        <!-- Header -->
+        <header class="flex items-center justify-between">
+          <h2 class="text-xl font-bold tracking-tight">
+            Identity Verification Console
+          </h2>
+        </header>
+        <div class="w-full">
+          <!-- Stats Overview -->
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div
+              class="bg-white dark:bg-white/5 border border-[#dbe6df] dark:border-white/10 rounded-xl p-6 flex flex-col gap-2 transition-all">
+              <p class="text-[#61896f] text-sm font-medium">
+                Pending Reviews
+              </p>
+              <div class="flex items-baseline gap-2">
+                <span id="kpi-pending" class="text-3xl font-extrabold tracking-tight">0</span>
+                <!-- <span
+                    class="text-primary text-xs font-bold bg-primary/10 px-2 py-0.5 rounded"
+                    >+12%</span
+                  > -->
+              </div>
+            </div>
+            <div
+              class="bg-white dark:bg-white/5 border border-[#dbe6df] dark:border-white/10 rounded-xl p-6 flex flex-col gap-2 transition-all">
+              <p class="text-[#61896f] text-sm font-medium">
+                Approved Documents
+              </p>
+              <div class="flex items-baseline gap-2">
+                <span id="kpi-approved" class="text-3xl font-extrabold tracking-tight">0</span>
+                <!-- <span
+                    class="text-primary text-xs font-bold bg-primary/10 px-2 py-0.5 rounded"
+                    >+5%</span
+                  > -->
+              </div>
+            </div>
+            <div
+              class="bg-white dark:bg-white/5 border border-[#dbe6df] dark:border-white/10 rounded-xl p-6 flex flex-col gap-2 transition-all">
+              <p class="text-[#61896f] text-sm font-medium">
+                Rejected Documents
+              </p>
+              <div class="flex items-baseline gap-2">
+                <span id="kpi-rejected" class="text-3xl font-extrabold tracking-tight">0</span>
+                <!-- <span
+                    class="text-red-500 text-xs font-bold bg-red-500/10 px-2 py-0.5 rounded"
+                    >-2%</span
+                  > -->
+              </div>
+            </div>
+            <div
+              class="bg-white dark:bg-white/5 border border-[#dbe6df] dark:border-white/10 rounded-xl p-6 flex flex-col gap-2 transition-all">
+              <p class="text-[#61896f] text-sm font-medium">
+                Avg. Verification Time
+              </p>
+              <div class="flex items-baseline gap-2">
+                <span id="kpi-avg-time" class="text-3xl font-extrabold tracking-tight">--</span>
+              </div>
+            </div>
+          </div>
+          <!-- Verification Queue -->
+          <div class="space-y-4 pt-6">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <h3 class="text-lg font-bold">Verification Queue</h3>
+              <div class="flex flex-wrap gap-2">
+                <div class="relative min-w-[500px]">
+                  <span
+                    class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">search</span>
+                  <input id="search-input" type="text" placeholder="Search Name or Username..."
+                    class="w-full pl-9 pr-4 py-2 bg-white dark:bg-sidebar-deep border border-[#dbe6df] dark:border-white/10 rounded-lg text-sm focus:ring-primary focus:border-primary dark:text-white dark:placeholder-slate-500">
+                </div>
+                <select id="role-filter"
+                  class="bg-white dark:bg-sidebar-deep border border-[#dbe6df] dark:border-white/10 rounded-lg text-sm font-medium px-8 py-2 focus:ring-primary focus:border-primary dark:text-white transition-all">
+                  <option class="dark:bg-sidebar-deep" value="all">All Roles</option>
+                  <option class="dark:bg-sidebar-deep" value="User">User</option>
+                  <option class="dark:bg-sidebar-deep" value="Buyer">Buyer</option>
+                </select>
+                <select id="status-filter"
+                  class="bg-white dark:bg-sidebar-deep border border-[#dbe6df] dark:border-white/10 rounded-lg text-sm font-medium px-8 py-2 focus:ring-primary focus:border-primary dark:text-white transition-all">
+                  <option class="dark:bg-sidebar-deep" value="pending">Pending</option>
+                  <option class="dark:bg-sidebar-deep" value="approved">Approved</option>
+                  <option class="dark:bg-sidebar-deep" value="rejected">Rejected</option>
+                  <option class="dark:bg-sidebar-deep" value="all">All Status</option>
+                </select>
+                <button id="refresh-btn"
+                  class="flex items-center gap-2 px-4 py-2 border border-[#dbe6df] dark:border-white/10 rounded-lg text-sm font-medium hover:bg-white dark:hover:bg-white/5">
+                  <span class="material-symbols-outlined text-sm">refresh</span>
+                  Refresh
+                </button>
+              </div>
+            </div>
+            <div
+              class="bg-white dark:bg-white/5 border border-[#dbe6df] dark:border-white/10 rounded-xl overflow-hidden transition-all">
+              <table class="w-full text-left border-collapse">
+                <thead class="bg-background-light dark:bg-white/5">
+                  <tr>
+                    <th class="px-6 py-4 text-xs font-bold text-[#61896f] uppercase tracking-wider">
+                      Date Submitted
+                    </th>
+                    <th class="px-6 py-4 text-xs font-bold text-[#61896f] uppercase tracking-wider">
+                      Full Name
+                    </th>
+                    <th class="px-6 py-4 text-xs font-bold text-[#61896f] uppercase tracking-wider">
+                      User Name
+                    </th>
+                    <th class="px-6 py-4 text-xs font-bold text-[#61896f] uppercase tracking-wider">
+                      Role
+                    </th>
+                    <th class="px-6 py-4 text-xs font-bold text-[#61896f] uppercase tracking-wider">
+                      Type
+                    </th>
+                    <th class="px-6 py-4 text-xs font-bold text-[#61896f] uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th class="px-6 py-4 text-xs font-bold text-[#61896f] uppercase tracking-wider text-right">
+                      Action
+                    </th>
+                  </tr>
+                </thead>
+                <tbody id="kyc-queue-body" class="divide-y divide-[#dbe6df] dark:divide-white/10">
+                  <!-- Dynamic Rows populated by JS -->
+                  <tr>
+                    <td colspan="7" class="px-6 py-8 text-center text-[#61896f]">
+                      <span class="material-symbols-outlined text-4xl mb-2 block text-slate-300">hourglass_empty</span>
+                      Loading pending verifications...
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+              <div
+                class="px-6 py-4 bg-white dark:bg-white/5 border-t border-[#dbe6df] dark:border-white/10 flex items-center justify-between">
+                <p class="text-xs text-[#61896f] font-bold" id="pagination-info">
+                  Showing 0 to 0 of 0 entries
+                </p>
+                <div class="flex items-center gap-2">
+                  <button id="prev-btn" disabled
+                    class="p-1.5 rounded-lg border border-[#dbe6df] dark:border-white/10 text-[#61896f] hover:bg-gray-50 dark:hover:bg-white/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                    <span class="material-symbols-outlined text-sm">chevron_left</span>
+                  </button>
+                  <span id="page-indicator" class="text-xs font-bold text-[#111813] dark:text-zinc-400 px-2">Page
+                    1</span>
+                  <button id="next-btn" disabled
+                    class="p-1.5 rounded-lg border border-[#dbe6df] dark:border-white/10 text-[#61896f] hover:bg-gray-50 dark:hover:bg-white/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                    <span class="material-symbols-outlined text-sm">chevron_right</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <footer class="pt-16 pb-8 border-t border-slate-200 dark:border-white/10 mt-12">
+          <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+            <div class="flex items-center gap-8 text-[11px] font-bold text-slate-400 uppercase tracking-widest">
+              <a class="hover:text-primary transition-colors" href="#">Privacy Policy</a>
+              <a class="hover:text-primary transition-colors" href="#">Terms of Service</a>
+              <a class="hover:text-primary transition-colors" href="#">Documentation</a>
+            </div>
+            <p class="text-[11px] font-bold text-slate-400">
+              <span id="copyrightYear"></span> TIME TASK BD. ALL RIGHTS RESERVED.
+            </p>
+          </div>
+        </footer>
+      </div>
+    </main>
+  </div>
+
+  <!-- Review Details Modal Overlay (Hidden by Default) -->
+  <div id="reviewDetailsModal"
+    class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
+    <!-- Review Details Modal Preview Section -->
+    <div
+      class="bg-white dark:bg-background-dark p-8 rounded-2xl border border-slate-200 dark:border-white/10 shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto relative transition-all">
+      <div class="flex items-center justify-between border-b border-[#dbe6df] dark:border-white/10 pb-6">
+        <div>
+          <h3 class="text-2xl font-extrabold tracking-tight">
+            Review Details: <span id="modalUserId"></span>
+          </h3>
+          <p class="text-[#61896f] font-medium">
+            Comparing submitted documents with profile data
+          </p>
+        </div>
+        <button id="closeModalBtn">
+          <span
+            class="material-symbols-outlined p-2 rounded-full bg-background-light dark:bg-white/5 text-[#61896f] hover:bg-gray-200 dark:hover:bg-white/10 transition-colors">close</span>
+        </button>
+      </div>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 pt-4">
+        <!-- Left: Image Viewer -->
+        <div class="space-y-4">
+          <div class="flex items-center justify-between">
+            <span class="text-sm font-bold uppercase tracking-widest text-[#61896f]">Document Images</span>
+            <div class="flex bg-background-light dark:bg-white/5 p-1 rounded-lg">
+              <button id="front-side-btn"
+                class="px-4 py-1.5 bg-white dark:bg-white/10 text-xs font-bold rounded shadow-sm transition-colors dark:text-white">
+                Front Side
+              </button>
+              <button id="back-side-btn"
+                class="px-4 py-1.5 text-[#61896f] text-xs font-bold hover:bg-white/5 dark:hover:bg-white/5 transition-colors">
+                Back Side
+              </button>
+            </div>
+          </div>
+          <div
+            class="relative group aspect-[1.5/1] bg-background-light dark:bg-white/5 rounded-xl overflow-hidden border border-[#dbe6df] dark:border-white/10 flex items-center justify-center">
+            <img id="modal-nid-image"
+              class="w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-500"
+              data-alt="National ID Card Preview" src="" />
+            <div class="absolute bottom-4 right-4 flex gap-2">
+              <button id="open-image-btn" type="button">
+                <span
+                  class="material-symbols-outlined text-sm p-2 bg-white/90 dark:bg-sidebar-deep/90 backdrop-blur rounded-lg shadow-lg hover:bg-gray-200 dark:hover:bg-primary/20 transition-colors">zoom_in</span>
+              </button>
+            </div>
+            <div class="absolute inset-0 border-[12px] border-primary/10 pointer-events-none"></div>
+          </div>
+        </div>
+        <!-- Right: Comparison Data -->
+        <div class="flex flex-col h-full">
+          <span class="text-sm font-bold uppercase tracking-widest text-[#61896f] mb-4">Submitted Details</span>
+          <div class="grid grid-cols-1 gap-4 flex-1">
+            <div
+              class="p-4 bg-background-light dark:bg-white/5 rounded-xl border border-transparent hover:border-primary/30 transition-colors">
+              <p class="text-xs text-[#61896f] font-bold uppercase mb-1">
+                Full Name
+              </p>
+              <p id="modal-fullname" class="text-lg font-bold"></p>
+            </div>
+            <div
+              class="p-4 bg-background-light dark:bg-white/5 rounded-xl border border-transparent hover:border-primary/30 transition-colors">
+              <p class="text-xs text-[#61896f] font-bold uppercase mb-1">
+                Birth Registration
+              </p>
+              <p id="modal-birth-reg" class="text-lg font-bold tracking-widest"></p>
+            </div>
+            <div
+              class="p-4 bg-background-light dark:bg-white/5 rounded-xl border border-transparent hover:border-primary/30 transition-colors">
+              <p class="text-xs text-[#61896f] font-bold uppercase mb-1">
+                Date of Birth
+              </p>
+              <p id="modal-dob" class="text-lg font-bold"></p>
+            </div>
+            <div class="space-y-2 pt-2">
+              <label class="text-xs font-bold text-[#61896f] uppercase">Decision Context</label>
+              <select id="modal-reject-reason"
+                class="w-full bg-background-light dark:bg-sidebar-deep border-[#dbe6df] dark:border-white/10 rounded-lg text-sm font-medium focus:ring-primary focus:border-primary dark:text-white transition-all">
+                <option class="dark:bg-sidebar-deep" value="">
+                  Select Reason for Rejection (Optional)
+                </option>
+                <option class="dark:bg-sidebar-deep" value="Blurry Image">Blurry Image</option>
+                <option class="dark:bg-sidebar-deep" value="Mismatched Data">Mismatched Data</option>
+                <option class="dark:bg-sidebar-deep" value="Document Tampered">Document Tampered</option>
+                <option class="dark:bg-sidebar-deep" value="Low Quality/Unreadable">
+                  Low Quality/Unreadable
+                </option>
+              </select>
+            </div>
+          </div>
+          <!-- Modal Footer Actions -->
+          <div class="flex gap-4 mt-8">
+            <button id="modal-reject-btn"
+              class="flex-1 bg-red-500 hover:bg-red-600 text-white font-bold py-4 rounded-xl transition-all shadow-lg shadow-red-500/10 flex items-center justify-center gap-2">
+              <span class="material-symbols-outlined">block</span>
+              Reject
+            </button>
+            <button id="modal-approve-btn"
+              class="flex-[2] bg-primary hover:bg-primary/90 text-sidebar-deep font-bold py-4 rounded-xl transition-all shadow-lg shadow-primary/10 flex items-center justify-center gap-2">
+              <span class="material-symbols-outlined"
+                style="font-variation-settings: &quot;FILL&quot; 1">check_circle</span>
+              Approve Verification
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../supabase-client.js"></script>
+  <!-- Script for Sidebar Functionality -->
+  <script>
+    const _sb = window.supabaseClient || null;
+    const IDLE_TIMEOUT_MS = 30 * 60 * 1000;
+    let idleTimer = null;
+    let activityListenersBound = false;
+    const normalizeRole = (v) => String(v || "").trim().toLowerCase();
+    function escapeHtml(s) {
+      return String(s ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+    async function requireAdminSession() {
+      if (!_sb?.auth) {
+        window.location.href = "/Admin Dashboard/Admin_Login.html";
+        return false;
+      }
+      const { data: { session }, error } = await _sb.auth.getSession();
+      if (error || !session) {
+        window.location.href = "/Admin Dashboard/Admin_Login.html";
+        return false;
+      }
+      const { data: profile, error: profErr } = await _sb
+        .from("profiles")
+        .select("role")
+        .eq("id", session.user.id)
+        .single();
+      if (profErr || normalizeRole(profile?.role) !== "admin") {
+        try {
+          await _sb.auth.signOut();
+        } catch (_) {
+          // Keep redirect flow even if sign-out request fails.
+        }
+        window.location.href = "/Admin Dashboard/Admin_Login.html";
+        return false;
+      }
+      return true;
+    }
+    function resetIdleTimer() {
+      clearTimeout(idleTimer);
+      idleTimer = setTimeout(async () => {
+        try {
+          if (_sb?.auth) await _sb.auth.signOut();
+        } catch (_) {
+          // Ignore sign-out failure on idle timeout.
+        } finally {
+          window.location.href = "/Admin Dashboard/Admin_Login.html";
+        }
+      }, IDLE_TIMEOUT_MS);
+    }
+    function bindIdleTracking() {
+      if (activityListenersBound) return;
+      ["click", "mousemove", "keydown", "scroll", "touchstart"].forEach((evt) => {
+        document.addEventListener(evt, resetIdleTimer, { passive: true });
+      });
+      activityListenersBound = true;
+      resetIdleTimer();
+    }
+    function debounce(fn, ms = 5000) {
+      let timer = null;
+      return function (...args) {
+        if (timer) return;
+        fn.apply(this, args);
+        timer = setTimeout(() => {
+          timer = null;
+        }, ms);
+      };
+    }
+    const sidebar = document.getElementById("mainSidebar");
+    const toggleBtn = document.getElementById("sidebarToggle");
+
+    // Toggle Sidebar
+    toggleBtn.addEventListener("click", () => {
+      sidebar.classList.toggle("sidebar-collapsed");
+    });
+
+    // Simple Active Tab Highlighting for Sub-Nav
+    const subTabs = document.querySelectorAll("#tabsContainer a");
+    subTabs.forEach((tab) => {
+      tab.addEventListener("click", (e) => {
+        subTabs.forEach((t) => t.classList.remove("active-tab-nav"));
+        tab.classList.add("active-tab-nav");
+      });
+    });
+    document.getElementById("logoutBtn").addEventListener("click", async () => {
+      try {
+        if (_sb?.auth) await _sb.auth.signOut();
+      } catch (_) {
+        // Ignore sign-out failure and continue logout flow.
+      } finally {
+        window.location.href = "/Admin Dashboard/Admin_Login.html";
+      }
+    });
+
+    // Modal Logic & Realtime Supabase Data
+    document.addEventListener("DOMContentLoaded", async () => {
+      const ok = await requireAdminSession();
+      if (!ok) return;
+      bindIdleTracking();
+      document.body.classList.remove("auth-loading");
+      // Elements
+      const reviewDetailsModal = document.getElementById("reviewDetailsModal");
+      const closeModalBtn = document.getElementById("closeModalBtn");
+      const modalUserIdSpan = document.getElementById("modalUserId");
+      const kycQueueBody = document.getElementById("kyc-queue-body");
+
+      const modalFullname = document.getElementById("modal-fullname");
+      const modalBirthReg = document.getElementById("modal-birth-reg");
+      const modalDob = document.getElementById("modal-dob");
+      const modalRejectReason = document.getElementById("modal-reject-reason");
+      const modalNidImage = document.getElementById("modal-nid-image");
+      const openImageBtn = document.getElementById("open-image-btn");
+
+      const frontSideBtn = document.getElementById("front-side-btn");
+      const backSideBtn = document.getElementById("back-side-btn");
+
+      const rejectBtn = document.getElementById("modal-reject-btn");
+      const approveBtn = document.getElementById("modal-approve-btn");
+
+      // Filter & Pagination Elements
+      const searchInput = document.getElementById("search-input");
+      const roleFilter = document.getElementById("role-filter");
+      const statusFilter = document.getElementById("status-filter");
+      const refreshBtn = document.getElementById("refresh-btn");
+      const prevBtn = document.getElementById("prev-btn");
+      const nextBtn = document.getElementById("next-btn");
+      const pageIndicator = document.getElementById("page-indicator");
+      const paginationInfo = document.getElementById("pagination-info");
+
+      // State
+      let currentRecord = null;
+      let verificationsList = [];
+      let currentFrontUrl = "";
+      let currentBackUrl = "";
+      let currentPage = 1;
+      const itemsPerPage = 10;
+      let totalItems = 0;
+
+      // Helper for Toggles
+      const setActiveToggle = (activeBtn, inactiveBtn) => {        // Active Style
+        activeBtn.classList.add("bg-white", "dark:bg-white/10", "shadow-sm", "text-[#111813]", "dark:text-white");
+        activeBtn.classList.remove("text-[#61896f]", "hover:bg-white/5", "dark:hover:bg-white/5");
+
+        // Inactive Style
+        inactiveBtn.classList.remove("bg-white", "dark:bg-white/10", "shadow-sm", "text-[#111813]", "dark:text-white");
+        inactiveBtn.classList.add("text-[#61896f]", "hover:bg-white/5", "dark:hover:bg-white/5");;
+      };
+
+      // Helper: Get Signed URL
+      const getSecureImage = async (path) => {
+        if (!path) return "https://via.placeholder.com/600x400?text=No+Image";
+        try {
+          const { data, error } = await _sb.storage
+            .from('kyc-documents')
+            .createSignedUrl(path, 3600); // 1 hour validity
+
+          if (error) {
+            console.warn("Could not generate signed image URL.");
+            return "https://via.placeholder.com/600x400?text=Error+Loading+Image";
+          }
+          return data.signedUrl;
+        } catch (err) {
+          console.warn("Failed to load secure image.");
+          return "https://via.placeholder.com/600x400?text=Error+Loading+Image";
+        }
+      };
+
+      const formatAvgTimeFromMs = (avgMs) => {
+        if (!Number.isFinite(avgMs) || avgMs <= 0) return "--";
+        const hours = Math.floor(avgMs / (1000 * 60 * 60));
+        const minutes = Math.floor((avgMs % (1000 * 60 * 60)) / (1000 * 60));
+        return `${hours}h ${minutes}m`;
+      };
+
+      const setKpiValues = (pendingCount, approvedCount, rejectedCount, avgMs) => {
+        document.getElementById('kpi-pending').textContent = Number(pendingCount || 0);
+        document.getElementById('kpi-approved').textContent = Number(approvedCount || 0);
+        document.getElementById('kpi-rejected').textContent = Number(rejectedCount || 0);
+        document.getElementById('kpi-avg-time').textContent = formatAvgTimeFromMs(avgMs);
+      };
+
+      // Fetch KPI stats with RPC first, then table-query fallback.
+      const fetchStats = async () => {
+        try {
+          const { data: statsRpc, error: statsRpcError } = await _sb.rpc("get_kyc_review_stats");
+          if (statsRpcError) {
+            throw new Error(statsRpcError.message || "KPI RPC failed.");
+          }
+
+          const row = Array.isArray(statsRpc) ? statsRpc[0] : statsRpc;
+          if (!row) {
+            throw new Error("KPI RPC returned no usable row.");
+          }
+
+          const pendingCount = Number(row?.pending_count || 0);
+          const approvedCount = Number(row?.approved_count || 0);
+          const rejectedCount = Number(row?.rejected_count || 0);
+          // Support either avg_review_ms or avg_review_seconds from DB.
+          const avgMs = row?.avg_review_ms != null
+            ? Number(row.avg_review_ms)
+            : (row?.avg_review_seconds != null ? Number(row.avg_review_seconds) * 1000 : NaN);
+
+          setKpiValues(pendingCount, approvedCount, rejectedCount, avgMs);
+          return;
+        } catch (err) {
+          console.warn("KPI RPC unavailable. Falling back to direct table stats.");
+        }
+
+        // Fallback path: compute KPI directly from kyc_verifications.
+        try {
+          const { data: rows, error } = await _sb
+            .from("kyc_verifications")
+            .select("status, submitted_at, reviewed_at");
+
+          if (error) {
+            throw new Error(error.message || "Fallback KPI query failed.");
+          }
+
+          const list = rows || [];
+          let pendingCount = 0;
+          let approvedCount = 0;
+          let rejectedCount = 0;
+          let reviewMsTotal = 0;
+          let reviewMsCount = 0;
+
+          list.forEach((item) => {
+            const status = String(item?.status || "").toLowerCase();
+            if (status === "approved") {
+              approvedCount += 1;
+            } else if (status === "rejected") {
+              rejectedCount += 1;
+            } else {
+              pendingCount += 1;
+            }
+
+            if (item?.submitted_at && item?.reviewed_at && (status === "approved" || status === "rejected")) {
+              const submittedTs = new Date(item.submitted_at).getTime();
+              const reviewedTs = new Date(item.reviewed_at).getTime();
+              if (Number.isFinite(submittedTs) && Number.isFinite(reviewedTs) && reviewedTs > submittedTs) {
+                reviewMsTotal += (reviewedTs - submittedTs);
+                reviewMsCount += 1;
+              }
+            }
+          });
+
+          const avgMs = reviewMsCount > 0 ? (reviewMsTotal / reviewMsCount) : NaN;
+          setKpiValues(pendingCount, approvedCount, rejectedCount, avgMs);
+        } catch (fallbackErr) {
+          document.getElementById('kpi-pending').textContent = "--";
+          document.getElementById('kpi-approved').textContent = "--";
+          document.getElementById('kpi-rejected').textContent = "--";
+          document.getElementById('kpi-avg-time').textContent = "--";
+          console.warn("Failed to refresh KPI from both RPC and fallback query.");
+        }
+      };
+
+      // Fetch KYC Data with Pagination
+      const fetchKYCs = async (page = 1) => {
+        currentPage = page;
+        const status = statusFilter.value;
+        const role = roleFilter.value;
+        const search = searchInput.value.trim();
+        const from = (page - 1) * itemsPerPage;
+        const to = from + itemsPerPage - 1;
+
+        kycQueueBody.innerHTML = `<tr><td colspan="7" class="text-center p-8 text-[#61896f]"><span class="material-symbols-outlined animate-spin text-2xl">progress_activity</span> Loading...</td></tr>`;
+
+        // Base query
+        let query = _sb
+          .from("kyc_verifications")
+          .select(`*, profiles!inner(full_name, username, role)`, { count: 'exact' });
+
+        // Filters
+        if (status !== 'all') {
+          query = query.eq('status', status);
+        }
+
+        if (role !== 'all') {
+          query = query.eq('profiles.role', role);
+        }
+
+        if (search) {
+          // Supabase filter on foreign table requires specific syntax
+          // We can filter on profiles fields directly because of !inner join
+          query = query.or(`full_name.ilike.%${search}%,username.ilike.%${search}%`, { foreignTable: "profiles" });
+        }
+
+        // [SEC-003] Server-Side Ordering & Pagination
+        query = query.order("submitted_at", { ascending: false })
+          .range(from, to);
+
+        const { data, count, error } = await query;
+
+        if (error) {
+          console.warn("Failed to load KYC queue.");
+          kycQueueBody.innerHTML = `<tr><td colspan="7" class="text-center p-4 text-red-500">Failed to load data.</td></tr>`;
+          return;
+        }
+
+        verificationsList = data || [];
+        totalItems = count || 0;
+
+        renderTable();
+        updatePaginationUI();
+      };
+
+      const updatePaginationUI = () => {
+        const totalPages = Math.ceil(totalItems / itemsPerPage);
+        pageIndicator.textContent = `Page ${currentPage} of ${totalPages || 1}`;
+
+        const start = totalItems === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1;
+        const end = Math.min(currentPage * itemsPerPage, totalItems);
+        paginationInfo.textContent = `Showing ${start} to ${end} of ${totalItems} entries`;
+
+        prevBtn.disabled = currentPage <= 1;
+        nextBtn.disabled = currentPage >= totalPages;
+
+        // Re-attach listeners to replace old ones (simple way)
+        prevBtn.onclick = () => {
+          if (currentPage > 1) fetchKYCs(currentPage - 1);
+        };
+        nextBtn.onclick = () => {
+          if (currentPage < totalPages) fetchKYCs(currentPage + 1);
+        };
+      };
+
+      const renderTable = () => {
+        if (verificationsList.length === 0) {
+          kycQueueBody.innerHTML = `<tr><td colspan="7" class="text-center p-8 text-[#61896f]">No records found.</td></tr>`;
+          return;
+        }
+
+        let html = "";
+        verificationsList.forEach((item) => {
+          const dt = new Date(item.submitted_at);
+          const dateStr = dt.toLocaleDateString();
+          const timeStr = dt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+          let statusColor = "bg-amber-500";
+          let statusText = "Pending";
+
+          if (item.status === 'approved') {
+            statusColor = "bg-green-500";
+            statusText = "Approved";
+          } else if (item.status === 'rejected') {
+            statusColor = "bg-red-500";
+            statusText = "Rejected";
+          }
+
+          html += `
+            <tr class="hover:bg-background-light/50 dark:hover:bg-white/5 transition-colors border-b border-[#dbe6df] dark:border-white/10 last:border-0">
+              <td class="px-6 py-4 text-sm">
+                ${escapeHtml(dateStr)} <span class="text-[#61896f] ml-1">${escapeHtml(timeStr)}</span>
+              </td>
+              <td class="px-6 py-4 font-bold text-sm">${escapeHtml(item.profiles?.full_name || "Unknown")}</td>
+              <td class="px-6 py-4 font-bold text-sm">${escapeHtml(item.profiles?.username || "Unknown")}</td>
+              <td class="px-6 py-4">
+                <span class="px-3 py-1 bg-[#f0f4f2] dark:bg-white/10 text-[#111813] dark:text-zinc-400 text-xs font-bold rounded-full">${escapeHtml(item.profiles?.role || "User")}</span>
+              </td>
+              <td class="px-6 py-4 text-sm text-[#61896f]">NID/Birth</td>
+              <td class="px-6 py-4">
+                <span class="flex items-center gap-1.5 font-bold text-xs uppercase ${item.status === 'rejected' ? 'text-red-600' : (item.status === 'approved' ? 'text-green-600' : 'text-amber-600')}">
+                  <span class="w-1.5 h-1.5 rounded-full ${statusColor}"></span>${statusText}
+                </span>
+              </td>
+              <td class="px-6 py-4 text-right">
+                <button
+                  class="bg-primary hover:bg-primary/90 text-[#111813] font-bold py-2 px-4 rounded-lg text-sm transition-all shadow-sm open-modal-btn"
+                  data-kyc-id="${item.id}">
+                  Review Details
+                </button>
+              </td>
+            </tr>
+          `;
+        });
+        kycQueueBody.innerHTML = html;
+
+        // Re-attach modal listeners
+        document.querySelectorAll(".open-modal-btn").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const kycId = btn.getAttribute("data-kyc-id");
+            openModal(kycId);
+          });
+        });
+      };
+
+      const openModal = async (id) => {
+        currentRecord = verificationsList.find((x) => x.id === id);
+        if (!currentRecord) return;
+
+        modalUserIdSpan.textContent = currentRecord.profiles?.username || currentRecord.user_id.substring(0, 8);
+        modalFullname.textContent = currentRecord.profiles?.full_name || "Unknown";
+        modalBirthReg.textContent = currentRecord.birth_reg_number || "N/A";
+        modalDob.textContent = currentRecord.dob ? new Date(currentRecord.dob).toLocaleDateString() : "N/A";
+
+        // Show loading state for image
+        modalNidImage.src = "https://via.placeholder.com/600x400?text=Loading+Secure+Image...";
+        modalRejectReason.value = "";
+
+        // Reset buttons
+        approveBtn.disabled = false;
+        rejectBtn.disabled = false;
+        approveBtn.innerHTML = `<span class="material-symbols-outlined" style="font-variation-settings: &quot;FILL&quot; 1">check_circle</span> Approve Verification`;
+        rejectBtn.innerHTML = `<span class="material-symbols-outlined">block</span> Reject`;
+
+        // Fetch Signed URLs
+        currentFrontUrl = await getSecureImage(currentRecord.nid_front_url);
+        currentBackUrl = await getSecureImage(currentRecord.nid_back_url);
+
+        // Set Initial Image (Front)
+        modalNidImage.src = currentFrontUrl;
+
+        // Reset toggles to front side using helper
+        setActiveToggle(frontSideBtn, backSideBtn);
+
+        reviewDetailsModal.classList.remove("hidden");
+      };
+
+      closeModalBtn.addEventListener("click", () => {
+        reviewDetailsModal.classList.add("hidden");
+        currentRecord = null;
+        currentFrontUrl = "";
+        currentBackUrl = "";
+      });
+
+      reviewDetailsModal.addEventListener("click", (e) => {
+        if (e.target === reviewDetailsModal) {
+          reviewDetailsModal.classList.add("hidden");
+        }
+      });
+
+      // Front / Back Toggles
+      frontSideBtn.addEventListener("click", () => {
+        if (!currentRecord) return;
+        modalNidImage.src = currentFrontUrl;
+        setActiveToggle(frontSideBtn, backSideBtn);
+      });
+
+      backSideBtn.addEventListener("click", () => {
+        if (!currentRecord) return;
+        modalNidImage.src = currentBackUrl;
+        setActiveToggle(backSideBtn, frontSideBtn);
+      });
+      openImageBtn.addEventListener("click", () => {
+        const src = modalNidImage.getAttribute("src");
+        if (src) window.open(src, "_blank");
+      });
+
+      // Event Listeners for Filter & Refresh
+      statusFilter.addEventListener('change', () => fetchKYCs(1));
+      roleFilter.addEventListener('change', () => fetchKYCs(1));
+
+      let debounceTimer;
+      searchInput.addEventListener('input', () => {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => fetchKYCs(1), 500);
+      });
+
+      refreshBtn.addEventListener('click', debounce(() => {
+        fetchStats();
+        fetchKYCs(currentPage);
+      }, 5000));
+
+      // Init
+      fetchStats();
+      fetchKYCs();
+
+      // Approve/Reject Logic
+      const updateStatus = async (status, reason = null) => {
+        if (!currentRecord) return;
+
+        try {
+          if (!_sb) throw new Error("Supabase client is unavailable.");
+          approveBtn.disabled = true;
+          rejectBtn.disabled = true;
+
+          if (status === 'approved') {
+            approveBtn.innerHTML = `<span class="material-symbols-outlined animate-spin">progress_activity</span> Processing...`;
+          } else {
+            rejectBtn.innerHTML = `<span class="material-symbols-outlined animate-spin">progress_activity</span> Processing...`;
+          }
+
+          // Preferred path: atomic backend transaction via RPC
+          const { error: rpcError } = await _sb.rpc('handle_kyc_decision', {
+            p_kyc_id: currentRecord.id,
+            p_status: status,
+            p_reason: reason || null
+          });
+
+          if (rpcError) {
+            // Fallback for environments where RPC is not deployed yet.
+            const fallbackPayload = {
+              status,
+              rejection_reason: status === "rejected" ? (reason || "Documents not clear") : null,
+              reviewed_at: new Date().toISOString()
+            };
+            const { error: fallbackError } = await _sb
+              .from("kyc_verifications")
+              .update(fallbackPayload)
+              .eq("id", currentRecord.id);
+            if (fallbackError) {
+              throw new Error(rpcError.message || fallbackError.message || "Unknown update error");
+            }
+          }
+
+          alert(`Verification successfully ${status}.`);
+          reviewDetailsModal.classList.add("hidden");
+
+          // Refresh Data
+          fetchStats();
+          fetchKYCs(currentPage);
+
+        } catch (err) {
+          const message = (err && typeof err.message === "string" && err.message.trim())
+            ? err.message
+            : "Unknown error";
+          console.warn("Verification update failed:", message);
+          alert("Failed to update verification: " + message);
+        } finally {
+          approveBtn.disabled = false;
+          rejectBtn.disabled = false;
+          approveBtn.innerHTML = `<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1">check_circle</span> Approve Verification`;
+          rejectBtn.innerHTML = `<span class="material-symbols-outlined">block</span> Reject`;
+        }
+      };
+
+      approveBtn.addEventListener("click", () => {
+        if (confirm("Are you sure you want to approve this verification? This cannot be easily reversed.")) {
+          updateStatus("approved");
+        }
+      });
+
+      rejectBtn.addEventListener("click", () => {
+        const reason = modalRejectReason.value;
+        if (confirm("Are you sure you want to reject this verification?")) {
+          updateStatus("rejected", reason || "Documents not clear");
+        }
+      });
+
+      // Setup Realtime subscription
+      const channel = _sb
+        .channel("kyc-changes")
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "kyc_verifications" },
+          () => {
+            fetchStats();
+            fetchKYCs(currentPage);
+          },
+        )
+        .subscribe();
+
+      // ─── Theme Toggle Logic ────────────────────────────────────────
+      const themeToggleBtn = document.getElementById("darkModeToggle");
+      const themeIcon = document.getElementById("darkIcon");
+
+      function updateIcons(isDark) {
+        if (themeIcon) {
+          themeIcon.textContent = isDark ? 'dark_mode' : 'light_mode';
+        }
+      }
+
+      if (themeToggleBtn) {
+        // Sync state on load
+        updateIcons(document.documentElement.classList.contains('dark'));
+
+        themeToggleBtn.addEventListener('click', () => {
+          const isDark = document.documentElement.classList.toggle('dark');
+          document.documentElement.classList.toggle('light', !isDark);
+          localStorage.setItem('theme', isDark ? 'dark' : 'light');
+          updateIcons(isDark);
+        });
+      }
+      document.getElementById("copyrightYear").textContent =
+        "© " + new Date().getFullYear();
+    });
+  </script>
+</body>
+
+</html>

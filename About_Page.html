@@ -1,0 +1,762 @@
+<!doctype html>
+<html class="light" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Time Task BD - About Us</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <!-- Supabase Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../supabase-client.js"></script>
+  <script src="../navbar-auth.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400;500;600;700&amp;display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:ital,wght@0,200;0,300;0,400;0,500;0,600;0,700;0,800;1,400&amp;display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+      rel="stylesheet"
+    />
+    <script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              primary: "#13ec5b",
+              "background-light": "#f6f8f6",
+              "background-dark": "#102216",
+              "footer-light": "#f0f2f0" /* From Header_Footer.html */,
+              "footer-dark": "#1a2e20" /* From Header_Footer.html */,
+              "brand-bg": "#f6f8f6",
+              "card-bg": "#ffffff",
+              "card-border": "#e2e8f0",
+              "accent-green": "#13ec5b",
+              "accent-green-hover": "#0dbd49",
+              "accent-green-dim": "rgba(19, 236, 91, 0.1)",
+              "primary-text": "#1a1c1e",
+              "secondary-text": "#64748b",
+              "input-bg": "#f8fafc",
+              "deep-navy": "#f1f5f9",
+            },
+            fontFamily: {
+              display: [
+                "Work Sans",
+                "sans-serif",
+              ] /* Changed to Work Sans for consistency with header/footer */,
+              manrope: [
+                "Manrope",
+                "sans-serif",
+              ] /* Kept Manrope specifically for page content if needed */,
+            },
+            borderRadius: {
+              DEFAULT: "0.25rem",
+              lg: "0.5rem",
+              xl: "0.75rem",
+              "2xl": "1rem" /* From About_Page.html */,
+              full: "9999px",
+            },
+          },
+        },
+      };
+    </script>
+    <style type="text/tailwindcss">
+      /* Styles from Header_Footer.html */
+      body {
+        font-family: "Work Sans", sans-serif; /* Applied for consistency */
+      }
+      .material-symbols-outlined {
+        font-variation-settings:
+          "FILL" 0,
+          "wght" 400,
+          "GRAD" 0,
+          "opsz" 24;
+      }
+      .active-nav-link {
+        @apply text-[#0d1b12] dark:text-white font-bold relative;
+      }
+      .active-nav-link::after {
+        content: "";
+        @apply absolute -bottom-[31px] left-0 w-full h-[3px] bg-primary rounded-t-full;
+      }
+
+      /* Styles from About_Page.html */
+      @layer utilities {
+        .shadow-premium {
+          box-shadow:
+            0 10px 15px -3px rgba(0, 0, 0, 0.02),
+            0 4px 6px -4px rgba(0, 0, 0, 0.02),
+            0 20px 25px -5px rgba(0, 0, 0, 0.04);
+        }
+        .hover-glow:hover {
+          box-shadow:
+            0 0 0 2px #13ec5b,
+            0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+      }
+    </style>
+  </head>
+  <body
+    class="bg-background-light dark:bg-background-dark text-[#0d1b12] dark:text-white min-h-screen flex flex-col"
+  >
+    <!-- Universal Header from Header_Footer.html -->
+    <header
+      class="sticky top-0 z-50 w-full bg-white/95 dark:bg-background-dark/95 backdrop-blur-md border-b border-[#e7f3eb] dark:border-white/10"
+    >
+      <div
+        class="max-w-[1280px] mx-auto h-20 flex items-center justify-between"
+      >
+        <div class="flex items-center shrink-0">
+          <a class="flex items-center gap-2 group" href="#">
+            <div
+              class="size-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary"
+            >
+              <span class="material-symbols-outlined text-2xl">update</span>
+            </div>
+            <span
+              class="text-xl font-bold tracking-tight text-[#0d1b12] dark:text-white ml-1"
+              >Time Task <span class="text-primary">BD</span></span
+            >
+          </a>
+        </div>
+        <div class="flex items-center justify-end flex-grow gap-5 ml-auto">
+          <nav class="hidden lg:flex items-center gap-10">
+            <a
+              class="text-sm font-medium hover:text-primary transition-colors text-[#0d1b12] dark:text-gray-300"
+              href="Home_Page.html"
+              >Home</a
+            >
+            <a
+              class="text-sm font-medium hover:text-primary transition-colors text-[#0d1b12] dark:text-gray-300"
+              href="Blog_Page.html"
+              >Blog</a
+            >
+            <a
+              class="text-sm font-medium hover:text-primary transition-colors text-[#0d1b12] dark:text-gray-300"
+              href="Video_Gallery_Page.html"
+              >Video Gallery
+            </a>
+            <a
+              class="text-sm active-nav-link transition-colors"
+              href="About_Page.html"
+              >About Us</a
+            >
+            <a
+              class="text-sm font-medium hover:text-primary transition-colors text-[#0d1b12] dark:text-gray-300"
+              href="Contact_Page.html"
+              >Contact Us</a
+            >
+            <a
+              class="text-sm font-medium hover:text-primary transition-colors text-[#0d1b12] dark:text-gray-300"
+              href="Earning_Page.html"
+              >Earning Page</a
+            >
+          </nav>
+          <div class="flex items-center gap-3">
+            <button
+              class="p-2.5 rounded-lg hover:bg-[#e7f3eb] dark:hover:bg-white/10 transition-colors text-[#0d1b12] dark:text-white flex items-center justify-center"
+            >
+              <span class="material-symbols-outlined text-[22px]"
+                >dark_mode</span
+              >
+            </button>
+            <div class="h-8 w-[1px] bg-[#e7f3eb] dark:bg-white/10 mx-1"></div>
+            <button
+              onclick="window.location.href = 'Login_Page.html'"
+              class="px-4 h-10 text-sm font-bold text-[#0d1b12] dark:text-white hover:text-primary transition-colors"
+            >
+              Login
+            </button>
+            <button
+              onclick="window.location.href = 'Register_Page.html'"
+              class="bg-primary hover:bg-[#11d853] text-black px-6 h-10 rounded-lg text-sm font-bold tracking-wide transition-all shadow-sm"
+            >
+              Register
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>
+    <main class="flex-grow">
+      <section class="px-6 lg:px-40 py-10">
+        <div class="max-w-[1280px] mx-auto overflow-hidden px-6">
+          <div
+            class="rounded-xl relative flex min-h-[500px] flex-col gap-6 bg-cover bg-center bg-no-repeat items-center justify-center p-8 text-center"
+            style="
+              background-image:
+                linear-gradient(rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0.7) 100%),
+                url(&quot;https://lh3.googleusercontent.com/aida-public/AB6AXuAaw4RwwcA6Wdnm3psSMToFcTDRzYo1WJ-qK5lZUUQr4on1A1fxgUJT02imUwuDKLemQEefNFACKZwM5rt-Rg_qVZshlR9KYoODwRhYhNwt_hj8ipbHo93CghtxS4jpEmdcad17kIPjlRwWvQ0N3_P1Tkf9rh1EVolzwdPNFhoaHefjgSzVn97_I1GaW2-MdNN9tEduolBPaMrjMnflLLJSLaSRDvP2aDgaUeXGm8H8aki5oxARYQKwS7IOeWs83yopNV_4R2soGiBg&quot;);
+            "
+          >
+            <h1
+              class="text-white text-4xl lg:text-6xl font-black leading-tight tracking-tight max-w-3xl"
+            >
+              Empowering Individuals Through Digital Opportunity
+            </h1>
+            <p class="text-white/90 text-lg lg:text-xl font-normal max-w-2xl">
+              Time Task BD is committed to bridging the gap between talent and
+              opportunity in the digital age.
+            </p>
+            <button
+              class="flex min-w-[160px] cursor-pointer items-center justify-center rounded-lg h-12 px-6 bg-primary text-[#0d1b12] text-base font-bold tracking-[0.015em] hover:scale-105 transition-transform"
+            >
+              Explore Our Platform
+            </button>
+          </div>
+        </div>
+      </section>
+      <section class="px-6 lg:px-40 py-16">
+        <div class="max-w-[1280px] mx-auto px-6">
+          <div class="flex flex-col items-center text-center">
+            <span
+              class="text-primary font-bold uppercase tracking-widest text-xs mb-2"
+              >Our Roots</span
+            >
+            <h2
+              class="text-[#0d1b12] dark:text-white text-3xl lg:text-4xl font-bold leading-tight mb-8"
+            >
+              The Story of Time Task BD
+            </h2>
+            <div class="space-y-6 max-w-[800px]">
+              <p
+                class="text-[#0d1b12] dark:text-white/80 text-lg leading-relaxed"
+              >
+                Founded with a vision to revolutionize the digital workspace,
+                Time Task BD started as a small initiative to connect skilled
+                individuals with meaningful tasks. We recognized a growing gap
+                in the market: talented people looking for flexibility, and
+                businesses needing agile digital support.
+              </p>
+              <p
+                class="text-[#0d1b12] dark:text-white/80 text-lg leading-relaxed"
+              >
+                Over the years, we have evolved into a robust platform that
+                empowers thousands of users by providing accessible digital
+                opportunities and fostering financial independence through
+                innovation and dedication. We believe that everyone, regardless
+                of their location, deserves a chance to build a professional
+                career in the digital economy.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section class="px-6 lg:px-40 py-16 bg-white dark:bg-[#0a150d]/50">
+        <div class="max-w-[1280px] mx-auto">
+          <div
+            class="max-w-[1280px] mx-auto overflow-hidden px-6 flex flex-col gap-10 @container"
+          >
+            <div class="flex flex-col gap-4 text-center md:text-left">
+              <h1
+                class="text-[#0d1b12] dark:text-white text-3xl lg:text-4xl font-bold leading-tight"
+              >
+                Our Mission &amp; Vision
+              </h1>
+              <p
+                class="text-[#4c9a66] dark:text-primary/80 text-lg font-medium"
+              >
+                The core principles that drive every decision we make.
+              </p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div
+                class="flex flex-col gap-6 rounded-xl border border-[#cfe7d7] dark:border-[#1e3a26] bg-background-light dark:bg-background-dark p-8 hover:shadow-lg transition-shadow"
+              >
+                <div
+                  class="text-primary size-12 flex items-center justify-center bg-primary/10 rounded-lg"
+                >
+                  <span class="material-symbols-outlined text-4xl">target</span>
+                </div>
+                <div class="flex flex-col gap-3">
+                  <h2
+                    class="text-[#0d1b12] dark:text-white text-2xl font-bold leading-tight"
+                  >
+                    Our Mission
+                  </h2>
+                  <p
+                    class="text-[#4c9a66] dark:text-white/60 text-base font-normal leading-relaxed"
+                  >
+                    To provide accessible digital tasks and financial
+                    empowerment to individuals across the region through a
+                    secure, transparent, and efficient micro-tasking platform.
+                  </p>
+                </div>
+              </div>
+              <div
+                class="flex flex-col gap-6 rounded-xl border border-[#cfe7d7] dark:border-[#1e3a26] bg-background-light dark:bg-background-dark p-8 hover:shadow-lg transition-shadow"
+              >
+                <div
+                  class="text-primary size-12 flex items-center justify-center bg-primary/10 rounded-lg"
+                >
+                  <span class="material-symbols-outlined text-4xl"
+                    >visibility</span
+                  >
+                </div>
+                <div class="flex flex-col gap-3">
+                  <h2
+                    class="text-[#0d1b12] dark:text-white text-2xl font-bold leading-tight"
+                  >
+                    Our Vision
+                  </h2>
+                  <p
+                    class="text-[#4c9a66] dark:text-white/60 text-base font-normal leading-relaxed"
+                  >
+                    To become the leading global ecosystem for digital growth,
+                    fostering a vibrant community of skilled professionals and
+                    setting the standard for remote tasking excellence.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section
+        class="px-6 lg:px-40 py-24 bg-background-light dark:bg-background-dark"
+      >
+        <div class="max-w-[1280px] mx-auto overflow-hidden px-6">
+          <div class="text-center mb-20">
+            <span
+              class="text-primary font-bold uppercase tracking-widest text-[10px] bg-primary/10 px-3 py-1 rounded-full mb-4 inline-block"
+              >The Experts</span
+            >
+            <h2
+              class="text-[#0d1b12] dark:text-white text-4xl lg:text-5xl font-black mb-4 tracking-tight"
+            >
+              Meet the Minds Behind the Platform
+            </h2>
+            <p
+              class="text-[#4c9a66] dark:text-primary/70 max-w-2xl mx-auto font-medium text-lg"
+            >
+              Our diverse team of experts is dedicated to creating a better
+              digital future for everyone.
+            </p>
+          </div>
+          <div
+            class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 pb-10"
+          >
+            <div
+              class="group relative bg-white dark:bg-[#162a1d] rounded-2xl p-8 transition-all duration-500 shadow-premium hover:scale-[1.02] border border-transparent hover:border-primary/20 hover-glow flex flex-col items-center text-center"
+            >
+              <div
+                class="w-40 h-40 rounded-full overflow-hidden mb-8 border-[6px] border-background-light dark:border-[#1e3a26] shadow-md group-hover:border-primary/10 transition-colors"
+              >
+                <img
+                  alt="Ahmed Sharif"
+                  class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuAtSwQ6YjvYCdyJ4C5Ml44luVg0q3MkrASwe7xZ0GFod3-O0DNxiUjBJSI2jv1OdlnDDEINnVB4e9UtF0g7kFKTVSelTYdjya6DaBAXRIYQF4PxYXIoYFfr8rjcnhO2a-Dd-He9WE2Hxzwo4c3eAw54Q8LwVssIDmI3rJEYqjNdSUP6A1G33x3qPEjfYBGgKDot6qcl80927K550_cDByioDDuIjFxPtr9rhwdW_ybAADi3wJydqT7hjwIIgWaInp_Ov8sTw1bQam5s"
+                />
+              </div>
+              <h3
+                class="text-[#0d1b12] dark:text-white font-black text-2xl mb-1 tracking-tight"
+              >
+                Ahmed Sharif
+              </h3>
+              <p class="text-primary/80 text-sm font-semibold italic mb-6">
+                CEO &amp; Founder
+              </p>
+              <p
+                class="text-sm text-[#4c9a66]/80 dark:text-white/60 leading-relaxed mb-8 flex-grow"
+              >
+                Visionary leader with 10+ years in digital workforce management.
+              </p>
+              <div class="flex gap-5 mt-auto">
+                <a
+                  class="text-[#4c9a66] dark:text-white/30 hover:text-primary transition-all scale-90 hover:scale-110"
+                  href="#"
+                >
+                  <svg class="w-5 h-5 fill-currentColor" viewBox="0 0 24 24">
+                    <path
+                      d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"
+                    ></path>
+                  </svg>
+                </a>
+                <a
+                  class="text-[#4c9a66] dark:text-white/30 hover:text-primary transition-all scale-90 hover:scale-110"
+                  href="#"
+                >
+                  <svg class="w-5 h-5 fill-currentColor" viewBox="0 0 24 24">
+                    <path
+                      d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z"
+                    ></path>
+                  </svg>
+                </a>
+              </div>
+            </div>
+            <div
+              class="group relative bg-white dark:bg-[#162a1d] rounded-2xl p-8 transition-all duration-500 shadow-premium hover:scale-[1.02] border border-transparent hover:border-primary/20 hover-glow flex flex-col items-center text-center"
+            >
+              <div
+                class="w-40 h-40 rounded-full overflow-hidden mb-8 border-[6px] border-background-light dark:border-[#1e3a26] shadow-md group-hover:border-primary/10 transition-colors"
+              >
+                <img
+                  alt="Sarah Rahman"
+                  class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuBEefEYpjOB0_22nnoD0nqQ8_9_OBOgmwGrdjIjGe9mAZQvSEfsf-8DRBSXg8TV3-w88VTRPc9qpENb57WrS_FU_DhfGwv2ETsM1u9DDCaPX1psSx7y2tNn-ilAvImJiFLvi1Yrp0NeCpGj6tSfxNTRUiK_3cijYwlo24LwjjArNfpr2jYCC1kmiNaAJl3agsD6N4cjGxKVCvKLOQ7SHHiazuDmVN2IaI7dSz_dUrUMezI5wflUcV4Vp_iFCYBGme89igviZKeKn1Cb"
+                />
+              </div>
+              <h3
+                class="text-[#0d1b12] dark:text-white font-black text-2xl mb-1 tracking-tight"
+              >
+                Sarah Rahman
+              </h3>
+              <p class="text-primary/80 text-sm font-semibold italic mb-6">
+                Chief Technology Officer
+              </p>
+              <p
+                class="text-sm text-[#4c9a66]/80 dark:text-white/60 leading-relaxed mb-8 flex-grow"
+              >
+                Architect of our platform's secure and scalable infrastructure.
+              </p>
+              <div class="flex gap-5 mt-auto">
+                <a
+                  class="text-[#4c9a66] dark:text-white/30 hover:text-primary transition-all scale-90 hover:scale-110"
+                  href="#"
+                >
+                  <svg class="w-5 h-5 fill-currentColor" viewBox="0 0 24 24">
+                    <path
+                      d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"
+                    ></path>
+                  </svg>
+                </a>
+                <a
+                  class="text-[#4c9a66] dark:text-white/30 hover:text-primary transition-all scale-90 hover:scale-110"
+                  href="#"
+                >
+                  <svg class="w-5 h-5 fill-currentColor" viewBox="0 0 24 24">
+                    <path
+                      d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z"
+                    ></path>
+                  </svg>
+                </a>
+              </div>
+            </div>
+            <div
+              class="group relative bg-white dark:bg-[#162a1d] rounded-2xl p-8 transition-all duration-500 shadow-premium hover:scale-[1.02] border border-transparent hover:border-primary/20 hover-glow flex flex-col items-center text-center"
+            >
+              <div
+                class="w-40 h-40 rounded-full overflow-hidden mb-8 border-[6px] border-background-light dark:border-[#1e3a26] shadow-md group-hover:border-primary/10 transition-colors"
+              >
+                <img
+                  alt="Tanvir Islam"
+                  class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuDmEumHRta-_k1uisKl9dboA3-_ZrcCIJX3xpJA1W-Tp5lkDCIHpF_145fqadXIl3UQnrM0BPVmWp71OgyRV2Zi6rKq1geFI2JbgN6QIJof7kKQSBcvaqeFD6sWDdIBfbigy8kANXOU6ukJbtikR7P-PFGhqYmHY4V41Tzw3nVFZ5X0oHXjKvxjyZ1gi7hQWXW_8No_nAayLK92tTWxXoLhjSSkF-X2h6MqHFvvB7nEtSIi6nDcnQI7Pm2OVAxb2j28FrfDqsr3asaE"
+                />
+              </div>
+              <h3
+                class="text-[#0d1b12] dark:text-white font-black text-2xl mb-1 tracking-tight"
+              >
+                Tanvir Islam
+              </h3>
+              <p class="text-primary/80 text-sm font-semibold italic mb-6">
+                Operations Director
+              </p>
+              <p
+                class="text-sm text-[#4c9a66]/80 dark:text-white/60 leading-relaxed mb-8 flex-grow"
+              >
+                Ensuring smooth workflows and quality control for every task.
+              </p>
+              <div class="flex gap-5 mt-auto">
+                <a
+                  class="text-[#4c9a66] dark:text-white/30 hover:text-primary transition-all scale-90 hover:scale-110"
+                  href="#"
+                >
+                  <svg class="w-5 h-5 fill-currentColor" viewBox="0 0 24 24">
+                    <path
+                      d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"
+                    ></path>
+                  </svg>
+                </a>
+                <a
+                  class="text-[#4c9a66] dark:text-white/30 hover:text-primary transition-all scale-90 hover:scale-110"
+                  href="#"
+                >
+                  <svg class="w-5 h-5 fill-currentColor" viewBox="0 0 24 24">
+                    <path
+                      d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z"
+                    ></path>
+                  </svg>
+                </a>
+              </div>
+            </div>
+            <div
+              class="group relative bg-white dark:bg-[#162a1d] rounded-2xl p-8 transition-all duration-500 shadow-premium hover:scale-[1.02] border border-transparent hover:border-primary/20 hover-glow flex flex-col items-center text-center"
+            >
+              <div
+                class="w-40 h-40 rounded-full overflow-hidden mb-8 border-[6px] border-background-light dark:border-[#1e3a26] shadow-md group-hover:border-primary/10 transition-colors"
+              >
+                <img
+                  alt="Jasmine Akter"
+                  class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuCp5dMLtPfcJ17c0K-XmrtoRj1fI926-D8SODhQQCnrBFZg70hY4JY2buP-snUkHyoJX5zRS1XuHlzUJudv7jde94G71p8kDIzp3j7mYsSpmUAlkE3LTPyRU4jjV7ppnbKL8nSUazoWWZAQpWg07j_R_f-qyBZ6lJO3pqPVa3ghA8AOzj9RkXle5GH8kiU342hl9arsLXuFxu10LyFG682SreOep6H36URpb4Mzc_RfHBqm_M4o_goEEZqc2bbgOq8hzjvP4y5kLK4e"
+                />
+              </div>
+              <h3
+                class="text-[#0d1b12] dark:text-white font-black text-2xl mb-1 tracking-tight"
+              >
+                Jasmine Akter
+              </h3>
+              <p class="text-primary/80 text-sm font-semibold italic mb-6">
+                Community Lead
+              </p>
+              <p
+                class="text-sm text-[#4c9a66]/80 dark:text-white/60 leading-relaxed mb-8 flex-grow"
+              >
+                Supporting our users and building a vibrant network of digital
+                pros.
+              </p>
+              <div class="flex gap-5 mt-auto">
+                <a
+                  class="text-[#4c9a66] dark:text-white/30 hover:text-primary transition-all scale-90 hover:scale-110"
+                  href="#"
+                >
+                  <svg class="w-5 h-5 fill-currentColor" viewBox="0 0 24 24">
+                    <path
+                      d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"
+                    ></path>
+                  </svg>
+                </a>
+                <a
+                  class="text-[#4c9a66] dark:text-white/30 hover:text-primary transition-all scale-90 hover:scale-110"
+                  href="#"
+                >
+                  <svg class="w-5 h-5 fill-currentColor" viewBox="0 0 24 24">
+                    <path
+                      d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z"
+                    ></path>
+                  </svg>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Universal Footer from Header_Footer.html -->
+    <footer
+      class="bg-footer-light dark:bg-footer-dark pt-16 pb-8 border-t border-[#e7f3eb] dark:border-white/5"
+    >
+      <div class="max-w-[1280px] mx-auto">
+        <div
+          class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16"
+        >
+          <div class="space-y-6">
+            <div class="flex items-center gap-3">
+              <div
+                class="size-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary"
+              >
+                <span class="material-symbols-outlined text-2xl">update</span>
+              </div>
+              <span
+                class="text-xl font-bold tracking-tight text-[#0d1b12] dark:text-white"
+                >Time Task <span class="text-primary">BD</span></span
+              >
+            </div>
+            <p class="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">
+              Empowering your digital productivity through innovative task
+              management and streamlined earning opportunities.
+            </p>
+            <div class="flex gap-4">
+              <a
+                class="size-10 rounded-xl border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-black transition-all"
+                href="#"
+              >
+                <span class="material-symbols-outlined text-[20px]"
+                  >public</span
+                >
+              </a>
+              <a
+                class="size-10 rounded-xl border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-black transition-all"
+                href="#"
+              >
+                <span class="material-symbols-outlined text-[20px]">share</span>
+              </a>
+              <a
+                class="size-10 rounded-xl border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-black transition-all"
+                href="#"
+              >
+                <span class="material-symbols-outlined text-[20px]"
+                  >alternate_email</span
+                >
+              </a>
+            </div>
+          </div>
+          <div>
+            <h4
+              class="text-sm font-bold uppercase tracking-widest mb-6 text-[#0d1b12] dark:text-white"
+            >
+              Quick Links
+            </h4>
+            <ul class="space-y-4">
+              <li>
+                <a
+                  class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                  href="Home_Page.html"
+                  >Home</a
+                >
+              </li>
+              <li>
+                <a
+                  class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                  href="Blog_Page.html"
+                  >Our Blog</a
+                >
+              </li>
+              <li>
+                <a
+                  class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                  href="About_Page.html"
+                  >About Us</a
+                >
+              </li>
+              <li>
+                <a
+                  class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                  href="Contact_Page.html"
+                  >Contact</a
+                >
+              </li>
+              <li>
+                <a
+                  class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                  href="Help_and_FAQ_Page.html"
+                  >FAQ Support</a
+                >
+              </li>
+            </ul>
+          </div>
+          <div>
+            <h4
+              class="text-sm font-bold uppercase tracking-widest mb-6 text-[#0d1b12] dark:text-white"
+            >
+              Services &amp; Legal
+            </h4>
+            <ul class="space-y-4">
+              <li>
+                <a
+                  class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                  href="About_Page.html"
+                  >About Us</a
+                >
+              </li>
+              <li>
+                <a
+                  class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                  href="Privacy_Policy_Page.html"
+                  >Privacy Policy</a
+                >
+              </li>
+              <li>
+                <a
+                  class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                  href="Terms_of_Service_Page.html"
+                  >Terms of Service</a
+                >
+              </li>
+            </ul>
+          </div>
+          <div>
+            <h4
+              class="text-sm font-bold uppercase tracking-widest mb-6 text-[#0d1b12] dark:text-white"
+            >
+              Contact Info
+            </h4>
+            <ul class="space-y-4">
+              <li class="flex items-start gap-3">
+                <span class="material-symbols-outlined text-primary text-[20px]"
+                  >mail</span
+                >
+                <a
+                  class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary"
+                  href="mailto:support@timetaskbd.com"
+                  >support@timetaskbd.com</a
+                >
+              </li>
+              <li class="flex items-start gap-3">
+                <span class="material-symbols-outlined text-primary text-[20px]"
+                  >call</span
+                >
+                <span class="text-sm text-gray-600 dark:text-gray-400"
+                  >+880 1234 567890</span
+                >
+              </li>
+              <li class="flex items-start gap-3">
+                <span class="material-symbols-outlined text-primary text-[20px]"
+                  >location_on</span
+                >
+                <span class="text-sm text-gray-600 dark:text-gray-400"
+                  >Dhaka, Bangladesh</span
+                >
+              </li>
+            </ul>
+            <div
+              class="mt-8 pt-8 border-t border-[#e7f3eb] dark:border-white/5"
+            >
+              <p
+                class="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-4"
+              >
+                Social Media
+              </p>
+              <div class="flex gap-4">
+                <a
+                  class="text-[#4c9a66] hover:text-primary transition-colors"
+                  href="#"
+                >
+                  <svg class="size-6" fill="currentColor" viewBox="0 0 24 24">
+                    <path
+                      d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"
+                    ></path>
+                  </svg>
+                </a>
+                <a
+                  class="text-[#4c9a66] hover:text-primary transition-colors"
+                  href="#"
+                >
+                  <svg class="size-6" fill="currentColor" viewBox="0 0 24 24">
+                    <path
+                      d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.84 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"
+                    ></path>
+                  </svg>
+                </a>
+                <a
+                  class="text-[#4c9a66] hover:text-primary transition-colors"
+                  href="#"
+                >
+                  <svg class="size-6" fill="currentColor" viewBox="0 0 24 24">
+                    <path
+                      d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"
+                    ></path>
+                  </svg>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div
+          class="pt-8 border-t border-[#e7f3eb] dark:border-white/5 flex flex-col md:flex-row items-center justify-between gap-4"
+        >
+          <p class="text-sm text-gray-500 dark:text-gray-400">
+            Copyright © 2024
+            <span class="text-[#0d1b12] dark:text-white font-semibold"
+              >Time Task BD</span
+            >. All rights reserved.
+          </p>
+          <p class="text-sm text-gray-500 dark:text-gray-400">
+            Developed with <span class="text-primary font-bold">★</span> by
+            <a class="text-primary font-medium hover:underline" href="#"
+              >Digital Dynamics Agency</a
+            >
+          </p>
+        </div>
+      </div>
+    </footer>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../supabase-client.js"></script>
+<script src="../auth-guard.js"></script>
+  </body>
+</html>

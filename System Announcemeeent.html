@@ -1,0 +1,865 @@
+<!doctype html>
+<html class="light" lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <title>Admin Panel - Time Task BD</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../supabase-client.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+    rel="stylesheet" />
+  <script>
+    (function () {
+      const savedTheme = localStorage.getItem("theme") || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+      if (savedTheme === "dark") {
+        document.documentElement.classList.add("dark");
+        document.documentElement.classList.remove("light");
+      } else {
+        document.documentElement.classList.add("light");
+        document.documentElement.classList.remove("dark");
+      }
+    })();
+  </script>
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            primary: "#13ec5b",
+            "background-light": "#f6f8f6",
+            "background-dark": "#0d1b12",
+            "sidebar-deep": "#102216",
+            "accent-green": "#13ec5b",
+          },
+          fontFamily: {
+            display: ["Manrope"],
+          },
+          borderRadius: {
+            DEFAULT: "0.25rem",
+            lg: "0.5rem",
+            xl: "0.75rem",
+            "2xl": "1rem",
+            full: "9999px",
+          },
+        },
+      },
+    };
+  </script>
+  <style type="text/tailwindcss">
+    @layer base {
+        body {
+          @apply font-display bg-background-light dark:bg-background-dark text-slate-900 dark:text-white transition-colors duration-300;
+        }
+      }
+
+      /* Sidebar Transitions */
+      .sidebar-transition {
+        @apply transition-all duration-300 ease-in-out;
+      }
+
+      /* Active Tab Notch Logic */
+      .sidebar-item-active {
+        @apply bg-background-light text-sidebar-deep font-bold relative !important;
+        border-radius: 40px 0 0 40px;
+        margin-left: 10px;
+        width: calc(100% - 10px) !important;
+      }
+
+      .sidebar-item-active::before {
+        content: "";
+        position: absolute;
+        right: 0;
+        top: -40px;
+        width: 40px;
+        height: 40px;
+        background: transparent;
+        border-radius: 50%;
+        box-shadow: 20px 20px 0 0 #f6f8f6;
+        pointer-events: none;
+      }
+
+      .sidebar-item-active::after {
+        content: "";
+        position: absolute;
+        right: 0;
+        bottom: -40px;
+        width: 40px;
+        height: 40px;
+        background: transparent;
+        border-radius: 50%;
+        box-shadow: 20px -20px 0 0 #f6f8f6;
+        pointer-events: none;
+      }
+
+      .dark .sidebar-item-active::before { box-shadow: 20px 20px 0 0 #0d1b12; }
+      .dark .sidebar-item-active::after  { box-shadow: 20px -20px 0 0 #0d1b12; }
+      .dark .sidebar-item-active { @apply bg-background-dark text-white !important; }
+
+      .sidebar-item {
+        @apply flex items-center py-4 text-white/70 hover:text-white transition-all duration-200 cursor-pointer w-full relative;
+      }
+
+      .sidebar-item .material-symbols-outlined {
+        @apply font-light text-[24px];
+      }
+
+      .sidebar-item-active .material-symbols-outlined {
+        @apply text-sidebar-deep;
+      }
+
+      .dark .sidebar-item-active .material-symbols-outlined {
+        @apply text-primary;
+      }
+
+      /*.sidebar-item-active span {
+        @apply text-sidebar-deep;
+      }*/
+
+      /* Tooltip Logic - Show only when collapsed */
+      .nav-tooltip {
+        @apply invisible absolute left-full ml-4 px-2 py-1 bg-sidebar-deep text-white text-[10px] rounded whitespace-nowrap opacity-0 transition-opacity z-50 pointer-events-none;
+      }
+
+      /* Collapsed Sidebar States */
+      .sidebar-collapsed {
+        @apply w-20 pl-0;
+      }
+      .sidebar-collapsed .logo-text,
+      .sidebar-collapsed .item-text,
+      .sidebar-collapsed .menu-label,
+      .sidebar-collapsed .system-card-text {
+        @apply hidden;
+      }
+      .sidebar-collapsed .sidebar-item {
+        @apply justify-center px-0;
+      }
+      .sidebar-collapsed .sidebar-item:hover .nav-tooltip {
+        @apply visible opacity-100;
+      }
+      .sidebar-collapsed .sidebar-header {
+        @apply px-0 justify-center;
+      }
+
+      /* Custom Scrollbar */
+      .custom-scrollbar::-webkit-scrollbar {
+        width: 4px;
+      }
+      .custom-scrollbar::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+      }
+
+      .active-tab-nav {
+        @apply bg-primary text-white shadow-lg shadow-primary/20;
+      }
+    </style>
+</head>
+
+<body class="flex min-h-screen overflow-hidden">
+  <!-- Sidebar -->
+  <aside id="mainSidebar"
+    class="w-72 bg-sidebar-deep flex-shrink-0 flex flex-col h-screen sticky top-0 sidebar-transition pl-2">
+    <!-- Logo Section -->
+    <div class="sidebar-header p-6 pb-12 flex items-center gap-3 transition-all">
+      <div
+        class="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20 flex-shrink-0">
+        <span class="material-symbols-outlined text-sidebar-deep font-bold text-2xl">update</span>
+      </div>
+      <div class="flex flex-col logo-text overflow-hidden">
+        <span class="text-white font-extrabold text-lg leading-tight tracking-tight whitespace-nowrap">Time Task
+          BD</span>
+        <span class="text-primary/60 text-[10px] font-bold uppercase tracking-widest whitespace-nowrap">Admin
+          Control</span>
+      </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="flex-1">
+      <div class="px-8 mb-4 menu-label">
+        <p class="text-[10px] font-bold text-white/40 uppercase tracking-[0.2em]">
+          Main Menu
+        </p>
+      </div>
+
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Admin Index.html">
+        <span class="material-symbols-outlined">dashboard</span>
+        <span class="text-sm item-text ml-4">Dashboard</span>
+        <span class="nav-tooltip">Dashboard</span>
+      </a>
+
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/System Health.html">
+        <span class="material-symbols-outlined">monitor_heart</span>
+        <span class="text-sm item-text ml-4">System Monitoring</span>
+        <span class="nav-tooltip">Security & System Monitoring</span>
+      </a>
+
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/KYC Review.html">
+        <span class="material-symbols-outlined">manage_accounts</span>
+        <span class="text-sm item-text ml-4">Management</span>
+        <span class="nav-tooltip">User & Buyer Management</span>
+      </a>
+
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/User Analytics.html">
+        <span class="material-symbols-outlined">analytics</span>
+        <span class="text-sm item-text ml-4">Analytics Section</span>
+        <span class="nav-tooltip">Analytics Section</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/User Referral Tree.html">
+        <span class="material-symbols-outlined">hub</span>
+        <span class="text-sm item-text ml-4">Referral System</span>
+        <span class="nav-tooltip">Referral System</span>
+      </a>
+
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Market Asset Price.html">
+        <span class="material-symbols-outlined">trending_up</span>
+        <span class="text-sm item-text ml-4">Market Asset Prices</span>
+        <span class="nav-tooltip">Market Asset Prices</span>
+      </a>
+
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Live Support.html">
+        <span class="material-symbols-outlined">support_agent</span>
+        <span class="text-sm item-text ml-4">Live Support</span>
+        <span class="nav-tooltip">Live Support</span>
+      </a>
+
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Buyer Communication.html">
+        <span class="material-symbols-outlined">forum</span>
+        <span class="text-sm item-text ml-4">Communication</span>
+        <span class="nav-tooltip">Communication</span>
+      </a>
+      <a class="sidebar-item sidebar-item-active px-8 group" href="/Admin Dashboard/System Announcemeeent.html">
+        <span class="material-symbols-outlined">forum</span>
+        <span class="text-sm item-text ml-4">System Announcement</span>
+        <span class="nav-tooltip">System Announcement</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Invoice Management.html">
+        <span class="material-symbols-outlined">description</span>
+        <span class="text-sm item-text ml-4">Invoice Management</span>
+        <span class="nav-tooltip">Invoice Management</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Create Content.html">
+        <span class="material-symbols-outlined">edit_note</span>
+        <span class="text-sm item-text ml-4">Content Management</span>
+        <span class="nav-tooltip">Content Management</span>
+      </a>
+    </nav>
+
+    <div class="px-6 py-8">
+      <button
+        class="w-full h-10 flex items-center justify-center bg-primary text-sidebar-deep font-bold text-xs rounded-lg hover:brightness-110 transition-all shadow-lg shadow-primary/10 group relative">
+        <span class="material-symbols-outlined text-[20px] system-icon">logout</span>
+        <span class="ml-2 system-card-text">Logout</span>
+        <span class="nav-tooltip !left-full !ml-6">Logout</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main Content wrapper -->
+  <div class="flex-1 flex flex-col h-screen overflow-hidden bg-background-light dark:bg-background-dark">
+    <!-- Header -->
+    <header
+      class="h-20 bg-white dark:bg-[#111f16] border-b border-slate-100 dark:border-white/10 px-6 flex items-center justify-between flex-shrink-0 z-40 transition-colors duration-300">
+      <div class="flex items-center gap-6">
+        <button id="sidebarToggle"
+          class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-white/70 hover:text-sidebar-deep dark:hover:text-primary hover:bg-primary/10 transition-all">
+          <span class="material-symbols-outlined">menu</span>
+        </button>
+        <div class="relative w-96 group">
+          <span
+            class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-sidebar-deep transition-colors">search</span>
+          <input
+            class="w-full bg-slate-100 dark:bg-white/5 border-none rounded-xl pl-10 pr-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 dark:text-white transition-all"
+            placeholder="Search system records..." type="text" />
+        </div>
+      </div>
+
+      <div class="flex items-center gap-6">
+        <div class="flex items-center gap-2">
+          <button
+            class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-white/70 hover:text-sidebar-deep dark:hover:text-primary hover:bg-primary/10 transition-all relative">
+            <span class="material-symbols-outlined">notifications</span>
+            <span
+              class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-[#111f16]"></span>
+          </button>
+          <button id="darkModeToggle"
+            class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-white/70 hover:text-sidebar-deep dark:hover:text-primary hover:bg-primary/10 transition-all">
+            <span id="darkIcon" class="material-symbols-outlined">light_mode</span>
+          </button>
+        </div>
+        <div class="h-10 w-px bg-slate-200 dark:bg-white/10"></div>
+        <div class="flex items-center gap-3 cursor-pointer group">
+          <div class="text-right">
+            <p class="text-sm font-bold text-slate-900 dark:text-white group-hover:text-primary transition-colors">
+              Super Admin
+            </p>
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
+              System Manager
+            </p>
+          </div>
+          <div
+            class="w-12 h-12 rounded-xl border-2 border-primary/20 p-0.5 overflow-hidden group-hover:border-primary transition-all">
+            <img alt="Admin Profile" class="w-full h-full object-cover rounded-lg"
+              src="https://lh3.googleusercontent.com/aida-public/AB6AXuDI3q59cS__AXyYcqFQtKZ2-e__roEJ3Cic28K7cd-6tYYxzLfpTArNsAJE3UypttzDIKS6SoNy85-jDLh0ZMbLqXr0NEEjrbCPSgoCJZyYc4W89P8djmlf34I_NEoa2vfl5IS3jHwLSZZ6lgtwguAje5Lv9h9RbZ2fJqb36M_tmZc-iJY-XxAXsCDxVyU1bONcO3AV5LZgB1o5wURKpB9w2XEN6iWAILVT7fIzOkl2pQ4lJb5WxYgkvuNIlKakHZWN1e4bzfo25zYy" />
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Dashboard Content -->
+    <main class="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-8 max-w-full">
+      <div class="max-w-[1600px] mx-auto w-full space-y-8">
+        <!-- Page Heading & Actions -->
+        <div class="flex flex-wrap justify-between items-end gap-3 mb-6">
+          <div class="flex min-w-72 flex-col gap-1">
+            <p class="text-[#0d1b12] dark:text-white text-3xl font-black leading-tight tracking-[-0.033em]">
+              System Maintenance &amp; Announcements
+            </p>
+            <p class="text-[#4c9a66] dark:text-gray-400 text-base font-normal">
+              Manage platform-wide broadcasts and monitor system health.
+            </p>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <!-- Left Side: Active Maintenance & Configuration -->
+          <div class="lg:col-span-2 space-y-8">
+            <!-- Active Maintenance Card -->
+            <div
+              class="p-6 rounded-xl bg-white dark:bg-background-dark border border-[#e7f3eb] dark:border-[#1e3a28] shadow-sm">
+              <div class="flex items-start justify-between mb-4">
+                <div class="flex items-center gap-3">
+                  <div class="p-2 bg-primary/20 rounded-lg text-primary">
+                    <span class="material-symbols-outlined">bolt</span>
+                  </div>
+                  <div>
+                    <p class="text-sm font-semibold text-[#4c9a66]">
+                      Live Monitoring
+                    </p>
+                    <h3 class="text-xl font-bold text-slate-900 dark:text-white">
+                      Active Maintenance Status
+                    </h3>
+                  </div>
+                </div>
+                <span id="activeStatusBadge"
+                  class="px-3 py-1 bg-yellow-100 text-yellow-800 text-xs font-bold rounded-full uppercase">—</span>
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 my-6">
+                <div
+                  class="p-4 rounded-lg bg-background-light dark:bg-background-dark/50 border border-[#e7f3eb] dark:border-[#1e3a28]">
+                  <p class="text-[#4c9a66] text-xs font-semibold uppercase mb-2">
+                    Start Time
+                  </p>
+                  <p id="activeStartTime" class="text-lg font-bold text-slate-900 dark:text-white">—</p>
+                </div>
+                <div
+                  class="p-4 rounded-lg bg-background-light dark:bg-background-dark/50 border border-[#e7f3eb] dark:border-[#1e3a28]">
+                  <p class="text-[#4c9a66] text-xs font-semibold uppercase mb-2">
+                    Est. End Time
+                  </p>
+                  <p id="activeEndTime" class="text-lg font-bold text-primary">—</p>
+                </div>
+              </div>
+              <div class="border-t border-[#e7f3eb] dark:border-white/10 pt-6">
+                <p class="text-sm font-bold mb-4 text-slate-900 dark:text-white">Broadcast Channels</p>
+                <div class="flex flex-wrap gap-4">
+                  <label
+                    class="flex items-center gap-2 bg-[#e7f3eb] dark:bg-background-dark/50 px-4 py-2 rounded-lg cursor-pointer border-2 border-transparent has-[:checked]:border-primary transition-all">
+                    <input id="activeChkBanner" checked
+                      class="rounded text-primary focus:ring-primary border-gray-300 dark:border-white/10 dark:bg-white/5"
+                      type="checkbox" disabled /> <span class="text-sm font-medium dark:text-white/70">Website
+                      Banner</span>
+                  </label>
+                  <label
+                    class="flex items-center gap-2 bg-[#e7f3eb] dark:bg-background-dark/50 px-4 py-2 rounded-lg cursor-pointer border-2 border-transparent has-[:checked]:border-primary transition-all">
+                    <input id="activeChkDashboard" checked
+                      class="rounded text-primary focus:ring-primary border-gray-300 dark:border-white/10 dark:bg-white/5"
+                      type="checkbox" disabled /> <span class="text-sm font-medium dark:text-white/70">Dashboard
+                      Alert</span>
+                  </label>
+                  <label
+                    class="flex items-center gap-2 bg-[#e7f3eb] dark:bg-background-dark/50 px-4 py-2 rounded-lg cursor-pointer border-2 border-transparent has-[:checked]:border-primary transition-all">
+                    <input id="activeChkEmail"
+                      class="rounded text-primary focus:ring-primary border-gray-300 dark:border-white/10 dark:bg-white/5"
+                      type="checkbox" disabled /> <span class="text-sm font-medium dark:text-white/70">Global
+                      Email</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+            <!-- Announcement History Table -->
+            <div
+              class="bg-white dark:bg-background-dark rounded-xl border border-[#e7f3eb] dark:border-[#1e3a28] overflow-hidden">
+              <div class="p-6 border-b border-[#e7f3eb] dark:border-[#1e3a28] flex justify-between items-center">
+                <h3 class="font-bold text-lg text-slate-900 dark:text-white">Broadcast History</h3>
+                <button class="text-primary text-sm font-bold flex items-center gap-1">
+                  <span>View All</span>
+                  <span class="material-symbols-outlined text-sm">arrow_forward</span>
+                </button>
+              </div>
+              <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                  <thead>
+                    <tr
+                      class="bg-background-light dark:bg-background-dark/80 text-[#4c9a66] text-xs uppercase font-bold">
+                      <th class="px-6 py-4">Date</th>
+                      <th class="px-6 py-4">Category</th>
+                      <th class="px-6 py-4">Target Audience</th>
+                      <th class="px-6 py-4">Reach</th>
+                      <th class="px-6 py-4">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-[#e7f3eb] dark:divide-[#1e3a28]">
+                    <tr class="hover:bg-background-light/50 dark:hover:bg-background-dark/50 transition-colors">
+                      <td class="px-6 py-4 text-sm">Oct 20, 2023</td>
+                      <td class="px-6 py-4">
+                        <span class="flex items-center gap-2 text-sm font-medium text-yellow-600">
+                          <span class="material-symbols-outlined text-base">warning</span>
+                          Maintenance
+                        </span>
+                      </td>
+                      <td class="px-6 py-4 text-sm">All Users</td>
+                      <td class="px-6 py-4 text-sm font-mono">12.4k</td>
+                      <td class="px-6 py-4">
+                        <span
+                          class="px-2 py-1 bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 text-[10px] font-bold rounded uppercase">Expired</span>
+                      </td>
+                    </tr>
+                    <tr class="hover:bg-background-light/50 dark:hover:bg-background-dark/50 transition-colors">
+                      <td class="px-6 py-4 text-sm">Oct 18, 2023</td>
+                      <td class="px-6 py-4">
+                        <span class="flex items-center gap-2 text-sm font-medium text-primary">
+                          <span class="material-symbols-outlined text-base">rocket_launch</span>
+                          Update
+                        </span>
+                      </td>
+                      <td class="px-6 py-4 text-sm">Buyers Only</td>
+                      <td class="px-6 py-4 text-sm font-mono">3.1k</td>
+                      <td class="px-6 py-4">
+                        <span
+                          class="px-2 py-1 bg-primary/20 text-primary text-[10px] font-bold rounded uppercase border border-primary/30">Active</span>
+                      </td>
+                    </tr>
+                    <tr class="hover:bg-background-light/50 dark:hover:bg-background-dark/50 transition-colors">
+                      <td class="px-6 py-4 text-sm">Oct 15, 2023</td>
+                      <td class="px-6 py-4">
+                        <span class="flex items-center gap-2 text-sm font-medium text-blue-500">
+                          <span class="material-symbols-outlined text-base">celebration</span>
+                          Bonus
+                        </span>
+                      </td>
+                      <td class="px-6 py-4 text-sm">All Users</td>
+                      <td class="px-6 py-4 text-sm font-mono">15.8k</td>
+                      <td class="px-6 py-4">
+                        <span
+                          class="px-2 py-1 bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 text-[10px] font-bold rounded uppercase">Expired</span>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+          <!-- Right Side: Quick Announcement Editor Section -->
+          <div class="space-y-6">
+            <div
+              class="bg-white dark:bg-background-dark rounded-xl border border-[#e7f3eb] dark:border-[#1e3a28] p-6 shadow-sm">
+              <h3 class="font-bold text-lg mb-6 flex items-center gap-2 text-slate-900 dark:text-white">
+                <span class="material-symbols-outlined text-primary">edit_note</span>
+                Quick Composer
+              </h3>
+              <form id="composerForm" class="space-y-5" onsubmit="return false">
+                <div class="space-y-2">
+                  <label class="text-sm font-bold text-[#4c9a66]" for="annTitle">Announcement Title</label>
+                  <input id="annTitle"
+                    class="w-full rounded-lg border-[#e7f3eb] dark:border-white/10 dark:bg-white/5 focus:ring-primary focus:border-primary text-sm dark:text-white placeholder:dark:text-white/30"
+                    placeholder="e.g. Server Upgrade v2.4" type="text" />
+                </div>
+                <div class="space-y-2">
+                  <label class="text-sm font-bold text-[#4c9a66]" for="annCategory">Category</label>
+                  <select id="annCategory"
+                    class="w-full rounded-lg border-[#e7f3eb] dark:border-white/10 dark:bg-white/5 focus:ring-primary focus:border-primary text-sm dark:text-white">
+                    <option>Urgent Alert</option>
+                    <option>Maintenance Notice</option>
+                    <option>System Update</option>
+                    <option>Holiday Bonus</option>
+                  </select>
+                </div>
+                <div class="space-y-2">
+                  <label class="text-sm font-bold text-[#4c9a66]">Target Audience</label>
+                  <div class="flex flex-row gap-3">
+                    <label class="flex items-center gap-2 text-sm dark:text-white/70">
+                      <input checked
+                        class="text-primary focus:ring-primary border-gray-300 dark:border-white/10 dark:bg-white/5"
+                        name="target" type="radio" value="All Users" />
+                      All Users
+                    </label>
+                    <label class="flex items-center gap-2 text-sm dark:text-white/70">
+                      <input
+                        class="text-primary focus:ring-primary border-gray-300 dark:border-white/10 dark:bg-white/5"
+                        name="target" type="radio" value="Verified Buyers" />
+                      Verified Buyers
+                    </label>
+                    <label class="flex items-center gap-2 text-sm dark:text-white/70">
+                      <input
+                        class="text-primary focus:ring-primary border-gray-300 dark:border-white/10 dark:bg-white/5"
+                        name="target" type="radio" value="New Registrations" />
+                      New Registrations
+                    </label>
+                  </div>
+                </div>
+                <!-- Broadcast Channels -->
+                <div class="space-y-2">
+                  <p class="text-sm font-bold text-[#4c9a66]">Broadcast Channels
+                  <div class="flex flex-wrap gap-3">
+                    <label
+                      class="flex items-center gap-2 bg-[#e7f3eb] dark:bg-white/5 px-3 py-2 rounded-lg cursor-pointer border-2 border-transparent has-[:checked]:border-primary transition-all text-sm dark:text-white/70">
+                      <input id="chkBanner" type="checkbox" checked
+                        class="rounded text-primary focus:ring-primary border-gray-300 dark:border-white/10 dark:bg-white/5" />
+                      Website Banner
+                    </label>
+                    <label
+                      class="flex items-center gap-2 bg-[#e7f3eb] dark:bg-white/5 px-3 py-2 rounded-lg cursor-pointer border-2 border-transparent has-[:checked]:border-primary transition-all text-sm dark:text-white/70">
+                      <input id="chkDashboard" type="checkbox" checked
+                        class="rounded text-primary focus:ring-primary border-gray-300 dark:border-white/10 dark:bg-white/5" />
+                      Dashboard Alert
+                    </label>
+                    <label
+                      class="flex items-center gap-2 bg-[#e7f3eb] dark:bg-white/5 px-3 py-2 rounded-lg cursor-pointer border-2 border-transparent has-[:checked]:border-primary transition-all text-sm dark:text-white/70">
+                      <input id="chkEmail" type="checkbox"
+                        class="rounded text-primary focus:ring-primary border-gray-300 dark:border-white/10 dark:bg-white/5" />
+                      Global Email
+                    </label>
+                  </div>
+                </div>
+            </div>
+            <div class="space-y-2">
+              <label class="text-sm font-bold text-[#4c9a66]" for="annMessage">Message Content</label>
+              <div class="border border-[#e7f3eb] dark:border-white/10 rounded-lg overflow-hidden">
+                <div class="bg-[#e7f3eb] dark:bg-white/5 p-2 flex gap-2 border-b border-[#cfe7d7] dark:border-white/10">
+                  <button
+                    class="p-1 hover:bg-white dark:hover:bg-white/10 rounded transition-colors text-slate-700 dark:text-white/70"
+                    type="button"><span class="material-symbols-outlined text-sm">format_bold</span></button>
+                  <button
+                    class="p-1 hover:bg-white dark:hover:bg-white/10 rounded transition-colors text-slate-700 dark:text-white/70"
+                    type="button"><span class="material-symbols-outlined text-sm">format_italic</span></button>
+                  <button
+                    class="p-1 hover:bg-white dark:hover:bg-white/10 rounded transition-colors text-slate-700 dark:text-white/70"
+                    type="button"><span class="material-symbols-outlined text-sm">list</span></button>
+                  <button
+                    class="p-1 hover:bg-white dark:hover:bg-white/10 rounded transition-colors text-slate-700 dark:text-white/70"
+                    type="button"><span class="material-symbols-outlined text-sm">link</span></button>
+                </div>
+                <textarea id="annMessage"
+                  class="w-full border-none focus:ring-0 text-sm p-3 dark:bg-background-dark dark:text-white placeholder:dark:text-white/30"
+                  placeholder="Draft your message here..." rows="4"></textarea>
+              </div>
+            </div>
+            <!-- Schedule date/time row (shown only when scheduling) -->
+            <div id="scheduleRow" class="space-y-2 hidden">
+              <label class="text-sm font-bold text-[#4c9a66]" for="annScheduledAt">Schedule Date &amp; Time</label>
+              <input id="annScheduledAt" type="datetime-local"
+                class="w-full rounded-lg border-[#e7f3eb] dark:border-white/10 dark:bg-white/5 focus:ring-primary focus:border-primary text-sm dark:text-white" />
+            </div>
+            <div class="flex flex-col gap-3">
+              <button id="publishBtn"
+                class="w-full bg-primary text-[#0d1b12] font-bold py-3 rounded-lg text-sm hover:opacity-90 flex items-center justify-center gap-2"
+                type="button">
+                <span class="material-symbols-outlined text-sm">send</span>
+                Publish Now
+              </button>
+              <button id="scheduleBtn"
+                class="w-full bg-[#e7f3eb] dark:bg-white/5 text-[#4c9a66] dark:text-white/70 font-bold py-3 rounded-lg text-sm border border-transparent hover:border-primary transition-all flex items-center justify-center gap-2"
+                type="button">
+                <span class="material-symbols-outlined text-sm">schedule</span>
+                Schedule for Later
+              </button>
+            </div>
+            </form>
+          </div>
+        </div>
+      </div>
+      <footer class="pt-16 pb-8 border-t border-slate-200 dark:border-white/10 mt-12">
+        <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+          <div class="flex items-center gap-8 text-[11px] font-bold text-slate-400 uppercase tracking-widest">
+            <a class="hover:text-primary transition-colors" href="#">Privacy Policy</a>
+            <a class="hover:text-primary transition-colors" href="#">Terms of Service</a>
+            <a class="hover:text-primary transition-colors" href="#">Documentation</a>
+          </div>
+          <p class="text-[11px] font-bold text-slate-400">
+            © 2024 TIME TASK BD. ALL RIGHTS RESERVED.
+          </p>
+        </div>
+      </footer>
+  </div>
+  </main>
+  </div>
+
+  <!-- Script for Sidebar Functionality -->
+  <script>
+    const sidebar = document.getElementById("mainSidebar");
+    const toggleBtn = document.getElementById("sidebarToggle");
+
+    // Toggle Sidebar
+    toggleBtn.addEventListener("click", () => {
+      sidebar.classList.toggle("sidebar-collapsed");
+    });
+
+    // ─── Dark Mode Toggle Logic ──────────────────────────────────────────────
+    const themeToggle = document.getElementById('darkModeToggle');
+    const darkIcon = document.getElementById('darkIcon');
+
+    function updateThemeUI(theme) {
+      if (theme === 'dark') {
+        document.documentElement.classList.add('dark');
+        document.documentElement.classList.remove('light');
+        darkIcon.textContent = 'dark_mode';
+      } else {
+        document.documentElement.classList.add('light');
+        document.documentElement.classList.remove('dark');
+        darkIcon.textContent = 'light_mode';
+      }
+    }
+
+    themeToggle.addEventListener('click', () => {
+      const isDark = document.documentElement.classList.contains('dark');
+      const newTheme = isDark ? 'light' : 'dark';
+      localStorage.setItem('theme', newTheme);
+      updateThemeUI(newTheme);
+    });
+
+    // Sync UI with current theme on load
+    const currentSavedTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    updateThemeUI(currentSavedTheme);
+
+    // Simple Active Tab Highlighting for Sub-Nav
+    const subTabs = document.querySelectorAll("#tabsContainer a");
+    subTabs.forEach((tab) => {
+      tab.addEventListener("click", (e) => {
+        subTabs.forEach((t) => t.classList.remove("active-tab-nav"));
+        tab.classList.add("active-tab-nav");
+      });
+    });
+  </script>
+
+  <!-- Toast Notification -->
+  <div id="toast"
+    class="fixed bottom-4 right-4 translate-y-20 opacity-0 transition-all duration-300 z-50 pointer-events-none">
+    <div
+      class="bg-slate-900 dark:bg-slate-800 text-white px-6 py-4 rounded-xl shadow-xl border border-white/10 flex items-center gap-3">
+      <span id="toastIcon" class="material-symbols-outlined text-primary">check_circle</span>
+      <p id="toastMessage" class="text-sm font-bold">Done!</p>
+    </div>
+  </div>
+
+  <!-- Integration Script -->
+  <script>
+    const _sb = window.supabaseClient;
+
+    // ── Toast ────────────────────────────────────────────────────────────────
+    const toast = {
+      el: document.getElementById('toast'),
+      icon: document.getElementById('toastIcon'),
+      msg: document.getElementById('toastMessage'),
+      _t: null,
+      show(msg, type = 'success') {
+        this.msg.textContent = msg;
+        this.icon.textContent = type === 'success' ? 'check_circle' : 'error';
+        this.icon.className = `material-symbols-outlined ${type === 'success' ? 'text-primary' : 'text-red-400'}`;
+        this.el.classList.remove('translate-y-20', 'opacity-0');
+        clearTimeout(this._t);
+        this._t = setTimeout(() => this.el.classList.add('translate-y-20', 'opacity-0'), 3200);
+      }
+    };
+
+    // ── Category helpers ─────────────────────────────────────────────────────
+    const CAT_MAP = {
+      'Urgent Alert': { icon: 'warning', color: 'text-red-500' },
+      'Maintenance Notice': { icon: 'warning', color: 'text-yellow-600' },
+      'System Update': { icon: 'rocket_launch', color: 'text-primary' },
+      'Holiday Bonus': { icon: 'celebration', color: 'text-blue-500' }
+    };
+    const STATUS_BADGE = {
+      active: `<span class="px-2 py-1 bg-primary/20 text-primary text-[10px] font-bold rounded uppercase border border-primary/30">Active</span>`,
+      scheduled: `<span class="px-2 py-1 bg-yellow-100 text-yellow-700 text-[10px] font-bold rounded uppercase">Scheduled</span>`,
+      expired: `<span class="px-2 py-1 bg-gray-100 text-gray-500 text-[10px] font-bold rounded uppercase">Expired</span>`
+    };
+
+    function fmtDate(iso) {
+      if (!iso) return '—';
+      return new Date(iso).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    }
+
+    // ── Load Active Maintenance Card ─────────────────────────────────────────
+    async function loadActiveAnnouncement() {
+      const { data } = await _sb
+        .from('system_announcements')
+        .select('*')
+        .in('status', ['active', 'scheduled'])
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      const badge = document.getElementById('activeStatusBadge');
+      const startEl = document.getElementById('activeStartTime');
+      const endEl = document.getElementById('activeEndTime');
+      const chkBan = document.getElementById('activeChkBanner');
+      const chkDash = document.getElementById('activeChkDashboard');
+      const chkEmail = document.getElementById('activeChkEmail');
+
+      if (!data) {
+        if (badge) badge.textContent = 'None';
+        if (startEl) startEl.textContent = 'No active announcement';
+        if (endEl) endEl.textContent = '—';
+        return;
+      }
+
+      if (badge) {
+        badge.textContent = data.status.charAt(0).toUpperCase() + data.status.slice(1);
+        badge.className = data.status === 'active'
+          ? 'px-3 py-1 bg-primary/20 text-primary text-xs font-bold rounded-full uppercase'
+          : 'px-3 py-1 bg-yellow-100 text-yellow-800 text-xs font-bold rounded-full uppercase';
+      }
+      if (startEl) startEl.textContent = fmtDate(data.created_at);
+      if (endEl) endEl.textContent = data.expires_at ? fmtDate(data.expires_at) : (data.scheduled_at ? fmtDate(data.scheduled_at) : 'Ongoing');
+      const ch = data.channels || {};
+      if (chkBan) chkBan.checked = !!ch.website_banner;
+      if (chkDash) chkDash.checked = !!ch.dashboard_alert;
+      if (chkEmail) chkEmail.checked = !!ch.global_email;
+    }
+
+    // ── Load History Table ───────────────────────────────────────────────────
+    async function loadAnnouncements() {
+      const tbody = document.getElementById('announcementsTableBody');
+      if (!tbody) return;
+
+      const { data, error } = await _sb
+        .from('system_announcements')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(20);
+
+      if (error || !data || data.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-10 text-center text-sm text-slate-400">No announcements yet. Use the Quick Composer →</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = data.map(row => {
+        const cat = CAT_MAP[row.category] || { icon: 'info', color: 'text-slate-500' };
+        const reach = row.reach_count >= 1000 ? (row.reach_count / 1000).toFixed(1) + 'k' : String(row.reach_count);
+        return `
+            <tr class="hover:bg-background-light/50 transition-colors">
+              <td class="px-6 py-4 text-sm">${fmtDate(row.created_at)}</td>
+              <td class="px-6 py-4">
+                <span class="flex items-center gap-2 text-sm font-medium ${cat.color}">
+                  <span class="material-symbols-outlined text-base">${cat.icon}</span>
+                  ${row.category}
+                </span>
+              </td>
+              <td class="px-6 py-4 text-sm">${row.target_audience}</td>
+              <td class="px-6 py-4 text-sm font-mono">${reach}</td>
+              <td class="px-6 py-4">${STATUS_BADGE[row.status] || ''}</td>
+              <td class="px-6 py-4">
+                <button onclick="expireAnnouncement('${row.id}')" title="Expire / Delete"
+                  class="text-slate-400 hover:text-red-500 transition-colors">
+                  <span class="material-symbols-outlined text-sm">delete</span>
+                </button>
+              </td>
+            </tr>`;
+      }).join('');
+    }
+
+    // ── Expire (soft-delete) ─────────────────────────────────────────────────
+    window.expireAnnouncement = async (id) => {
+      if (!confirm('Mark this announcement as expired?')) return;
+      const { error } = await _sb.from('system_announcements').update({ status: 'expired' }).eq('id', id);
+      if (error) { toast.show('Failed: ' + error.message, 'error'); return; }
+      toast.show('Announcement expired.');
+      loadAnnouncements();
+      loadActiveAnnouncement();
+    };
+
+    // ── Publish / Schedule form ──────────────────────────────────────────────
+    let schedulingMode = false;
+
+    document.getElementById('scheduleBtn')?.addEventListener('click', () => {
+      schedulingMode = !schedulingMode;
+      const row = document.getElementById('scheduleRow');
+      const btn = document.getElementById('scheduleBtn');
+      if (schedulingMode) {
+        row.classList.remove('hidden');
+        btn.innerHTML = `<span class="material-symbols-outlined text-sm">close</span> Cancel Schedule`;
+      } else {
+        row.classList.add('hidden');
+        btn.innerHTML = `<span class="material-symbols-outlined text-sm">schedule</span> Schedule for Later`;
+      }
+    });
+
+    document.getElementById('publishBtn')?.addEventListener('click', () => submitAnnouncement(false));
+
+    async function submitAnnouncement(isScheduled) {
+      const title = document.getElementById('annTitle')?.value.trim();
+      const category = document.getElementById('annCategory')?.value;
+      const message = document.getElementById('annMessage')?.value.trim();
+      const audience = document.querySelector('input[name="target"]:checked')?.value || 'All Users';
+      const channels = {
+        website_banner: document.getElementById('chkBanner')?.checked ?? true,
+        dashboard_alert: document.getElementById('chkDashboard')?.checked ?? true,
+        global_email: document.getElementById('chkEmail')?.checked ?? false
+      };
+
+      if (!title) { toast.show('Please enter a title.', 'error'); return; }
+      if (!message) { toast.show('Please enter a message.', 'error'); return; }
+
+      let scheduled_at = null;
+      if (schedulingMode) {
+        const raw = document.getElementById('annScheduledAt')?.value;
+        if (!raw) { toast.show('Please pick a schedule date/time.', 'error'); return; }
+        scheduled_at = new Date(raw).toISOString();
+      }
+
+      const btn = document.getElementById('publishBtn');
+      btn.disabled = true;
+      btn.innerHTML = `<span class="material-symbols-outlined animate-spin text-sm">sync</span> Saving...`;
+
+      const payload = {
+        title, category, target_audience: audience, message, channels,
+        status: schedulingMode ? 'scheduled' : 'active',
+        ...(scheduled_at ? { scheduled_at } : {})
+      };
+
+      const { error } = await _sb.from('system_announcements').insert([payload]);
+
+      btn.disabled = false;
+      btn.innerHTML = `<span class="material-symbols-outlined text-sm">send</span> Publish Now`;
+
+      if (error) {
+        toast.show('Error: ' + error.message, 'error');
+        return;
+      }
+
+      toast.show(schedulingMode ? 'Announcement scheduled!' : 'Announcement published!');
+      // Reset form
+      document.getElementById('composerForm').reset();
+      document.getElementById('scheduleRow').classList.add('hidden');
+      schedulingMode = false;
+      document.getElementById('scheduleBtn').innerHTML = `<span class="material-symbols-outlined text-sm">schedule</span> Schedule for Later`;
+      loadAnnouncements();
+      loadActiveAnnouncement();
+    }
+
+    // ── Init ─────────────────────────────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', () => {
+      loadActiveAnnouncement();
+      loadAnnouncements();
+    });
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,1051 @@
+<!doctype html>
+<html class="light" lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <title>Time Task BD - Support User</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400;500;600;700&amp;display=swap"
+    rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+    rel="stylesheet" />
+  <script>
+    if (localStorage.getItem('theme') === 'dark' || (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  </script>
+  <!-- Supabase Client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../supabase-client.js"></script>
+  <script src="../auth-guard.js"></script>
+  <script src="../navbar-auth.js"></script>
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            primary: "#13ec5b",
+            "background-light": "#f6f8f6",
+            "background-dark": "#102216",
+            "footer-light": "#f0f2f0",
+            "footer-dark": "#1a2e20",
+            "brand-bg": "#f6f8f6",
+            "card-bg": "#ffffff",
+            "card-border": "#e2e8f0",
+            "accent-green": "#13ec5b",
+            "accent-green-hover": "#0dbd49",
+            "accent-green-dim": "rgba(19, 236, 91, 0.1)",
+            "primary-text": "#1a1c1e",
+            "secondary-text": "#64748b",
+            "input-bg": "#f8fafc",
+            "deep-navy": "#f1f5f9",
+          },
+          fontFamily: {
+            display: ["Manrope", "sans-serif"],
+          },
+          borderRadius: {
+            DEFAULT: "0.25rem",
+            lg: "0.5rem",
+            xl: "0.75rem",
+            "2xl": "1rem",
+            "3xl": "1.5rem",
+            full: "9999px",
+          },
+        },
+      },
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../supabase-client.js"></script>
+  <script src="../auth-guard.js"></script>
+  <script src="../navbar-auth.js"></script>
+  <style type="text/tailwindcss">
+    :root {
+        --brand-bg: #f6f8f6;
+        --card-bg: #ffffff;
+        --accent-green: #13ec5b;
+        --accent-glow: rgba(19, 236, 91, 0.15);
+        --glass-bg: rgba(255, 255, 255, 0.8);
+        --glass-border: rgba(19, 236, 91, 0.3);
+      }
+      .material-symbols-outlined {
+        font-variation-settings:
+          "FILL" 0,
+          "wght" 400,
+          "GRAD" 0,
+          "opsz" 24;
+      }
+      body {
+        font-family: "Manrope", sans-serif;
+        background-color: var(--brand-bg);
+        color: #1a1c1e;
+      }
+      .no-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+      .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+      .premium-card {
+        background-color: var(--card-bg);
+        border: 1px solid rgba(226, 232, 240, 0.8);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow:
+          0 4px 6px -1px rgba(0, 0, 0, 0.05),
+          0 2px 4px -1px rgba(0, 0, 0, 0.03);
+      }
+      .premium-card:hover {
+        border-color: rgba(19, 236, 91, 0.4);
+        box-shadow:
+          0 20px 25px -5px rgba(0, 0, 0, 0.05),
+          0 10px 10px -5px rgba(0, 0, 0, 0.02);
+      }
+      .btn-primary {
+        background: linear-gradient(135deg, #13ec5b 0%, #0dbd49 100%);
+        transition: all 0.3s ease;
+        color: #ffffff;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+      }
+      .btn-primary:hover {
+        filter: brightness(1.05);
+        box-shadow: 0 10px 15px -3px rgba(19, 236, 91, 0.3);
+      }
+      .gateway-card-glass {
+        background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(19, 236, 91, 0.2);
+        position: relative;
+        overflow: hidden;
+      }
+      
+      .active-nav-link {
+        @apply text-[#0d1b12] dark:text-white font-bold relative;
+      }
+      .active-nav-link::after {
+        content: "";
+        @apply absolute -bottom-[31px] left-0 w-full h-[3px] bg-primary rounded-t-full;
+      }
+    </style>
+</head>
+
+<body class="bg-background-light dark:bg-background-dark text-[#0d1b12] dark:text-white min-h-screen flex flex-col">
+  <header
+    class="sticky top-0 z-50 w-full bg-white/95 dark:bg-background-dark/95 backdrop-blur-md border-b border-[#e7f3eb] dark:border-white/10">
+    <div class="max-w-[1280px] mx-auto h-20 flex items-center justify-between">
+      <div class="flex items-center shrink-0">
+        <a class="flex items-center gap-2 group" href="#">
+          <div class="size-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
+            <span class="material-symbols-outlined text-2xl">update</span>
+          </div>
+          <span class="text-xl font-bold tracking-tight text-[#0d1b12] dark:text-white ml-1">Time Task <span
+              class="text-primary">BD</span></span>
+        </a>
+      </div>
+      <div class="flex items-center justify-end flex-grow gap-5 ml-auto">
+        <nav class="hidden lg:flex items-center gap-10">
+          <a class="text-sm font-medium hover:text-primary transition-colors text-[#0d1b12] dark:text-gray-300"
+            href="/Web Dashboard/Home_Page.html">Home</a>
+          <a class="text-sm font-medium hover:text-primary transition-colors text-[#0d1b12] dark:text-gray-300"
+            href="/Web Dashboard/Blog_Page.html">Blog</a>
+          <a class="text-sm font-medium hover:text-primary transition-colors text-[#0d1b12] dark:text-gray-300"
+            href="Video_Gallery_Page.html">Video Gallery
+          </a>
+          <a class="text-sm font-medium hover:text-primary transition-colors text-[#0d1b12] dark:text-gray-300"
+            href="/Web Dashboard/About_Page.html">About Us</a>
+          <a class="text-sm font-medium hover:text-primary transition-colors text-[#0d1b12] dark:text-gray-300"
+            href="/Web Dashboard/Contact_Page.html">Contact Us</a>
+          <a class="text-sm font-medium hover:text-primary transition-colors text-[#0d1b12] dark:text-gray-300"
+            href="/Web Dashboard/Earning_Page.html">Earning Page</a>
+        </nav>
+        <div class="flex items-center gap-3">
+          <!-- Notification Bell and Dropdown Wrapper -->
+          <div class="relative">
+            <button id="notificationBtn"
+              class="flex size-10 items-center justify-center rounded-xl bg-white border border-slate-200 text-secondary-text hover:text-accent-green hover:border-accent-green transition-all">
+              <span class="material-symbols-outlined text-xl">notifications</span>
+            </button>
+
+            <!-- YOUR NOTIFICATION DROPDOWN OVERLAY (Updated Positioning) -->
+            <div id="notificationDropdown"
+              class="absolute top-full right-0 mt-3 z-50 w-screen max-w-[420px] hidden transform origin-top-right transition-all">
+              <div
+                class="bg-white dark:bg-[#1a2e1e] rounded-xl shadow-2xl border border-[#e7f3eb] dark:border-[#2a4a2f] overflow-hidden flex flex-col">
+                <!-- Dropdown Header -->
+                <div
+                  class="px-5 py-4 flex items-center justify-between border-b border-[#e7f3eb] dark:border-[#2a4a2f]">
+                  <h3 class="text-[#0d1b12] dark:text-white text-lg font-bold leading-tight tracking-[-0.015em]">
+                    Notifications
+                  </h3>
+                  <button class="text-primary text-sm font-semibold hover:underline bg-transparent">
+                    Mark all as read
+                  </button>
+                </div>
+                <!-- Scrollable Notification List -->
+                <div class="no-scrollbar overflow-y-auto max-h-[480px]">
+                  <!-- Notification Item: Success -->
+                  <div
+                    class="flex gap-4 px-5 py-4 hover:bg-[#f8fcf9] dark:hover:bg-[#213a26] transition-colors cursor-pointer group bg-[#f0fff4] dark:bg-[#1e3a24]">
+                    <div class="shrink-0">
+                      <div class="flex items-center justify-center rounded-lg bg-primary/20 text-primary size-11">
+                        <span class="material-symbols-outlined">check_circle</span>
+                      </div>
+                    </div>
+                    <div class="flex flex-1 flex-col justify-center min-w-0">
+                      <div class="flex items-center justify-between gap-2">
+                        <p class="text-[#0d1b12] dark:text-white text-sm font-bold truncate">
+                          Order #4829 Completed
+                        </p>
+                        <span class="text-xs font-medium text-[#4c9a66] whitespace-nowrap">5m ago</span>
+                      </div>
+                      <p class="text-[#4c9a66] dark:text-gray-300 text-xs mt-0.5 line-clamp-2 leading-normal">
+                        Your TikTok marketing task has been approved and the
+                        order is marked as completed.
+                      </p>
+                    </div>
+                    <div class="shrink-0 flex items-center">
+                      <div class="size-2.5 rounded-full bg-primary shadow-[0_0_8px_rgba(19,236,91,0.6)]"></div>
+                    </div>
+                  </div>
+                  <!-- Notification Item: Payment -->
+                  <div
+                    class="flex gap-4 px-5 py-4 hover:bg-[#f8fcf9] dark:hover:bg-[#213a26] transition-colors cursor-pointer group bg-[#f0fff4] dark:bg-[#1e3a24]">
+                    <div class="shrink-0">
+                      <div
+                        class="flex items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 size-11">
+                        <span class="material-symbols-outlined">account_balance_wallet</span>
+                      </div>
+                    </div>
+                    <div class="flex flex-1 flex-col justify-center min-w-0">
+                      <div class="flex items-center justify-between gap-2">
+                        <p class="text-[#0d1b12] dark:text-white text-sm font-bold truncate">
+                          Withdrawal Successful
+                        </p>
+                        <span class="text-xs font-medium text-[#4c9a66] whitespace-nowrap">1h ago</span>
+                      </div>
+                      <p class="text-[#4c9a66] dark:text-gray-300 text-xs mt-0.5 line-clamp-2 leading-normal">
+                        ৳500.00 has been successfully transferred to your
+                        linked bKash account.
+                      </p>
+                    </div>
+                    <div class="shrink-0 flex items-center">
+                      <div class="size-2.5 rounded-full bg-primary shadow-[0_0_8px_rgba(19,236,91,0.6)]"></div>
+                    </div>
+                  </div>
+                  <!-- Notification Item: New Task -->
+                  <div
+                    class="flex gap-4 px-5 py-4 hover:bg-[#f8fcf9] dark:hover:bg-[#213a26] transition-colors cursor-pointer group">
+                    <div class="shrink-0">
+                      <div
+                        class="flex items-center justify-center rounded-lg bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400 size-11">
+                        <span class="material-symbols-outlined">campaign</span>
+                      </div>
+                    </div>
+                    <div class="flex flex-1 flex-col justify-center min-w-0">
+                      <div class="flex items-center justify-between gap-2">
+                        <p class="text-[#0d1b12] dark:text-white text-sm font-bold truncate">
+                          New TikTok Task Available
+                        </p>
+                        <span class="text-xs font-medium text-gray-400 dark:text-gray-500 whitespace-nowrap">3h
+                          ago</span>
+                      </div>
+                      <p class="text-gray-500 dark:text-gray-400 text-xs mt-0.5 line-clamp-2 leading-normal">
+                        A new high-priority video engagement task is available
+                        on the marketplace.
+                      </p>
+                    </div>
+                    <div class="shrink-0 flex items-center">
+                      <!-- Read notification, no dot -->
+                      <div class="size-2.5"></div>
+                    </div>
+                  </div>
+                  <!-- Notification Item: System Update -->
+                  <div
+                    class="flex gap-4 px-5 py-4 hover:bg-[#f8fcf9] dark:hover:bg-[#213a26] transition-colors cursor-pointer group">
+                    <div class="shrink-0">
+                      <div
+                        class="flex items-center justify-center rounded-lg bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-400 size-11">
+                        <span class="material-symbols-outlined">info</span>
+                      </div>
+                    </div>
+                    <div class="flex flex-1 flex-col justify-center min-w-0">
+                      <div class="flex items-center justify-between gap-2">
+                        <p class="text-[#0d1b12] dark:text-white text-sm font-bold truncate">
+                          System Maintenance
+                        </p>
+                        <span
+                          class="text-xs font-medium text-gray-400 dark:text-gray-500 whitespace-nowrap">Yesterday</span>
+                      </div>
+                      <p class="text-gray-500 dark:text-gray-400 text-xs mt-0.5 line-clamp-2 leading-normal">
+                        Scheduled maintenance will occur tonight from 2:00 AM
+                        to 4:00 AM GMT.
+                      </p>
+                    </div>
+                    <div class="shrink-0 flex items-center">
+                      <div class="size-2.5"></div>
+                    </div>
+                  </div>
+                  <!-- Notification Item: Security -->
+                  <div
+                    class="flex gap-4 px-5 py-4 hover:bg-[#f8fcf9] dark:hover:bg-[#213a26] transition-colors cursor-pointer group">
+                    <div class="shrink-0">
+                      <div
+                        class="flex items-center justify-center rounded-lg bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 size-11">
+                        <span class="material-symbols-outlined">security</span>
+                      </div>
+                    </div>
+                    <div class="flex flex-1 flex-col justify-center min-w-0">
+                      <div class="flex items-center justify-between gap-2">
+                        <p class="text-[#0d1b12] dark:text-white text-sm font-bold truncate">
+                          New Login Detected
+                        </p>
+                        <span class="text-xs font-medium text-gray-400 dark:text-gray-500 whitespace-nowrap">2d
+                          ago</span>
+                      </div>
+                      <p class="text-gray-500 dark:text-gray-400 text-xs mt-0.5 line-clamp-2 leading-normal">
+                        Your account was accessed from a new device in Dhaka,
+                        Bangladesh.
+                      </p>
+                    </div>
+                    <div class="shrink-0 flex items-center">
+                      <div class="size-2.5"></div>
+                    </div>
+                  </div>
+                </div>
+                <!-- Dropdown Footer -->
+                <div class="p-4 border-t border-[#e7f3eb] dark:border-[#2a4a2f]">
+                  <button
+                    class="w-full bg-primary hover:bg-primary/90 text-[#0d1b12] py-2.5 rounded-lg text-sm font-bold transition-all shadow-sm">
+                    View All Notifications
+                  </button>
+                </div>
+              </div>
+              <!-- Pointer triangle -->
+              <div
+                class="absolute -top-2 right-4 w-4 h-4 bg-white dark:bg-[#1a2e1e] rotate-45 border-l border-t border-[#e7f3eb] dark:border-[#2a4a2f]">
+              </div>
+            </div>
+          </div>
+          <button
+            class="flex size-10 items-center justify-center rounded-xl bg-white border border-slate-200 text-secondary-text hover:text-accent-green hover:border-accent-green transition-all">
+            <span class="material-symbols-outlined text-xl">light_mode</span>
+          </button>
+          <div class="relative group pl-4 border-l border-slate-200">
+            <button class="flex items-center gap-2 focus:outline-none">
+              <div
+                class="bg-center bg-no-repeat aspect-square bg-cover rounded-xl size-10 bg-accent-green flex items-center justify-center font-bold text-white shadow-lg shadow-accent-green/20 cursor-pointer hover:scale-105 transition-transform">
+                B
+              </div>
+              <span
+                class="material-symbols-outlined text-slate-400 text-sm group-hover:text-accent-green transition-colors">keyboard_arrow_down</span>
+            </button>
+            <div
+              class="absolute right-0 top-full mt-3 w-64 bg-brand-bg border border-slate-200 rounded-2xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-[60] overflow-hidden transform group-hover:translate-y-0 translate-y-2">
+              <div class="p-4 border-b border-slate-200 bg-white">
+                <p class="text-[10px] font-bold text-secondary-text uppercase tracking-widest mb-1">
+                  Signed in as
+                </p>
+                <p class="text-sm font-extrabold text-primary-text truncate">
+                  Bikash Bowmick
+                </p>
+              </div>
+              <div class="p-2">
+                <a class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white transition-colors group/item"
+                  href="/User Dashboard/User_Index.html">
+                  <span class="material-symbols-outlined text-accent-green">dashboard</span>
+                  <span class="text-sm font-bold text-slate-700 group-hover/item:text-primary-text">My Dashboard</span>
+                </a>
+                <a class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white transition-colors group/item"
+                  href="/User Dashboard/Add Task.html">
+                  <span class="material-symbols-outlined text-accent-green">list_alt</span>
+                  <span class="text-sm font-bold text-slate-700 group-hover/item:text-primary-text">Task Active</span>
+                </a>
+                <a class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white transition-colors group/item"
+                  href="/User Dashboard/Account_Setting_User.html">
+                  <span class="material-symbols-outlined text-accent-green">manage_accounts</span>
+                  <span class="text-sm font-bold text-slate-700 group-hover/item:text-primary-text">Account
+                    Settings</span>
+                </a>
+                <a class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white transition-colors group/item"
+                  href="/User Dashboard/Refer Earn Page.html">
+                  <span class="material-symbols-outlined text-accent-green">group</span>
+                  <span class="text-sm font-bold text-slate-700 group-hover/item:text-primary-text">Refer &amp;
+                    Earn</span>
+                </a>
+                <a class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white transition-colors group/item"
+                  href="/User Dashboard/Support_User.html">
+                  <span class="material-symbols-outlined text-accent-green">help_center</span>
+                  <span class="text-sm font-bold text-slate-700 group-hover/item:text-primary-text">Support
+                    Center</span>
+                </a>
+              </div>
+              <div class="p-2 border-t border-slate-200">
+                <a class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-red-50 transition-colors group/item"
+                  href="/Web Dashboard/Login_Page.html">
+                  <span class="material-symbols-outlined text-red-500">logout</span>
+                  <span class="text-sm font-bold text-red-500">Logout</span>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+  <!-- Main Content Area -->
+  <main class="flex-1 max-w-[1280px] mx-auto w-full flex flex-col md:flex-row gap-6 p-6">
+    <!-- Left Sidebar: Support Info -->
+    <aside class="w-full md:w-[320px] flex flex-col gap-6">
+      <div
+        class="bg-white dark:bg-slate-900 border border-[#f0f4f2] dark:border-white/10 rounded-xl p-6 shadow-sm flex flex-col h-fit transition-colors">
+        <div class="mb-6">
+          <h2 class="text-[#111813] dark:text-white text-lg font-bold">
+            Support Info
+          </h2>
+          <p class="text-[#61896f] dark:text-gray-400 text-sm">
+            Quick access shortcuts
+          </p>
+        </div>
+        <nav class="flex flex-col gap-2">
+          <a class="flex items-center gap-3 px-4 py-3 rounded-xl bg-primary/10 text-[#111813] dark:text-white hover:bg-primary/20 transition-all group"
+            href="#">
+            <span class="material-symbols-outlined text-primary">info</span>
+            <span class="text-sm font-semibold">General FAQ</span>
+            <span
+              class="material-symbols-outlined ml-auto text-sm opacity-0 group-hover:opacity-100 transition-opacity">chevron_right</span>
+          </a>
+          <a class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-[#f0f4f2] dark:hover:bg-white/5 transition-colors transition-all group"
+            href="#">
+            <span class="material-symbols-outlined text-[#61896f]">account_balance_wallet</span>
+            <span class="text-sm font-medium">Withdrawal Help</span>
+            <span
+              class="material-symbols-outlined ml-auto text-sm opacity-0 group-hover:opacity-100 transition-opacity">chevron_right</span>
+          </a>
+          <a class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-[#f0f4f2] dark:hover:bg-white/5 transition-colors transition-all group"
+            href="#">
+            <span class="material-symbols-outlined text-[#61896f]">verified_user</span>
+            <span class="text-sm font-medium">Task Verification</span>
+            <span
+              class="material-symbols-outlined ml-auto text-sm opacity-0 group-hover:opacity-100 transition-opacity">chevron_right</span>
+          </a>
+          <a class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-[#f0f4f2] dark:hover:bg-white/5 text-[#111813] dark:text-gray-300 transition-all group"
+            href="#">
+            <span class="material-symbols-outlined text-[#61896f]">help_center</span>
+            <span class="text-sm font-medium">Help Center</span>
+            <span
+              class="material-symbols-outlined ml-auto text-sm opacity-0 group-hover:opacity-100 transition-opacity">chevron_right</span>
+          </a>
+        </nav>
+        <div class="mt-8 pt-6 border-t border-[#f0f4f2] dark:border-white/10">
+          <button
+            class="w-full flex items-center justify-center gap-2 rounded-xl h-12 bg-[#111813] dark:bg-primary text-white dark:text-black text-sm font-bold transition-transform active:scale-95 transition-colors">
+            <span class="material-symbols-outlined text-[20px]">mail</span>
+            Contact Email
+          </button>
+        </div>
+      </div>
+      <!-- Promotion Card (Extra) -->
+      <div class="bg-primary/20 dark:bg-primary/5 border border-primary/20 rounded-xl p-6 relative overflow-hidden">
+        <div class="relative z-10">
+          <h3 class="text-[#111813] dark:text-white font-bold">
+            Premium Support
+          </h3>
+          <p class="text-sm text-[#111813]/70 dark:text-gray-400 mt-1">
+            Get instant responses from our senior agents.
+          </p>
+        </div>
+        <div class="absolute -right-4 -bottom-4 opacity-20">
+          <span class="material-symbols-outlined text-[80px]">support_agent</span>
+        </div>
+      </div>
+    </aside>
+    <!-- Main Chat Window -->
+    <section
+      class="flex-1 flex flex-col bg-white dark:bg-slate-900 border border-[#f0f4f2] dark:border-white/10 rounded-2xl shadow-xl overflow-hidden min-h-[600px] max-h-[800px] transition-colors">
+      <!-- Chat Header -->
+      <div class="p-6 border-b border-[#f0f4f2] dark:border-white/10 flex items-center justify-between">
+        <div class="flex items-center gap-4">
+          <div class="relative">
+            <div
+              class="bg-center bg-no-repeat aspect-square bg-cover rounded-full w-14 h-14 border-2 border-white dark:border-background-dark shadow-md"
+              data-alt="Admin support representative avatar" style="
+                  background-image: url(&quot;https://lh3.googleusercontent.com/aida-public/AB6AXuDePxCkMj5ioGHO7_CqVlORNWjGT-_25ww45bBGgwMcNY5GC0Gzge_USpk5W8u7a9KBr9NXNhKqp0HcAlhPCQSTzNU3JPdDOoRZuWU4TRK2GhN9-F22oTDESi_K0z1BarpVWmYMmcsXnz01mufgFBy5LMQBu91tTNQduDk1FvmD7BId9SuwvPh6GgrK0Lh3h6Am6sZz7QNaNv3yMWfVeWjnJildI0LA0KANYxQphl_qT8Lb_FP3mWa5VnEVTAMy51EIn_tIJAeb1jlB&quot;);
+                "></div>
+            <div
+              class="absolute bottom-0 right-0 w-4 h-4 bg-primary border-2 border-white dark:border-background-dark rounded-full">
+            </div>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h2 class="text-[#111813] dark:text-white text-lg font-bold leading-none">
+                Support Admin
+              </h2>
+              <span
+                class="px-2 py-0.5 rounded-full bg-primary/20 text-[#111813] dark:text-primary text-[10px] font-bold uppercase tracking-wider">Staff</span>
+            </div>
+            <div class="flex items-center gap-1.5 mt-1">
+              <p class="text-primary text-sm font-bold">Online</p>
+              <span class="text-gray-300 dark:text-gray-600">•</span>
+              <p class="text-[#61896f] dark:text-gray-400 text-sm">
+                Responds in 5m
+              </p>
+            </div>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <button class="p-2 hover:bg-[#f0f4f2] dark:hover:bg-white/10 rounded-lg transition-colors text-[#61896f] transition-all">
+            <span class="material-symbols-outlined">search</span>
+          </button>
+          <button class="p-2 hover:bg-[#f0f4f2] dark:hover:bg-white/10 rounded-lg transition-colors text-[#61896f] transition-all">
+            <span class="material-symbols-outlined">more_vert</span>
+          </button>
+        </div>
+      </div>
+      <!-- Message Area -->
+      <div id="chat-messages"
+        class="flex-1 overflow-y-auto p-6 flex flex-col gap-6 custom-scrollbar bg-white dark:bg-slate-900/50 transition-colors">
+        <div class="flex justify-center my-2">
+          <span
+            class="px-3 py-1 bg-background-light dark:bg-white/5 rounded-full text-[12px] text-[#61896f] font-medium uppercase tracking-wide">Today</span>
+        </div>
+        <!-- Admin Message -->
+        <div class="flex items-end gap-3 max-w-[80%]">
+          <div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full w-8 h-8 shrink-0 shadow-sm"
+            data-alt="Admin small avatar" style="
+                background-image: url(&quot;https://lh3.googleusercontent.com/aida-public/AB6AXuDTvLpZRlhbFvhXUhf3GCj1BjwyzjCpfxqjcoywGU-LZglxo9d1NxBa820q4ivbaM7s68wNDv9-aq7vRs0ei7oM7DCp6ZpkJfEjW49R7gKTV_SD0FB1zd6Alhytml3dK_bccQRjacey--VoeaYKm2a4Dqe-uF9GKtzINqvy-_u6qxcpHOm8K4mGOSz0c4FHf7nqIrijMFWz3I-jnl9Llc7xM7KSrTORirc2L8JROVQrBcgFMm7GoHeQlApkzCkoI87ovjiJ6viGXVSQ&quot;);
+              "></div>
+          <div class="flex flex-col gap-1 items-start">
+            <span class="text-[#61896f] dark:text-gray-400 text-xs ml-1">Admin • 10:45 AM</span>
+            <div
+              class="text-base font-normal leading-relaxed rounded-2xl rounded-bl-none px-5 py-3 bg-[#f0f4f2] dark:bg-slate-800 text-[#111813] dark:text-white shadow-sm transition-colors transition-all">
+              Hello! Welcome to Time Task BD support. How can I assist you
+              with your tasks or withdrawal today?
+            </div>
+          </div>
+        </div>
+        <!-- User Message -->
+        <div class="flex items-end gap-3 max-w-[80%] self-end flex-row-reverse">
+          <div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full w-8 h-8 shrink-0 shadow-sm"
+            data-alt="User small avatar" style="
+                background-image: url(&quot;https://lh3.googleusercontent.com/aida-public/AB6AXuBps0hrdS6nJeaDBlg6gS7eCy0u31dcv5wR5NEpQqnWH5jtgoztLTYG4GH5bfzpT862USShWGynJwBFOnVT84x9EY4uaMP9SUv1wzEP8joAQvQk8xXUlNJENL2ID2oMbKoxQtd_WYLWHTVT6ggFG9Oes6PNM2ZNaWR9cFm5OrqoeEaf6-SW25cQNXH7EQL-Ia54_goi4H7ZzDdjYsOqSSnPabvcJDK2rCLtE4aiHf_mKR2NPND_58jy7v7w-ncr21EDlCvrzqvCmAxt&quot;);
+              "></div>
+          <div class="flex flex-col gap-1 items-end">
+            <span class="text-[#61896f] dark:text-gray-400 text-xs mr-1">You • 10:46 AM</span>
+            <div
+              class="text-base font-normal leading-relaxed rounded-2xl rounded-br-none px-5 py-3 bg-primary text-[#111813] font-medium shadow-md">
+              Hi there! I have a question regarding the task "Social Media
+              Outreach #402". It's been pending verification for 24 hours.
+            </div>
+          </div>
+        </div>
+        <!-- Admin Message -->
+        <div class="flex items-end gap-3 max-w-[80%]">
+          <div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full w-8 h-8 shrink-0 shadow-sm"
+            data-alt="Admin small avatar" style="
+                background-image: url(&quot;https://lh3.googleusercontent.com/aida-public/AB6AXuDcQYxRdY5YSgI0bZwceEYBd_Te136CEKJzfCJY-H_-t94zwk1KL8qIR1GNPUU3sTS6jMZ4BvHgXRSLxH685xCSm-WDlI7p7Y25Wyc0tKqXeCPqt1FQCxQSi3Iv4aTBgPvS-0Iwk3RKwfWZMz2hBZRAinRjnHnQucz4G0RUgNz5PFpm2yie_vJ-GSrhhtOsG4M-wqdArFzM-ENtUFQs1W-kHgFbOaYFSqZLHuArSCyRdKGKRwMRemkW-8p9gz79rStHfx36Ldf0nr8i&quot;);
+              "></div>
+          <div class="flex flex-col gap-1 items-start">
+            <span class="text-[#61896f] dark:text-gray-400 text-xs ml-1">Admin • 10:47 AM</span>
+            <div
+              class="text-base font-normal leading-relaxed rounded-2xl rounded-bl-none px-5 py-3 bg-[#f0f4f2] dark:bg-slate-800 text-[#111813] dark:text-white shadow-sm transition-colors transition-all">
+              I see. Usually, verification takes up to 48 hours depending on
+              the buyer. Let me check the status for you. Could you please
+              provide your Task ID?
+            </div>
+          </div>
+        </div>
+        <!-- User Message (Typing Placeholder) -->
+        <div id="typing-indicator" class="flex items-center gap-2 text-primary self-end animate-pulse mr-12 hidden">
+          <div class="size-1.5 bg-primary rounded-full"></div>
+          <div class="size-1.5 bg-primary rounded-full"></div>
+          <div class="size-1.5 bg-primary rounded-full"></div>
+        </div>
+      </div>
+      <!-- Input Area -->
+      <div class="p-6 border-t border-[#f0f4f2] dark:border-white/10 bg-white dark:bg-slate-900 transition-colors">
+        <div
+          class="relative flex items-center gap-3 bg-[#f0f4f2] dark:bg-slate-800 rounded-2xl p-2 pl-4 border border-transparent focus-within:border-primary/30 transition-all transition-colors">
+          <div id="reply-preview"
+            class="hidden absolute bottom-full left-0 right-0 bg-[#f0f4f2] dark:bg-slate-800 p-2 border-t border-primary/20 flex justify-between items-center animate-in slide-in-from-bottom-2 transition-colors">
+            <div class="flex flex-col border-l-4 border-primary pl-2 overflow-hidden">
+              <span class="text-[10px] font-bold text-primary uppercase">Replying to</span>
+              <p id="reply-text" class="text-xs truncate italic opacity-70"></p>
+            </div>
+            <button onclick="cancelReply()"
+              class="size-6 flex items-center justify-center opacity-50 hover:opacity-100"><span
+                class="material-symbols-outlined text-sm">close</span></button>
+          </div>
+          <button class="text-[#61896f] hover:text-primary transition-colors flex items-center justify-center">
+            <span class="material-symbols-outlined text-[24px]">add_circle</span>
+          </button>
+          <input id="message-input"
+            class="flex-1 bg-transparent border-none focus:ring-0 text-[#111813] dark:text-white placeholder-[#61896f] text-sm py-2"
+            placeholder="Type your message here..." type="text" oninput="handleTyping()" />
+          <button id="send-button"
+            class="bg-primary text-[#111813] size-11 rounded-xl flex items-center justify-center hover:brightness-105 active:scale-95 transition-all shadow-lg shadow-primary/20">
+            <span class="material-symbols-outlined text-[20px] fill-current">send</span>
+          </button>
+        </div>
+        <p class="text-center text-[11px] text-[#61896f] mt-3">
+          Press Enter to send message
+        </p>
+      </div>
+    </section>
+  </main>
+  <footer class="bg-footer-light dark:bg-footer-dark pt-16 pb-8 border-t border-[#e7f3eb] dark:border-white/5">
+    <div class="max-w-[1280px] mx-auto">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
+        <div class="space-y-6">
+          <div class="flex items-center gap-3">
+            <div class="size-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
+              <span class="material-symbols-outlined text-2xl">update</span>
+            </div>
+            <span class="text-xl font-bold tracking-tight text-[#0d1b12] dark:text-white">Time Task <span
+                class="text-primary">BD</span></span>
+          </div>
+          <p class="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">
+            Empowering your digital productivity through innovative task
+            management and streamlined earning opportunities.
+          </p>
+          <div class="flex gap-4">
+            <a class="size-10 rounded-xl border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-black transition-all"
+              href="#">
+              <span class="material-symbols-outlined text-[20px]">public</span>
+            </a>
+            <a class="size-10 rounded-xl border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-black transition-all"
+              href="#">
+              <span class="material-symbols-outlined text-[20px]">share</span>
+            </a>
+            <a class="size-10 rounded-xl border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-black transition-all"
+              href="#">
+              <span class="material-symbols-outlined text-[20px]">alternate_email</span>
+            </a>
+          </div>
+        </div>
+        <div>
+          <h4 class="text-sm font-bold uppercase tracking-widest mb-6 text-[#0d1b12] dark:text-white">
+            Quick Links
+          </h4>
+          <ul class="space-y-4">
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="/Web Dashboard/Home_Page.html">Home</a>
+            </li>
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="/Web Dashboard/Blog_Page.html">Our Blog</a>
+            </li>
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="/Web Dashboard/About_Page.html">About Us</a>
+            </li>
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="/Web Dashboard/Contact_Page.html">Contact</a>
+            </li>
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="/Web Dashboard/Help_and_FAQ_Page.html">FAQ Support</a>
+            </li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="text-sm font-bold uppercase tracking-widest mb-6 text-[#0d1b12] dark:text-white">
+            Services &amp; Legal
+          </h4>
+          <ul class="space-y-4">
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="/Web Dashboard/About_Page.html">About Us</a>
+            </li>
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="/Web Dashboard/Privacy_Policy_Page.html">Privacy Policy</a>
+            </li>
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="/Web Dashboard/Terms_of_Service_Page.html">Terms of Service</a>
+            </li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="text-sm font-bold uppercase tracking-widest mb-6 text-[#0d1b12] dark:text-white">
+            Contact Info
+          </h4>
+          <ul class="space-y-4">
+            <li class="flex items-start gap-3">
+              <span class="material-symbols-outlined text-primary text-[20px]">mail</span>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary"
+                href="mailto:support@timetaskbd.com">support@timetaskbd.com</a>
+            </li>
+            <li class="flex items-start gap-3">
+              <span class="material-symbols-outlined text-primary text-[20px]">call</span>
+              <span class="text-sm text-gray-600 dark:text-gray-400">+880 1234 567890</span>
+            </li>
+            <li class="flex items-start gap-3">
+              <span class="material-symbols-outlined text-primary text-[20px]">location_on</span>
+              <span class="text-sm text-gray-600 dark:text-gray-400">Dhaka, Bangladesh</span>
+            </li>
+          </ul>
+          <div class="mt-8 pt-8 border-t border-[#e7f3eb] dark:border-white/5">
+            <p class="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-4">
+              Social Media
+            </p>
+            <div class="flex gap-4">
+              <a class="text-[#4c9a66] hover:text-primary transition-colors" href="#">
+                <svg class="size-6" fill="currentColor" viewBox="0 0 24 24">
+                  <path
+                    d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z">
+                  </path>
+                </svg>
+              </a>
+              <a class="text-[#4c9a66] hover:text-primary transition-colors" href="#">
+                <svg class="size-6" fill="currentColor" viewBox="0 0 24 24">
+                  <path
+                    d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.84 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z">
+                  </path>
+                </svg>
+              </a>
+              <a class="text-[#4c9a66] hover:text-primary transition-colors" href="#">
+                <svg class="size-6" fill="currentColor" viewBox="0 0 24 24">
+                  <path
+                    d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z">
+                  </path>
+                </svg>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div
+        class="pt-8 border-t border-[#e7f3eb] dark:border-white/5 flex flex-col md:flex-row items-center justify-between gap-4">
+        <p class="text-sm text-gray-500 dark:text-gray-400">
+          Copyright © 2024
+          <span class="text-[#0d1b12] dark:text-white font-semibold">Time Task BD</span>. All rights reserved.
+        </p>
+        <p class="text-sm text-gray-500 dark:text-gray-400">
+          Developed with <span class="text-primary font-bold">★</span> by
+          <a class="text-primary font-medium hover:underline" href="#">Digital Dynamics Agency</a>
+        </p>
+      </div>
+    </div>
+  </footer>
+  <script type="module">
+    // --- Notification Dropdown Logic ---
+    const notifBtn = document.getElementById("notificationBtn");
+    const notifDropdown = document.getElementById("notificationDropdown");
+
+    if (notifBtn && notifDropdown) {
+      notifBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        notifDropdown.classList.toggle("hidden");
+      });
+      document.addEventListener("click", (e) => {
+        if (!notifDropdown.contains(e.target) && e.target !== notifBtn) {
+          notifDropdown.classList.add("hidden");
+        }
+      });
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") notifDropdown.classList.add("hidden");
+      });
+    }
+
+    // --- Real-time Chat Logic ---
+    const supabase = window.supabaseClient;
+    const chatMessages = document.getElementById('chat-messages');
+    const messageInput = document.getElementById('message-input');
+    const sendButton = document.getElementById('send-button');
+
+    let currentTicketId = null;
+    let userId = null;
+    let replyingToId = null;
+    let typingTimeout = null;
+
+    async function initChat() {
+      console.log('Chat: Initializing...');
+      if (!supabase) {
+        console.error('Chat: Supabase client not found!');
+        return;
+      }
+
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) {
+        console.error('Chat: User not logged in', userError);
+        return;
+      }
+      userId = user.id;
+      console.log('Chat: Logged in as', userId);
+
+      // --- Ensure Profile Exists ---
+      let { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('role, full_name')
+        .eq('id', userId)
+        .maybeSingle();
+
+      if (profileError) console.error('Chat: Error fetching profile', profileError);
+
+      if (!profile) {
+        console.log('Chat: Profile missing, creating one...');
+        const { data: newProfile, error: insertError } = await supabase
+          .from('profiles')
+          .insert([{
+            id: userId,
+            full_name: user.user_metadata?.full_name || 'User ' + userId.slice(0, 4),
+            role: 'User'
+          }])
+          .select()
+          .single();
+
+        if (insertError) {
+          console.error('Chat: Failed to create profile', insertError);
+          alert('System Error: Could not initialize your support profile. Error: ' + (insertError.message || JSON.stringify(insertError)));
+          return;
+        }
+        profile = newProfile;
+      }
+
+      const { data: ticket, error: ticketError } = await supabase
+        .from('support_tickets')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('status', 'open')
+        .maybeSingle();
+
+      if (ticketError) console.error('Chat: Error fetching ticket', ticketError);
+
+      if (ticket) {
+        currentTicketId = ticket.id;
+        console.log('Chat: Active ticket found', currentTicketId);
+        loadMessages();
+      } else {
+        console.log('Chat: No active ticket found');
+        chatMessages.innerHTML = `
+          <div class="flex flex-col items-center justify-center h-full opacity-30 text-center px-12">
+            <span class="material-symbols-outlined text-6xl mb-4">support_agent</span>
+            <p class="text-sm font-bold uppercase tracking-widest">Start a conversation with our team</p>
+          </div>
+        `;
+      }
+      subscribeToMessages();
+    }
+
+    async function loadMessages() {
+      if (!currentTicketId) return;
+      const { data: messages, error } = await supabase
+        .from('support_messages')
+        .select('*')
+        .eq('ticket_id', currentTicketId)
+        .order('created_at', { ascending: true });
+
+      if (error) console.error('Chat: Error loading messages', error);
+      renderMessages(messages || []);
+    }
+
+    function renderMessages(messages) {
+      chatMessages.innerHTML = `
+        <div class="flex justify-center my-2">
+          <span class="px-3 py-1 bg-background-light dark:bg-white/5 rounded-full text-[12px] text-[#61896f] font-medium uppercase tracking-wide">Today</span>
+        </div>
+      `;
+      messages.forEach(msg => renderSingleMessage(msg));
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    function renderSingleMessage(msg) {
+      const isMe = msg.sender_id === userId;
+      const alignClass = isMe ? 'self-end flex-row-reverse' : '';
+      const bgColor = isMe ? 'bg-primary text-[#111813]' : 'bg-[#f0f4f2] dark:bg-white/10 text-[#111813] dark:text-white';
+      const label = isMe ? 'You' : 'Admin';
+      const avatar = isMe ? 'https://via.placeholder.com/150' : 'https://aida-public.lh3.googleusercontent.com/AB6AXuDTvLpZRlhbFvhXUhf3GCj1BjwyzjCpfxqjcoywGU-LZglxo9d1NxBa820q4ivbaM7s68wNDv9-aq7vRs0ei7oM7DCp6ZpkJfEjW49R7gKTV_SD0FB1zd6Alhytml3dK_bccQRjacey--VoeaYKm2a4Dqe-uF9GKtzINqvy-_u6qxcpHOm8K4mGOSz0c4FHf7nqIrijMFWz3I-jnl9Llc7xM7KSrTORirc2L8JROVQrBcgFMm7GoHeQlApkzCkoI87ovjiJ6viGXVSQ';
+
+      const content = msg.is_deleted ? '<i class="opacity-50 text-xs text-inherit">This message was deleted</i>' : msg.message;
+
+      // Reply Logic
+      let replyHtml = '';
+      if (msg.reply_to_id) {
+        const repliedTo = document.querySelector(`[data-msg-id="${msg.reply_to_id}"]`);
+        const repliedText = repliedTo ? repliedTo.querySelector('.bubble-content').innerText : '...';
+        replyHtml = `
+          <div class="bg-black/5 dark:bg-white/5 p-2 rounded-lg border-l-2 border-primary mb-1 text-[10px] opacity-70 truncate max-w-full">
+            ${repliedText}
+          </div>
+        `;
+      }
+
+      const msgHtml = `
+        <div data-msg-id="${msg.id}" class="flex items-end gap-3 max-w-[85%] ${alignClass} group relative">
+          <div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full w-8 h-8 shrink-0 shadow-sm" style="background-image: url('${avatar}')"></div>
+          <div class="flex flex-col gap-1 ${isMe ? 'items-end' : 'items-start'} min-w-0">
+            <span class="text-[#61896f] dark:text-gray-400 text-xs ${isMe ? 'mr-1' : 'ml-1'}">${label} • ${new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+            ${replyHtml}
+            <div class="relative text-base font-normal leading-relaxed rounded-2xl ${isMe ? 'rounded-br-none' : 'rounded-bl-none'} px-5 py-3 ${bgColor} shadow-md overflow-hidden">
+               <div class="bubble-content">${content}</div>
+               ${!msg.is_deleted ? `
+                <div class="absolute top-0 right-0 p-1 flex gap-1 bg-inherit opacity-0 group-hover:opacity-100 transition-opacity">
+                   <button onclick="setReply('${msg.id}', '${msg.message.replace(/'/g, "\\'")}')" class="size-6 rounded-full hover:bg-black/10 flex items-center justify-center"><span class="material-symbols-outlined text-[14px]">reply</span></button>
+                   ${isMe ? `<button onclick="deleteMessage('${msg.id}')" class="delete-btn size-6 rounded-full hover:bg-red-500/10 text-red-500 flex items-center justify-center"><span class="material-symbols-outlined text-[14px]">delete</span></button>` : ''}
+                </div>
+              ` : ''}
+            </div>
+            ${isMe ? `<div class="text-[10px] ${msg.is_read ? 'text-primary' : 'text-slate-300 font-bold'} px-1 mt-0.5">${msg.is_read ? 'Seen' : 'Sent'}</div>` : ''}
+          </div>
+        </div>
+      `;
+      chatMessages.insertAdjacentHTML('beforeend', msgHtml);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    // --- Advanced Features Helpers ---
+    function setReply(id, text) {
+      replyingToId = id;
+      document.getElementById('reply-text').innerText = text;
+      document.getElementById('reply-preview').classList.remove('hidden');
+      messageInput.focus();
+    }
+
+    window.cancelReply = () => {
+      replyingToId = null;
+      document.getElementById('reply-preview').classList.add('hidden');
+    }
+
+    async function deleteMessage(id) {
+      if (!confirm('Delete this message?')) return;
+      const { error } = await supabase.from('support_messages').update({ is_deleted: true }).eq('id', id);
+      if (error) alert('Error deleting message');
+    }
+
+    function handleTyping() {
+      if (!currentTicketId) return;
+      supabase.channel(`ticket-${currentTicketId}`).send({
+        type: 'broadcast',
+        event: 'typing',
+        payload: { user: 'User' }
+      });
+    }
+
+    async function markAsRead(msgId) {
+      await supabase.from('support_messages').update({ is_read: true }).eq('id', msgId);
+    }
+
+    async function sendMessage() {
+      const text = messageInput.value.trim();
+      if (!text) return;
+
+      // Re-verify session before sensitive operation
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        console.error('Chat: No active session found');
+        alert('Your session has expired. Please log in again.');
+        return;
+      }
+      userId = session.user.id;
+
+      if (!currentTicketId) {
+        console.log('Chat: Creating new ticket for user:', userId);
+        const { data: newTicket, error: ticketError } = await supabase
+          .from('support_tickets')
+          .insert([{ user_id: userId, status: 'open', last_message: text }])
+          .select()
+          .single();
+
+        if (ticketError) {
+          console.error('Chat: Error creating ticket', ticketError);
+          alert('Failed to start a support ticket. Error: ' + (ticketError.message || JSON.stringify(ticketError)));
+          return;
+        }
+        currentTicketId = newTicket.id;
+        console.log('Chat: New ticket created:', currentTicketId);
+      }
+
+      const { error: msgError } = await supabase
+        .from('support_messages')
+        .insert([{ ticket_id: currentTicketId, sender_id: userId, message: text }]);
+
+      if (!msgError) {
+        messageInput.value = '';
+        await supabase.from('support_tickets').update({ last_message: text, updated_at: new Date() }).eq('id', currentTicketId);
+      } else {
+        console.error('Chat: Error sending message', msgError);
+        alert('Failed to send message: ' + msgError.message);
+      }
+    }
+
+    function subscribeToMessages() {
+      if (!currentTicketId) return;
+
+      supabase
+        .channel(`ticket-${currentTicketId}`)
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'support_messages',
+          filter: `ticket_id=eq.${currentTicketId}`
+        }, payload => {
+          if (payload.eventType === 'INSERT') {
+            renderSingleMessage(payload.new);
+            if (payload.new.sender_id !== userId) markAsRead(payload.new.id);
+          } else if (payload.eventType === 'UPDATE') {
+            const msgEl = document.querySelector(`[data-msg-id="${payload.new.id}"]`);
+            if (msgEl) {
+              if (payload.new.is_deleted) {
+                msgEl.querySelector('.bubble-content').innerHTML = '<i class="opacity-50 text-xs text-inherit">This message was deleted</i>';
+                msgEl.querySelector('.delete-btn')?.remove();
+              }
+              // Update seen status
+              if (payload.new.sender_id === userId && payload.new.is_read) {
+                const seenStatus = msgEl.querySelector('.text-slate-300');
+                if (seenStatus) {
+                  seenStatus.className = 'text-[10px] text-primary px-1 mt-0.5';
+                  seenStatus.innerText = 'Seen';
+                }
+              }
+            }
+          }
+        })
+        .on('broadcast', { event: 'typing' }, (payload) => {
+          if (payload.payload.user !== 'User') {
+            showTypingIndicator(payload.payload.user);
+          }
+        })
+        .subscribe();
+
+      // Mark admin messages as read
+      loadUnreadMark();
+    }
+
+    async function loadUnreadMark() {
+      const { data: unread } = await supabase.from('support_messages').select('id').eq('ticket_id', currentTicketId).eq('is_read', false).neq('sender_id', userId);
+      if (unread?.length) unread.forEach(m => markAsRead(m.id));
+    }
+
+    function showTypingIndicator(user) {
+      const indicator = document.getElementById('typing-indicator');
+      if (indicator) {
+        indicator.classList.remove('hidden');
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      }
+      clearTimeout(typingTimeout);
+      typingTimeout = setTimeout(() => {
+        document.getElementById('typing-indicator')?.classList.add('hidden');
+      }, 3000);
+    }
+
+    sendButton.addEventListener('click', sendMessage);
+    messageInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    initChat();
+  </script>
+</body>
+
+</html>

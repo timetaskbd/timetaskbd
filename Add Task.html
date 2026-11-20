@@ -1,0 +1,920 @@
+<!doctype html>
+<html class="light" lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <title>Time Task BD - Refer &amp; Earn</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400;500;600;700&amp;display=swap"
+    rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+    rel="stylesheet" />
+  <script>
+    if (localStorage.getItem('theme') === 'dark' || (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  </script>
+  <!-- Supabase Client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../supabase-client.js"></script>
+  <script src="../auth-guard.js"></script>
+  <script src="../navbar-auth.js"></script>
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            primary: "#13ec5b",
+            "background-light": "#f6f8f6",
+            "background-dark": "#102216",
+            "footer-light": "#f0f2f0",
+            "footer-dark": "#1a2e20",
+            "brand-bg": "#f6f8f6",
+            "card-bg": "#ffffff",
+            "card-border": "#e2e8f0",
+            "accent-green": "#13ec5b",
+            "accent-green-hover": "#0dbd49",
+            "accent-green-dim": "rgba(19, 236, 91, 0.1)",
+            "primary-text": "#1a1c1e",
+            "secondary-text": "#64748b",
+            "input-bg": "#f8fafc",
+            "deep-navy": "#f1f5f9",
+          },
+          fontFamily: {
+            display: ["Manrope", "sans-serif"],
+          },
+          borderRadius: {
+            DEFAULT: "0.25rem",
+            lg: "0.5rem",
+            xl: "0.75rem",
+            "2xl": "1rem",
+            "3xl": "1.5rem",
+            full: "9999px",
+          },
+        },
+      },
+    };
+  </script>
+  <style type="text/tailwindcss">
+    :root {
+        --brand-bg: #f6f8f6;
+        --card-bg: #ffffff;
+        --accent-green: #13ec5b;
+        --accent-glow: rgba(19, 236, 91, 0.15);
+        --glass-bg: rgba(255, 255, 255, 0.8);
+        --glass-border: rgba(19, 236, 91, 0.3);
+      }
+      .material-symbols-outlined {
+        font-variation-settings:
+          "FILL" 0,
+          "wght" 400,
+          "GRAD" 0,
+          "opsz" 24;
+      }
+      body {
+        font-family: "Manrope", sans-serif;
+        background-color: var(--brand-bg);
+        color: #1a1c1e;
+      }
+      .no-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+      .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+      .active-nav-link {
+        @apply text-[#0d1b12] dark:text-white font-bold relative;
+      }
+      .active-nav-link::after {
+        content: "";
+        @apply absolute -bottom-[31px] left-0 w-full h-[3px] bg-primary rounded-t-full;
+      }
+    </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../supabase-client.js"></script>
+  <script src="../navbar-auth.js"></script>
+</head>
+
+<body class="bg-background-light dark:bg-background-dark text-[#0d1b12] dark:text-white min-h-screen flex flex-col">
+  <header
+    class="sticky top-0 z-50 w-full bg-white/95 dark:bg-background-dark/95 backdrop-blur-md border-b border-[#e7f3eb] dark:border-white/10">
+    <div class="max-w-[1280px] mx-auto h-20 flex items-center justify-between">
+      <div class="flex items-center shrink-0">
+        <a class="flex items-center gap-2 group" href="#">
+          <div class="size-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
+            <span class="material-symbols-outlined text-2xl">update</span>
+          </div>
+          <span class="text-xl font-bold tracking-tight text-[#0d1b12] dark:text-white ml-1">Time Task <span
+              class="text-primary">BD</span></span>
+        </a>
+      </div>
+      <div class="flex items-center justify-end flex-grow gap-5 ml-auto">
+        <nav class="hidden lg:flex items-center gap-10">
+          <a class="text-sm font-medium hover:text-primary transition-colors text-[#0d1b12] dark:text-gray-300"
+            href="/Web Dashboard/Home_Page.html">Home</a>
+          <a class="text-sm font-medium hover:text-primary transition-colors text-[#0d1b12] dark:text-gray-300"
+            href="/Web Dashboard/Blog_Page.html">Blog</a>
+          <a class="text-sm font-medium hover:text-primary transition-colors text-[#0d1b12] dark:text-gray-300"
+            href="/Web Dashboard/About_Page.html">About Us</a>
+          <a class="text-sm font-medium hover:text-primary transition-colors text-[#0d1b12] dark:text-gray-300"
+            href="/Web Dashboard/Contact_Page.html">Contact Us</a>
+          <a class="text-sm font-medium hover:text-primary transition-colors text-[#0d1b12] dark:text-gray-300"
+            href="/Web Dashboard/Earning_Page.html">Earning Page</a>
+        </nav>
+        <!-- Auth Container (Targeted by navbar-auth.js) -->
+        <div class="flex items-center gap-3" id="navbar-auth-container">
+          <!-- navbar-auth.js will inject Dark Mode and Profile here -->
+        </div>
+      </div>
+    </div>
+  </header>
+  <!-- Main Content Area -->
+  <main class="max-w-[1280px] w-full mx-auto px-6 py-8">
+    <div class="flex flex-col lg:flex-row gap-8">
+      <!-- Left Column: Task Inventory -->
+      <div class="flex-1 space-y-6">
+        <div class="flex flex-wrap items-end justify-between gap-4">
+          <div class="space-y-1">
+            <h1 class="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+              Live Tasks
+            </h1>
+            <p class="text-slate-500 dark:text-slate-400">
+              Pick up available tasks and start earning instantly.
+            </p>
+          </div>
+          <div class="flex gap-2">
+            <button
+              class="px-4 py-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-semibold flex items-center gap-2">
+              <span class="material-symbols-outlined text-sm">filter_list</span>
+              Filter
+            </button>
+            <button
+              class="px-4 py-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-semibold flex items-center gap-2">
+              <span class="material-symbols-outlined text-sm">sort</span> Sort
+            </button>
+          </div>
+        </div>
+        <!-- Task Cards List -->
+        <div id="bookmarked-tasks-container" class="grid gap-4">
+        </div>
+      </div>
+      <!-- Right Column: Stats Sidebar -->
+      <aside class="lg:w-80 space-y-6">
+        <!-- Profile Summary Card -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-xl shadow-sm space-y-4 transition-colors">
+          <div class="flex items-center gap-3">
+            <div id="sidebar-avatar" class="size-12 rounded-full bg-primary/20 flex items-center justify-center text-primary overflow-hidden">
+              <span class="material-symbols-outlined">account_circle</span>
+            </div>
+            <div>
+              <p id="sidebar-level" class="text-xs text-slate-500 dark:text-slate-400">Level</p>
+              <p id="sidebar-name" class="font-bold text-primary">Loading...</p>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-4 pt-4 border-t border-slate-100 dark:border-white/10">
+            <div class="space-y-1">
+              <p class="text-[10px] uppercase text-slate-500 dark:text-slate-400 font-bold tracking-widest">
+                Completed
+              </p>
+              <p id="sidebar-completed" class="text-lg font-bold text-slate-900 dark:text-white">0</p>
+            </div>
+            <div class="space-y-1">
+              <p class="text-[10px] uppercase text-slate-500 dark:text-slate-400 font-bold tracking-widest">
+                Success Rate
+              </p>
+              <p class="text-lg font-bold text-slate-900 dark:text-white">98.5%</p>
+            </div>
+          </div>
+        </div>
+        <!-- Main Stats -->
+        <div class="space-y-4">
+          <div
+            class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm group hover:border-primary transition-colors">
+            <div class="flex items-center justify-between mb-2">
+              <p class="text-sm font-semibold text-slate-500 dark:text-slate-400">
+                Potential Earning
+              </p>
+              <span
+                class="material-symbols-outlined text-primary group-hover:scale-110 transition-transform">monitoring</span>
+            </div>
+            <p id="sidebar-potential-earning" class="text-3xl font-black text-slate-900 dark:text-white">
+              ৳0.00
+            </p>
+            <div
+              class="mt-4 flex items-center gap-2 text-xs font-bold text-primary bg-primary/10 px-2 py-1 rounded w-fit">
+              <span class="material-symbols-outlined text-[14px]">trending_up</span>
+              Based on your bookmarked tasks
+            </div>
+          </div>
+          <div
+            class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm hover:border-primary">
+            <div class="flex items-center justify-between mb-2">
+              <p class="text-sm font-semibold text-slate-500 dark:text-slate-400">
+                Available Tasks
+              </p>
+              <span class="material-symbols-outlined text-primary">inventory_2</span>
+            </div>
+            <p class="text-3xl font-black text-slate-900 dark:text-white">
+              <span id="sidebar-available-units">0</span>
+              <span class="text-sm font-medium text-slate-400">Units</span>
+            </p>
+          </div>
+        </div>
+        <!-- Recent Activity Mini List -->
+        <div
+          class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden hover:border-primary">
+          <div class="p-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
+            <h4 class="text-sm font-bold uppercase tracking-wider text-slate-400">
+              Recent Tasks
+            </h4>
+            <a class="text-xs font-bold text-primary" href="#">View All</a>
+          </div>
+          <div id="sidebar-recent-tasks" class="divide-y divide-slate-100 dark:divide-slate-800">
+          </div>
+        </div>
+      </aside>
+    </div>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../supabase-client.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      const _supabase =
+        window.supabaseClient ||
+        supabase.createClient(
+          "https://kdoouzlmncekkozjrsdf.supabase.co",
+          "sb_publishable_N0bYkeKQceE8zG8APzzQGA_QQOHDbUa",
+        );
+
+      let currentUser = null;
+      const {
+        data: { session },
+      } = await _supabase.auth.getSession();
+      if (session) {
+        currentUser = session.user;
+      } else {
+        window.location.href = "/Web Dashboard/Login_Page.html";
+        return;
+      }
+
+      // Helper function for SVG Platform Icons
+      function getPlatformSVG(platform) {
+        const svgs = {
+          Facebook: `<svg class="w-14 h-14" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><path d="M240 363.3L240 576L356 576L356 363.3L442.5 363.3L460.5 265.5L356 265.5L356 230.9C356 179.2 376.3 159.4 428.7 159.4C445 159.4 458.1 159.8 465.7 160.6L465.7 71.9C451.4 68 416.4 64 396.2 64C289.3 64 240 114.5 240 223.4L240 265.5L174 265.5L174 363.3L240 363.3z"/></svg>`,
+          Instagram: `<svg class="w-14 h-14" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><path d="M320.3 205C256.8 204.8 205.2 256.2 205 319.7C204.8 383.2 256.2 434.8 319.7 435C383.2 435.2 434.8 383.8 435 320.3C435.2 256.8 383.8 205.2 320.3 205zM319.7 245.4C360.9 245.2 394.4 278.5 394.6 319.7C394.8 360.9 361.5 394.4 320.3 394.6C279.1 394.8 245.6 361.5 245.4 320.3C245.2 279.1 278.5 245.6 319.7 245.4zM413.1 200.3C413.1 185.5 425.1 173.5 439.9 173.5C454.7 173.5 466.7 185.5 466.7 200.3C466.7 215.1 454.7 227.1 439.9 227.1C425.1 227.1 413.1 215.1 413.1 200.3zM542.8 227.5C541.1 191.6 532.9 159.8 506.6 133.6C480.4 107.4 448.6 99.2 412.7 97.4C375.7 95.3 264.8 95.3 227.8 97.4C192 99.1 160.2 107.3 133.9 133.5C107.6 159.7 99.5 191.5 97.7 227.4C95.6 264.4 95.6 375.3 97.7 412.3C99.4 448.2 107.6 480 133.9 506.2C160.2 532.4 191.9 540.6 227.8 542.4C264.8 544.5 375.7 544.5 412.7 542.4C448.6 540.7 480.4 532.5 506.6 506.2C532.8 480 541 448.2 542.8 412.3C544.9 375.3 544.9 264.5 542.8 227.5zM495 452C487.2 471.6 472.1 486.7 452.4 494.6C422.9 506.3 352.9 503.6 320.3 503.6C287.7 503.6 217.6 506.2 188.2 494.6C168.6 486.8 153.5 471.7 145.6 452C133.9 422.5 136.6 352.5 136.6 319.9C136.6 287.3 134 217.2 145.6 187.8C153.4 168.2 168.5 153.1 188.2 145.2C217.7 133.5 287.7 136.2 320.3 136.2C352.9 136.2 423 133.6 452.4 145.2C472 153 487.1 168.1 495 187.8C506.7 217.3 504 287.3 504 319.9C504 352.5 506.7 422.6 495 452z"/></svg>`,
+          TikTok: `<svg class="w-14 h-14" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><path d="M544.5 273.9C500.5 274 457.5 260.3 421.7 234.7L421.7 413.4C421.7 446.5 411.6 478.8 392.7 506C373.8 533.2 347.1 554 316.1 565.6C285.1 577.2 251.3 579.1 219.2 570.9C187.1 562.7 158.3 545 136.5 520.1C114.7 495.2 101.2 464.1 97.5 431.2C93.8 398.3 100.4 365.1 116.1 336C131.8 306.9 156.1 283.3 185.7 268.3C215.3 253.3 248.6 247.8 281.4 252.3L281.4 342.2C266.4 337.5 250.3 337.6 235.4 342.6C220.5 347.6 207.5 357.2 198.4 369.9C189.3 382.6 184.4 398 184.5 413.8C184.6 429.6 189.7 444.8 199 457.5C208.3 470.2 221.4 479.6 236.4 484.4C251.4 489.2 267.5 489.2 282.4 484.3C297.3 479.4 310.4 469.9 319.6 457.2C328.8 444.5 333.8 429.1 333.8 413.4L333.8 64L421.8 64C421.7 71.4 422.4 78.9 423.7 86.2C426.8 102.5 433.1 118.1 442.4 131.9C451.7 145.7 463.7 157.5 477.6 166.5C497.5 179.6 520.8 186.6 544.6 186.6L544.6 274z"/></svg>`,
+          YouTube: `<svg class="w-14 h-14" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><path d="M581.7 188.1C575.5 164.4 556.9 145.8 533.4 139.5C490.9 128 320.1 128 320.1 128C320.1 128 149.3 128 106.7 139.5C83.2 145.8 64.7 164.4 58.4 188.1C47 231 47 320.4 47 320.4C47 320.4 47 409.8 58.4 452.7C64.7 476.3 83.2 494.2 106.7 500.5C149.3 512 320.1 512 320.1 512C320.1 512 490.9 512 533.5 500.5C557 494.2 575.5 476.3 581.8 452.7C593.2 409.8 593.2 320.4 593.2 320.4C593.2 320.4 593.2 231 581.8 188.1zM264.2 401.6L264.2 239.2L406.9 320.4L264.2 401.6z"/></svg>`
+        };
+        return svgs[platform] || `<span class="material-symbols-outlined text-4xl">task</span>`;
+      }
+
+      // Icons come from market_assets.icon_svg (fallback to hardcoded SVGs above)
+      const marketAssetIconByPlatform = new Map();
+      function normalizePlatformKey(v) {
+        return String(v || '').trim().toLowerCase();
+      }
+      function getIconSvgFromMarketAssets(platform) {
+        const key = normalizePlatformKey(platform);
+        const raw = marketAssetIconByPlatform.get(key);
+        if (!raw) return null;
+        // very small safety gate: reject script tags
+        const s = String(raw);
+        if (/[\s\S]*<\s*script/i.test(s)) return null;
+
+        const normalized = normalizeSvgMarkup(s);
+        if (!normalized) return null;
+
+        // Force consistent size inside cards
+        return forceSvgSizeClasses(normalized, 'w-20 h-20');
+      }
+
+      function normalizeSvgMarkup(raw) {
+        const s = String(raw || '').trim();
+        if (!s) return null;
+        const lower = s.toLowerCase();
+
+        // Already a full <svg> markup
+        if (lower.includes('<svg')) return s;
+
+        // Stored as inner SVG content (e.g. <path ...>, <g ...>, etc.)
+        if (
+          lower.includes('<path') ||
+          lower.includes('<g') ||
+          lower.includes('<circle') ||
+          lower.includes('<rect') ||
+          lower.includes('<polygon')
+        ) {
+          return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">${s}</svg>`;
+        }
+
+        return null;
+      }
+
+      function forceSvgSizeClasses(svgMarkup, sizeClasses) {
+        let s = String(svgMarkup || '');
+        if (!/\<svg/i.test(s)) return s;
+
+        // Remove hard width/height attributes that can override Tailwind sizing
+        s = s.replace(/\s(width|height)\s*=\s*(["']).*?\2/gi, '');
+
+        // 1) If <svg> has a class, prepend size classes
+        if (/\<svg[^>]*\sclass\s*=\s*["'][^"']*["'][^>]*\>/i.test(s)) {
+          return s.replace(/\<svg([^>]*?)\sclass\s*=\s*(["'])([^"']*)(\2)/i, (m, pre, q, cls) => {
+            const normalized = String(cls || '');
+            // Append size classes last so they win over older widths (e.g. w-14)
+            const merged = `${normalized} ${sizeClasses}`.trim().replace(/\s+/g, ' ');
+            return `<svg${pre} class=${q}${merged}${q} style="width:5rem;height:5rem"`;
+          });
+        }
+        // 2) Otherwise add class to the opening <svg ...>
+        return s.replace(/\<svg(\s|>)/i, `<svg class="${sizeClasses}" style="width:5rem;height:5rem"$1`);
+      }
+
+      // Helper function for timeAgo
+      function timeAgo(dateString) {
+        if (!dateString) return "Just now";
+        const d = new Date(dateString);
+        const now = new Date();
+        const seconds = Math.round((now - d) / 1000);
+        if (seconds < 60) return `${seconds}s ago`;
+        const minutes = Math.round(seconds / 60);
+        if (minutes < 60) return `${minutes}m ago`;
+        const hours = Math.round(minutes / 60);
+        if (hours < 24) return `${hours}h ago`;
+        const days = Math.round(hours / 24);
+        return `${days}d ago`;
+      }
+
+      // Simple toast function
+      function showToast(message, type = 'success') {
+        const toast = document.createElement('div');
+        toast.className = `fixed bottom-6 right-6 z-50 px-6 py-3 rounded-xl font-bold text-sm shadow-xl transition-all ${type === 'success' ? 'bg-primary text-black' : 'bg-red-500 text-white'}`;
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3500);
+      }
+
+      // Optimised concurrent data fetching for Tier Logic and Profile 
+      const [profileReq, completedReq, rejectedReq, totalReq] = await Promise.all([ 
+        _supabase.from('profiles').select('full_name, username, avatar_url').eq('id', currentUser.id).single(), 
+        _supabase.from('user_active_tasks').select('*', { count: 'exact', head: true }).eq('user_id', currentUser.id).eq('status', 'completed'), 
+        _supabase.from('user_active_tasks').select('*', { count: 'exact', head: true }).eq('user_id', currentUser.id).eq('status', 'rejected'), 
+        _supabase.from('user_active_tasks').select('*', { count: 'exact', head: true }).eq('user_id', currentUser.id) 
+      ]); 
+       
+      const completedCount = completedReq.count || 0; 
+      const rejectedCount = rejectedReq.count || 0; 
+      const totalCount = totalReq.count || 0; 
+       
+      // Dynamic Custom Level Formula 
+      let calculatedLevel = 1; 
+      if (totalCount >= 200 && completedCount >= 100 && rejectedCount === 0) { 
+        calculatedLevel = 5; 
+      } else if (totalCount >= 150 && completedCount >= 50 && rejectedCount === 0) { 
+        calculatedLevel = 4; 
+      } else if (completedCount >= 100) { 
+        calculatedLevel = 3; 
+      } else if (completedCount >= 50) { 
+        calculatedLevel = 2; 
+      } 
+ 
+      // DOM Updates 
+      const sidebarCompleted = document.getElementById('sidebar-completed'); 
+      if (sidebarCompleted && !completedReq.error) sidebarCompleted.textContent = completedCount; 
+       
+      if (profileReq.data) { 
+        const profile = profileReq.data; 
+        const displayName = profile.full_name || profile.username || 'Worker'; 
+ 
+        // Bind Name and Custom Calculated Level 
+        const nameEl = document.getElementById('sidebar-name'); 
+        const levelEl = document.getElementById('sidebar-level'); 
+        if (nameEl) nameEl.textContent = displayName; 
+        if (levelEl) levelEl.textContent = `Level ${calculatedLevel} Worker`; 
+ 
+        // Profile Picture Avatar Logic 
+        const avatarEl = document.getElementById('sidebar-avatar'); 
+        // Try to find the inner icon span to remove it if it exists
+        const fallbackIcon = avatarEl ? avatarEl.querySelector('span.material-symbols-outlined') : null;
+         
+        if (avatarEl) { 
+           const uiAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=13ec5b&color=102216&bold=true`; 
+           avatarEl.style.backgroundImage = `url('${profile.avatar_url || uiAvatar}')`; 
+           avatarEl.style.backgroundSize = 'cover';
+           avatarEl.style.backgroundPosition = 'center';
+           if (fallbackIcon) fallbackIcon.remove(); // Drop the icon, replace with beautiful image 
+        } 
+      }
+
+      // Fetch Bookmarked / Saved Tasks
+      const taskContainer = document.getElementById("bookmarked-tasks-container");
+      if (taskContainer) {
+        try {
+          // Load platform icons from market_assets.icon_svg
+          const { data: marketAssets, error: marketAssetsError } = await _supabase
+            .from('market_assets')
+            .select('platform_name, icon_svg, is_active, market_status');
+
+          if (marketAssetsError) {
+            console.warn('Could not load market_assets icons:', marketAssetsError.message);
+          } else {
+            (marketAssets || []).forEach(a => {
+              const platformKey = normalizePlatformKey(a.platform_name);
+              if (!platformKey) return;
+              // store icon even if inactive; icon is only used for rendering and tasks control availability elsewhere
+              if (a.icon_svg) marketAssetIconByPlatform.set(platformKey, a.icon_svg);
+            });
+          }
+
+          // Load recent submissions for sidebar mini list
+          const { data: recentSubs } = await _supabase
+            .from('task_submissions')
+            .select('order_id, payout_amount, submitted_at, status')
+            .eq('user_id', currentUser.id)
+            .order('submitted_at', { ascending: false })
+            .limit(3);
+
+          const [savedRes, profilesRes] = await Promise.all([
+            _supabase.from('user_active_tasks').select('id, task_id, status, tasks(*)').eq('user_id', currentUser.id).in('status', ['saved', 'in_progress']),
+            _supabase.from('profiles').select('id, full_name, username')
+          ]);
+
+          if (savedRes.error) throw savedRes.error;
+          if (profilesRes.error) throw profilesRes.error;
+
+          const savedTasks = (savedRes.data || []).filter(item => item.tasks && item.tasks.remaining_units > 0);
+          if (savedTasks.length > 0) {
+            taskContainer.innerHTML = ""; // Clear existing templates
+
+            const profileMap = new Map((profilesRes.data || []).map(p => [p.id, p]));
+
+            // Fetch active worker counts using RPC
+            const taskIds = savedTasks.map(t => t.task_id).filter(id => id);
+            let activeCounts = {};
+            if (taskIds.length > 0) {
+                const { data: counts, error: rpcError } = await _supabase.rpc('get_active_task_counts', { task_ids: taskIds });
+                if (rpcError) {
+                    console.error('Error fetching active counts:', rpcError);
+                } else if (counts) {
+                    counts.forEach(row => {
+                        activeCounts[row.t_id] = row.active_count;
+                    });
+                }
+            }
+
+            let sidebarTotalPotential = 0;
+            let sidebarTotalUnits = 0;
+
+            savedTasks.forEach(item => {
+              const task = item.tasks;
+              if (!task) return;
+
+              const buyer = profileMap.get(task.created_by) || {};
+              const buyerName = buyer.full_name || buyer.username || 'Verified Buyer';
+              const svgRaw = getIconSvgFromMarketAssets(task.platform) || getPlatformSVG(task.platform);
+              const svg = forceSvgSizeClasses(svgRaw, 'w-20 h-20');
+              const ago = timeAgo(task.created_at);
+              const totalUnits = Number(task.total_units) || 0;
+              const remainingUnits = Number(task.remaining_units) || 0;
+              const completedUnits = totalUnits - remainingUnits;
+              const progressWidth = totalUnits > 0 ? Math.round((completedUnits / totalUnits) * 100) : 0;
+              const activeCount = activeCounts[item.task_id] || 0;
+
+              // Accumulate sidebar stats
+              sidebarTotalUnits += remainingUnits;
+              sidebarTotalPotential += remainingUnits * Number(task.rate_per_unit || 0);
+
+              let priorityBadge = '';
+              if (progressWidth > 90) {
+                priorityBadge = `
+                    <div class="absolute inset-0 flex items-end p-2 pointer-events-none">
+                      <span class="bg-primary text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-widest">High Priority</span>
+                    </div>`;
+              }
+
+              let endingSoon = '';
+              if (remainingUnits < 20 && remainingUnits > 0) {
+                endingSoon = `
+                    <span class="flex items-center gap-1 text-red-500 font-bold">
+                      <span class="material-symbols-outlined text-sm">warning</span>
+                      Ending soon!
+                    </span>`;
+              }
+
+              let actionButtonHtml = '';
+              if (item.status === 'in_progress') {
+                actionButtonHtml = `
+                  <button class="bg-gray-400 text-white px-6 py-2 rounded-lg font-bold text-sm shadow-lg cursor-not-allowed flex items-center gap-2" disabled>
+                    <span class="material-symbols-outlined text-sm">hourglass_empty</span> In Progress
+                  </button>
+                `;
+              } else {
+                actionButtonHtml = `
+                  <button onclick="startWorking('${item.id}', '${task.id}')" class="bg-primary hover:bg-primary/90 text-background-dark px-6 py-2 rounded-lg font-bold text-sm transition-all shadow-lg shadow-primary/20 flex items-center gap-2 start-btn-${item.id}">
+                    Start Working
+                    <span class="material-symbols-outlined text-sm">arrow_forward</span>
+                  </button>
+                `;
+              }
+
+              const cardHtml = `
+                  <div class="bg-white dark:bg-slate-900 p-5 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 flex flex-col md:flex-row gap-6 hover:border-primary/50 transition-colors group" id="task-card-${item.id}">
+                    <div class="md:w-48 h-34 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center flex-shrink-0 relative overflow-hidden">
+                      ${svg}
+                      ${priorityBadge}
+                    </div>
+
+                    <div class="flex-1 space-y-3">
+                      <div class="flex justify-between items-start">
+                        <div>
+                          <div class="flex items-center gap-2 text-primary font-bold text-xs uppercase tracking-wider mb-1">
+                            ${task.platform || 'Unknown'}
+                          </div>
+                          <h3 class="text-xl font-bold text-slate-900 dark:text-white">
+                            ${task.order_id}
+                          </h3>
+                          <p class="text-sm text-slate-500">
+                            Buyer: <span class="font-semibold text-slate-700 dark:text-slate-300">${buyerName}</span>
+                          </p>
+                        </div>
+                        <div class="text-right">
+                          <p class="text-xs text-slate-400 font-medium">Rate per unit</p>
+                          <p class="text-xl font-black text-primary">${task.rate_per_unit || 0} Tk</p>
+                        </div>
+                      </div>
+                      <div class="space-y-2">
+                        <div class="flex justify-between text-xs font-bold text-slate-600 dark:text-slate-400">
+                          <span>Remaining: ${remainingUnits} Units</span>
+                          <span>Total: ${totalUnits} Units</span>
+                        </div>
+                        <div class="w-full bg-slate-100 dark:bg-slate-800 h-2.5 rounded-full overflow-hidden">
+                          <div class="${progressWidth > 90 ? 'bg-red-400' : 'bg-primary'} h-full rounded-full shadow-[0_0_8px_rgba(19,236,91,0.4)]" style="width: ${progressWidth}%"></div>
+                        </div>
+                      </div>
+                      <div class="pt-2 flex items-center justify-between gap-4">
+                        <div class="flex items-center gap-4 text-xs text-slate-400">
+                          <span class="flex items-center gap-1">
+                            <span class="material-symbols-outlined text-sm">schedule</span>
+                            ${ago}
+                          </span>
+                          <span class="flex items-center gap-1">
+                            <span class="material-symbols-outlined text-sm">group</span>
+                            <span id="active-count-${item.task_id}">${activeCount}</span> active
+                          </span>
+                          ${endingSoon}
+                        </div>
+                        ${actionButtonHtml}
+                      </div>
+                    </div>
+                  </div>
+                `;
+              taskContainer.insertAdjacentHTML('beforeend', cardHtml);
+            });
+
+            // Update right sidebar stats (Potential Earning & Available Units)
+            const potentialEl = document.getElementById('sidebar-potential-earning');
+            if (potentialEl) {
+              potentialEl.textContent = `৳${sidebarTotalPotential.toFixed(2)}`;
+            }
+            const unitsEl = document.getElementById('sidebar-available-units');
+            if (unitsEl) {
+              unitsEl.textContent = sidebarTotalUnits.toLocaleString();
+            }
+
+            // After rendering, set up real-time listeners
+            const channel = _supabase
+              .channel('user-active-tasks-changes')
+              .on(
+                'postgres_changes',
+                {
+                  event: '*', // Listen to INSERT and UPDATE
+                  schema: 'public',
+                  table: 'user_active_tasks',
+                  filter: `status=in.('in_progress','working','accepted','processing')`
+                },
+                (payload) => {
+                  // Don't update for the current user, as they have an optimistic update
+                  if (payload.new.user_id === currentUser.id) {
+                    return;
+                  }
+
+                  const taskId = payload.new.task_id;
+                  const countSpan = document.getElementById(`active-count-${taskId}`);
+
+                  if (countSpan) {
+                    const oldStatus = payload.old ? payload.old.status : null;
+                    const newStatus = payload.new.status;
+                    const wasActive = ['in_progress', 'working', 'accepted', 'processing'].includes(oldStatus);
+                    const isActive = ['in_progress', 'working', 'accepted', 'processing'].includes(newStatus);
+
+                    if (!wasActive && isActive) {
+                       const currentCount = parseInt(countSpan.textContent, 10) || 0;
+                       countSpan.textContent = currentCount + 1;
+                    }
+                  }
+                }
+              )
+              .subscribe((status, err) => {
+                if (status === 'SUBSCRIBED') {
+                  console.log('Subscribed to user_active_tasks changes!');
+                } else if (err) {
+                  console.error('Subscription error:', err);
+                }
+              });
+
+            // Also listen to task unit changes so Remaining/Progress updates after admin approval
+            _supabase
+              .channel('user_tasks_units_live')
+              .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'tasks' },
+                async (payload) => {
+                  // reload list; cheap enough and avoids partial DOM diff bugs
+                  try {
+                    // Re-run the saved tasks load path by reloading the page state in-place:
+                    // We keep it simple: re-run the outer loader by triggering a full refresh of this section.
+                    const containerNow = document.getElementById("bookmarked-tasks-container");
+                    if (containerNow) {
+                      containerNow.innerHTML = `<div class="p-5 text-slate-400 font-medium">Refreshing units...</div>`;
+                    }
+                    // Reinvoke by reloading page (consistent with existing approach)
+                    location.reload();
+                  } catch (e) {
+                    console.error('Failed to refresh units:', e);
+                  }
+                }
+              )
+              .subscribe();
+
+          } else {
+            taskContainer.innerHTML = `
+                <div class="p-12 text-center flex flex-col items-center justify-center bg-white dark:bg-slate-900 rounded-xl border border-dashed border-slate-300 dark:border-slate-700">
+                  <span class="material-symbols-outlined text-6xl text-slate-300 mb-4">bookmark_border</span>
+                  <h3 class="text-xl font-bold text-slate-800 dark:text-white mb-2">No Bookmarked Tasks</h3>
+                  <p class="text-sm text-slate-500 max-w-sm mx-auto mb-6">You haven't bookmarked any tasks yet. Go to the Earning Page to add some tasks to your live list.</p>
+                  <a href="/Web Dashboard/Earning_Page.html" class="bg-primary hover:bg-primary/90 text-background-dark px-6 py-2.5 rounded-lg font-bold text-sm transition-all shadow-sm">
+                    Browse Earning Page
+                  </a>
+                </div>
+              `;
+          }
+
+          // Render Recent Tasks sidebar list
+          const recentContainer = document.getElementById('sidebar-recent-tasks');
+          if (recentContainer) {
+            if (recentSubs && recentSubs.length > 0) {
+              recentContainer.innerHTML = recentSubs.map(sub => {
+                const when = timeAgo(sub.submitted_at);
+                const amt = Number(sub.payout_amount || 0);
+                const statusLabel = (sub.status || '').toLowerCase() === 'approved'
+                  ? 'Completed'
+                  : (sub.status || 'Pending');
+                const statusColor = sub.status === 'approved'
+                  ? 'text-green-600'
+                  : sub.status === 'rejected'
+                    ? 'text-red-500'
+                    : 'text-slate-500';
+                return `
+                  <div class="p-4 flex items-center gap-3 hover:bg-primary/5">
+                    <div class="size-2 rounded-full bg-primary"></div>
+                    <div class="flex-1">
+                      <p class="text-sm font-bold">${sub.order_id}</p>
+                      <p class="text-xs ${statusColor}">${statusLabel} · +৳${amt.toFixed(2)}</p>
+                    </div>
+                    <span class="text-[10px] text-slate-400">${when}</span>
+                  </div>
+                `;
+              }).join('');
+            } else {
+              recentContainer.innerHTML = `
+                <div class="p-4 text-xs text-slate-400 text-center">
+                  No recent submissions yet.
+                </div>
+              `;
+            }
+          }
+
+        } catch (err) {
+          console.error('Error fetching data:', err);
+          taskContainer.innerHTML = `<div class="p-5 text-red-500 font-medium">Failed to load saved tasks.</div>`;
+        }
+      }
+
+      // Global function for "Start Working"
+      window.startWorking = async (userTaskId, taskId) => {
+        const btn = document.querySelector(`.start-btn-${userTaskId}`);
+        if (btn) {
+          btn.innerHTML = `<span class="material-symbols-outlined animate-spin text-sm">refresh</span> Starting...`;
+          btn.disabled = true;
+        }
+
+        const { error } = await _supabase
+          .from('user_active_tasks')
+          .update({ status: 'in_progress' })
+          .eq('id', userTaskId)
+          .eq('user_id', currentUser.id);
+
+        if (error) {
+          showToast("Failed to start working: " + error.message, 'error');
+          if (btn) {
+            btn.innerHTML = `Start Working <span class="material-symbols-outlined text-sm">arrow_forward</span>`;
+            btn.disabled = false;
+          }
+        } else {
+          showToast("Success! Task started.");
+          if (btn) {
+            btn.innerHTML = `<span class="material-symbols-outlined text-sm">hourglass_empty</span> In Progress`;
+            btn.classList.remove("bg-primary", "hover:bg-primary/90", "text-background-dark");
+            btn.classList.add("bg-gray-400", "text-white", "cursor-not-allowed");
+          }
+          // Optimistic update for the current user
+          const countSpan = document.getElementById(`active-count-${taskId}`);
+          if (countSpan) {
+            countSpan.textContent = (parseInt(countSpan.textContent, 10) || 0) + 1;
+          }
+        }
+      };
+
+    });
+  </script>
+  <footer class="bg-footer-light dark:bg-footer-dark pt-16 pb-8 border-t border-[#e7f3eb] dark:border-white/5">
+    <div class="max-w-[1280px] mx-auto">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
+        <div class="space-y-6">
+          <div class="flex items-center gap-3">
+            <div class="size-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
+              <span class="material-symbols-outlined text-2xl">update</span>
+            </div>
+            <span class="text-xl font-bold tracking-tight text-[#0d1b12] dark:text-white">Time Task <span
+                class="text-primary">BD</span></span>
+          </div>
+          <p class="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">
+            Empowering your digital productivity through innovative task
+            management and streamlined earning opportunities.
+          </p>
+          <div class="flex gap-4">
+            <a class="size-10 rounded-xl border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-black transition-all"
+              href="#">
+              <span class="material-symbols-outlined text-[20px]">public</span>
+            </a>
+            <a class="size-10 rounded-xl border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-black transition-all"
+              href="#">
+              <span class="material-symbols-outlined text-[20px]">share</span>
+            </a>
+            <a class="size-10 rounded-xl border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-black transition-all"
+              href="#">
+              <span class="material-symbols-outlined text-[20px]">alternate_email</span>
+            </a>
+          </div>
+        </div>
+        <div>
+          <h4 class="text-sm font-bold uppercase tracking-widest mb-6 text-[#0d1b12] dark:text-white">
+            Quick Links
+          </h4>
+          <ul class="space-y-4">
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="/Web Dashboard/Home_Page.html">Home</a>
+            </li>
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="/Web Dashboard/Blog_Page.html">Our Blog</a>
+            </li>
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="/Web Dashboard/About_Page.html">About Us</a>
+            </li>
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="/Web Dashboard/Contact_Page.html">Contact</a>
+            </li>
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="/Web Dashboard/Help_and_FAQ_Page.html">FAQ Support</a>
+            </li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="text-sm font-bold uppercase tracking-widest mb-6 text-[#0d1b12] dark:text-white">
+            Services &amp; Legal
+          </h4>
+          <ul class="space-y-4">
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="/Web Dashboard/About_Page.html">About Us</a>
+            </li>
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="/Web Dashboard/Privacy_Policy_Page.html">Privacy Policy</a>
+            </li>
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="/Web Dashboard/Terms_of_Service_Page.html">Terms of Service</a>
+            </li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="text-sm font-bold uppercase tracking-widest mb-6 text-[#0d1b12] dark:text-white">
+            Contact Info
+          </h4>
+          <ul class="space-y-4">
+            <li class="flex items-start gap-3">
+              <span class="material-symbols-outlined text-primary text-[20px]">mail</span>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary"
+                href="mailto:support@timetaskbd.com">support@timetaskbd.com</a>
+            </li>
+            <li class="flex items-start gap-3">
+              <span class="material-symbols-outlined text-primary text-[20px]">call</span>
+              <span class="text-sm text-gray-600 dark:text-gray-400">+880 1234 567890</span>
+            </li>
+            <li class="flex items-start gap-3">
+              <span class="material-symbols-outlined text-primary text-[20px]">location_on</span>
+              <span class="text-sm text-gray-600 dark:text-gray-400">Dhaka, Bangladesh</span>
+            </li>
+          </ul>
+          <div class="mt-8 pt-8 border-t border-[#e7f3eb] dark:border-white/5">
+            <p class="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-4">
+              Social Media
+            </p>
+            <div class="flex gap-4">
+              <a class="text-[#4c9a66] hover:text-primary transition-colors" href="#">
+                <svg class="size-6" fill="currentColor" viewBox="0 0 24 24">
+                  <path
+                    d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z">
+                  </path>
+                </svg>
+              </a>
+              <a class="text-[#4c9a66] hover:text-primary transition-colors" href="#">
+                <svg class="size-6" fill="currentColor" viewBox="0 0 24 24">
+                  <path
+                    d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.84 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z">
+                  </path>
+                </svg>
+              </a>
+              <a class="text-[#4c9a66] hover:text-primary transition-colors" href="#">
+                <svg class="size-6" fill="currentColor" viewBox="0 0 24 24">
+                  <path
+                    d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z">
+                  </path>
+                </svg>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div
+        class="pt-8 border-t border-[#e7f3eb] dark:border-white/5 flex flex-col md:flex-row items-center justify-between gap-4">
+        <p class="text-sm text-gray-500 dark:text-gray-400">
+          Copyright © 2024
+          <span class="text-[#0d1b12] dark:text-white font-semibold">Time Task BD</span>. All rights reserved.
+        </p>
+        <p class="text-sm text-gray-500 dark:text-gray-400">
+          Developed with <span class="text-primary font-bold">★</span> by
+          <a class="text-primary font-medium hover:underline" href="#">Digital Dynamics Agency</a>
+        </p>
+      </div>
+    </div>
+  </footer>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      // --- Notification Dropdown Logic ---
+      const notifBtn = document.getElementById("notificationBtn");
+      const notifDropdown = document.getElementById("notificationDropdown");
+
+      if (notifBtn && notifDropdown) {
+        // ১. বাটনে ক্লিক করলে ড্রপডাউন দেখা যাবে বা লুকিয়ে যাবে (Toggle)
+        notifBtn.addEventListener("click", (e) => {
+          e.stopPropagation(); // বাটনে ক্লিক করলে যেন নিচের ডকুমেন্ট ক্লিক লজিক কাজ না করে
+          notifDropdown.classList.toggle("hidden");
+        });
+
+        // ২. ড্রপডাউন এর বাইরে স্ক্রিনের কোথাও ক্লিক করলে ড্রপডাউন বন্ধ হয়ে যাবে
+        document.addEventListener("click", (e) => {
+          // যদি ক্লিক ড্রপডাউনের ভেতরে না হয় এবং ক্লিকটি বাটনের ওপরেও না হয়
+          if (!notifDropdown.contains(e.target) && e.target !== notifBtn) {
+            notifDropdown.classList.add("hidden");
+          }
+        });
+      }
+
+      // ৩. কিবোর্ডের Escape বাটন চাপলে ড্রপডাউন বন্ধ হবে
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && notifDropdown) {
+          notifDropdown.classList.add("hidden");
+          // আপনার যদি মডাল ফাংশন থাকে তবে সেটিও এখানে কল করতে পারেন
+          if (typeof closeModal === "function") {
+            closeModal();
+          }
+        }
+      });
+    });
+  </script>
+</body>
+
+</html>

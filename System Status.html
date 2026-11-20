@@ -1,0 +1,802 @@
+<!doctype html>
+<html class="light" lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <title>Admin Panel - Time Task BD</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+    rel="stylesheet" />
+  <script>
+    (function () {
+      const savedTheme = localStorage.getItem("theme") || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+      if (savedTheme === "dark") {
+        document.documentElement.classList.add("dark");
+        document.documentElement.classList.remove("light");
+      } else {
+        document.documentElement.classList.add("light");
+        document.documentElement.classList.remove("dark");
+      }
+    })();
+  </script>
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            primary: "#13ec5b",
+            "background-light": "#f6f8f6",
+            "background-dark": "#0d1b12",
+            "sidebar-deep": "#102216",
+            "accent-green": "#13ec5b",
+          },
+          fontFamily: {
+            display: ["Manrope"],
+          },
+          borderRadius: {
+            DEFAULT: "0.25rem",
+            lg: "0.5rem",
+            xl: "0.75rem",
+            "2xl": "1rem",
+            full: "9999px",
+          },
+        },
+      },
+    };
+  </script>
+  <style type="text/tailwindcss">
+    @layer base {
+        body {
+          @apply font-display bg-background-light dark:bg-background-dark text-slate-900 dark:text-white;
+        }
+      }
+
+      /* Sidebar Transitions */
+      .sidebar-transition {
+        @apply transition-all duration-300 ease-in-out;
+      }
+
+      /* Active Tab Notch Logic */
+      .sidebar-item-active {
+        @apply bg-background-light text-sidebar-deep font-bold relative !important;
+        border-radius: 40px 0 0 40px;
+        margin-left: 10px;
+        width: calc(100% - 10px) !important;
+      }
+
+      .sidebar-item-active::before {
+        content: "";
+        position: absolute;
+        right: 0;
+        top: -40px;
+        width: 40px;
+        height: 40px;
+        background: transparent;
+        border-radius: 50%;
+        box-shadow: 20px 20px 0 0 #f6f8f6;
+        pointer-events: none;
+      }
+      .sidebar-item-active::after {
+        content: "";
+        position: absolute;
+        right: 0;
+        bottom: -40px;
+        width: 40px;
+        height: 40px;
+        background: transparent;
+        border-radius: 50%;
+        box-shadow: 20px -20px 0 0 #f6f8f6;
+        pointer-events: none;
+      }
+
+      .dark .sidebar-item-active::before { box-shadow: 20px 20px 0 0 #0d1b12; }
+      .dark .sidebar-item-active::after  { box-shadow: 20px -20px 0 0 #0d1b12; }
+      .dark .sidebar-item-active { @apply bg-background-dark text-white !important; }
+
+      .sidebar-item {
+        @apply flex items-center py-4 text-white/70 hover:text-white transition-all duration-200 cursor-pointer w-full relative;
+      }
+
+      .sidebar-item .material-symbols-outlined {
+        @apply font-light text-[24px];
+      }
+
+      .sidebar-item-active .material-symbols-outlined {
+        @apply text-sidebar-deep;
+      }
+      .dark .sidebar-item-active .material-symbols-outlined { @apply text-primary; }
+
+      /* Tooltip Logic - Show only when collapsed */
+      .nav-tooltip {
+        @apply invisible absolute left-full ml-4 px-2 py-1 bg-sidebar-deep text-white text-[10px] rounded whitespace-nowrap opacity-0 transition-opacity z-50 pointer-events-none;
+      }
+
+      /* Collapsed Sidebar States */
+      .sidebar-collapsed {
+        @apply w-20 pl-0;
+      }
+      .sidebar-collapsed .logo-text,
+      .sidebar-collapsed .item-text,
+      .sidebar-collapsed .menu-label,
+      .sidebar-collapsed .system-card-text {
+        @apply hidden;
+      }
+      .sidebar-collapsed .sidebar-item {
+        @apply justify-center px-0;
+      }
+      .sidebar-collapsed .sidebar-item:hover .nav-tooltip {
+        @apply visible opacity-100;
+      }
+      .sidebar-collapsed .sidebar-header {
+        @apply px-0 justify-center;
+      }
+
+      /* Custom Scrollbar */
+      .custom-scrollbar::-webkit-scrollbar {
+        width: 4px;
+      }
+      .custom-scrollbar::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+      }
+
+      .active-tab-nav {
+        @apply bg-primary text-slate-900 dark:text-white shadow-lg shadow-primary/20;
+      }
+    </style>
+</head>
+
+<body class="flex min-h-screen overflow-hidden">
+  <!-- Sidebar -->
+  <aside id="mainSidebar"
+    class="w-72 bg-sidebar-deep flex-shrink-0 flex flex-col h-screen sticky top-0 sidebar-transition pl-2">
+    <!-- Logo Section -->
+    <div class="sidebar-header p-6 pb-12 flex items-center gap-3 transition-all">
+      <div
+        class="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20 flex-shrink-0">
+        <span class="material-symbols-outlined text-sidebar-deep font-bold text-2xl">update</span>
+      </div>
+      <div class="flex flex-col logo-text overflow-hidden">
+        <span class="text-white font-extrabold text-lg leading-tight tracking-tight whitespace-nowrap">Time Task
+          BD</span>
+        <span class="text-primary/60 text-[10px] font-bold uppercase tracking-widest whitespace-nowrap">Admin
+          Control</span>
+      </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="flex-1">
+      <div class="px-8 mb-4 menu-label">
+        <p class="text-[10px] font-bold text-white/40 uppercase tracking-[0.2em]">
+          Main Menu
+        </p>
+      </div>
+
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Admin Index.html">
+        <span class="material-symbols-outlined">dashboard</span>
+        <span class="text-sm item-text ml-4">Dashboard</span>
+        <span class="nav-tooltip">Dashboard</span>
+      </a>
+
+      <a class="sidebar-item sidebar-item-active px-8 group" href="/Admin Dashboard/System Health.html">
+        <span class="material-symbols-outlined">monitor_heart</span>
+        <span class="text-sm item-text ml-4">System Monitoring</span>
+        <span class="nav-tooltip">Security & System Monitoring</span>
+      </a>
+
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/KYC Review.html">
+        <span class="material-symbols-outlined">manage_accounts</span>
+        <span class="text-sm item-text ml-4">Management</span>
+        <span class="nav-tooltip">Management</span>
+      </a>
+
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/User Analytics.html">
+        <span class="material-symbols-outlined">analytics</span>
+        <span class="text-sm item-text ml-4">Analytics Section</span>
+        <span class="nav-tooltip">Analytics Section</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/User Referral Tree.html">
+        <span class="material-symbols-outlined">hub</span>
+        <span class="text-sm item-text ml-4">Referral System</span>
+        <span class="nav-tooltip">Referral System</span>
+      </a>
+
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Market Asset Price.html">
+        <span class="material-symbols-outlined">trending_up</span>
+        <span class="text-sm item-text ml-4">Market Asset Prices</span>
+        <span class="nav-tooltip">Market Asset Prices</span>
+      </a>
+
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Live Support.html">
+        <span class="material-symbols-outlined">support_agent</span>
+        <span class="text-sm item-text ml-4">Live Support</span>
+        <span class="nav-tooltip">Live Support</span>
+      </a>
+
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Buyer Communication.html">
+        <span class="material-symbols-outlined">forum</span>
+        <span class="text-sm item-text ml-4">Communication</span>
+        <span class="nav-tooltip">Communication</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/System Announcemeeent.html">
+        <span class="material-symbols-outlined">forum</span>
+        <span class="text-sm item-text ml-4">System Announcement</span>
+        <span class="nav-tooltip">System Announcement</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Invoice Management.html">
+        <span class="material-symbols-outlined">description</span>
+        <span class="text-sm item-text ml-4">Invoice Management</span>
+        <span class="nav-tooltip">Invoice Management</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Create Content.html">
+        <span class="material-symbols-outlined">edit_note</span>
+        <span class="text-sm item-text ml-4">Content Management</span>
+        <span class="nav-tooltip">Content Management</span>
+      </a>
+    </nav>
+
+    <div class="px-6 py-8">
+      <button id="logoutBtn"
+        class="w-full h-10 flex items-center justify-center bg-primary text-sidebar-deep font-bold text-xs rounded-lg hover:brightness-110 transition-all shadow-lg shadow-primary/10 group relative">
+        <span class="material-symbols-outlined text-[20px] system-icon">logout</span>
+        <span class="ml-2 system-card-text">Logout</span>
+        <span class="nav-tooltip !left-full !ml-6">Logout</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main Content wrapper -->
+  <div class="flex-1 flex flex-col h-screen overflow-hidden bg-background-light dark:bg-background-dark">
+    <!-- Header -->
+    <header
+      class="h-20 bg-white dark:bg-[#111f16] border-b border-slate-100 dark:border-white/10 px-6 flex items-center justify-between flex-shrink-0 z-40">
+      <div class="flex items-center gap-6">
+        <button id="sidebarToggle"
+          class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-white/70 hover:text-sidebar-deep dark:hover:text-primary hover:bg-primary/10 transition-all">
+          <span class="material-symbols-outlined">menu</span>
+        </button>
+        <div class="relative w-96 group">
+          <span
+            class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-white/40 group-focus-within:text-sidebar-deep dark:group-focus-within:text-primary transition-colors">search</span>
+          <input
+            class="w-full bg-slate-100 dark:bg-white/5 dark:text-white border-none rounded-xl pl-10 pr-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 transition-all"
+            placeholder="Search system records..." type="text" />
+        </div>
+      </div>
+
+      <div class="flex items-center gap-6">
+        <div class="flex items-center gap-2">
+          <button
+            class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-white/70 hover:text-sidebar-deep dark:hover:text-primary hover:bg-primary/10 transition-all relative">
+            <span class="material-symbols-outlined">notifications</span>
+            <span
+              class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-[#111f16]"></span>
+          </button>
+          <button id="darkModeToggle"
+            class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-white/70 hover:text-sidebar-deep dark:hover:text-primary hover:bg-primary/10 transition-all">
+            <span class="material-symbols-outlined" id="darkIcon">light_mode</span>
+          </button>
+        </div>
+        <div class="h-10 w-px bg-slate-200 dark:bg-white/10"></div>
+        <div class="flex items-center gap-3 cursor-pointer group">
+          <div class="text-right">
+            <p class="text-sm font-bold text-slate-900 dark:text-white group-hover:text-primary transition-colors">
+              Super Admin
+            </p>
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
+              System Manager
+            </p>
+          </div>
+          <div
+            class="w-12 h-12 rounded-xl border-2 border-primary/20 p-0.5 overflow-hidden group-hover:border-primary transition-all">
+            <img alt="Admin Profile" class="w-full h-full object-cover rounded-lg"
+              src="https://lh3.googleusercontent.com/aida-public/AB6AXuDI3q59cS__AXyYcqFQtKZ2-e__roEJ3Cic28K7cd-6tYYxzLfpTArNsAJE3UypttzDIKS6SoNy85-jDLh0ZMbLqXr0NEEjrbCPSgoCJZyYc4W89P8djmlf34I_NEoa2vfl5IS3jHwLSZZ6lgtwguAje5Lv9h9RbZ2fJqb36M_tmZc-iJY-XxAXsCDxVyU1bONcO3AV5LZgB1o5wURKpB9w2XEN6iWAILVT7fIzOkl2pQ4lJb5WxYgkvuNIlKakHZWN1e4bzfo25zYy" />
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Sub Navigation Tabs -->
+    <nav
+      class="sticky top-0 bg-white/50 dark:bg-[#111f16]/50 border-b border-gray-100 dark:border-white/10 backdrop-blur-sm relative z-30 rounded-l-[30px] ml-80">
+      <div class="mx-auto w-full px-4">
+        <div id="tabsContainer" class="flex gap-4 overflow-x-auto no-scrollbar py-3">
+          <a class="flex items-center gap-2 px-4 py-2 rounded-[30px] text-sm font-semibold text-gray-700 dark:text-slate-300 hover:bg-white dark:hover:bg-white/5 hover:shadow-sm whitespace-nowrap transition-all"
+            href="/Admin Dashboard/System Health.html">
+            <span class="material-symbols-outlined text-[20px]">security</span>
+            Security & System Health
+          </a>
+          <a class="flex items-center gap-2 px-4 py-2 rounded-[30px] text-sm font-semibold active-tab-nav whitespace-nowrap transition-all"
+            href="/Admin Dashboard/System Status.html">
+            <span class="material-symbols-outlined text-[20px]">cloud_done</span>
+            System Status & Uptime
+          </a>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main Dashboard Content -->
+    <main class="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-8 max-w-full">
+      <div class="max-w-[1600px] mx-auto w-full space-y-8">
+        <!-- Overall Status Banner -->
+        <div id="overall-status-banner"
+          class="p-4 rounded-xl flex items-center gap-3 bg-primary/10 border border-primary/20">
+          <span id="status-dot" class="w-3 h-3 rounded-full bg-primary animate-pulse"></span>
+          <p id="status-banner-text" class="font-bold text-slate-700">Loading system status...</p>
+          <span class="ml-auto text-xs text-slate-400 font-medium" id="status-last-updated"></span>
+        </div>
+        <!-- Live Metrics Grid -->
+        <div class="mb-8 grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="bg-white dark:bg-[#1a2e1f] border border-gray-200 dark:border-white/10 p-4 rounded-xl shadow-sm">
+            <div class="flex justify-between items-center mb-4">
+              <h3 class="font-semibold text-gray-700 dark:text-gray-200">
+                API Response Time
+              </h3>
+              <span id="api-response-time" class="text-primary font-mono font-bold">—</span>
+            </div>
+            <div id="api-sparkline" class="h-16 flex items-end gap-1">
+              <!-- Sparkline bars filled dynamically -->
+            </div>
+          </div>
+          <div class="bg-white dark:bg-[#1a2e1f] border border-gray-200 dark:border-white/10 p-4 rounded-xl shadow-sm">
+            <div class="flex justify-between items-center mb-4">
+              <h3 class="font-semibold text-gray-700 dark:text-gray-200">
+                Server Load
+              </h3>
+              <span id="server-load" class="text-primary font-mono font-bold">—</span>
+            </div>
+            <div id="load-sparkline" class="h-16 flex items-end gap-1">
+              <!-- Sparkline bars filled dynamically -->
+            </div>
+          </div>
+        </div>
+        <!-- Component Health Section -->
+        <h2 class="text-[#0d1b12] dark:text-white text-[22px] font-bold leading-tight tracking-[-0.015em] py-3">
+          Component Health
+        </h2>
+        <div id="component-health-list" class="flex flex-col gap-1">
+          <div class="text-sm text-gray-500 py-4 italic">Loading component health...</div>
+        </div>
+        <!-- Incident History Section -->
+        <div class="flex items-center justify-between pt-10 pb-3">
+          <h2 class="text-[#0d1b12] dark:text-white text-[22px] font-bold leading-tight tracking-[-0.015em]">
+            Incident History
+          </h2>
+          <button id="btn-add-incident" onclick="toggleIncidentForm()"
+            class="flex items-center gap-2 px-4 py-2 bg-sidebar-deep text-primary font-bold text-sm rounded-lg hover:brightness-125 transition-all shadow">
+            <span class="material-symbols-outlined text-[18px]">add</span> Log New Incident
+          </button>
+        </div>
+        <!-- Add Incident Form -->
+        <div id="incident-form"
+          class="hidden bg-white dark:bg-[#1a2e1f] border border-slate-200 dark:border-white/10 rounded-xl p-5 mb-6 space-y-4 shadow-sm">
+          <h3 class="font-bold text-slate-800 dark:text-white text-base">New Incident Report</h3>
+          <input id="inc-title" placeholder="Incident title..."
+            class="w-full bg-slate-50 dark:bg-black/20 dark:text-white border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary/30 outline-none" />
+          <textarea id="inc-desc" placeholder="Description..." rows="3"
+            class="w-full bg-slate-50 dark:bg-black/20 dark:text-white border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary/30 outline-none resize-none"></textarea>
+          <div class="flex flex-wrap gap-3">
+            <select id="inc-status"
+              class="bg-slate-50 dark:bg-black/20 dark:text-white border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary/30 outline-none">
+              <option value="Investigating">Investigating</option>
+              <option value="Resolved">Resolved</option>
+              <option value="Scheduled">Scheduled</option>
+            </select>
+            <select id="inc-severity"
+              class="bg-slate-50 dark:bg-black/20 dark:text-white border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary/30 outline-none">
+              <option value="minor">Minor</option>
+              <option value="major">Major</option>
+              <option value="maintenance">Maintenance</option>
+            </select>
+            <input id="inc-resolved-str" placeholder="Resolved at (optional, e.g. 14:30 UTC)"
+              class="flex-1 min-w-[200px] bg-slate-50 dark:bg-black/20 dark:text-white border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary/30 outline-none" />
+          </div>
+          <div class="flex gap-3">
+            <button onclick="submitIncident()"
+              class="bg-sidebar-deep dark:bg-primary/20 text-primary px-5 py-2 rounded-lg font-bold text-sm hover:brightness-125 transition-all">Submit
+              Incident</button>
+            <button onclick="toggleIncidentForm()"
+              class="border border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400 px-5 py-2 rounded-lg font-bold text-sm hover:bg-slate-50 dark:hover:bg-white/5 transition-all">Cancel</button>
+          </div>
+        </div>
+        <div id="incident-history-list" class="pl-6 space-y-8 mb-12">
+          <div class="text-sm text-gray-500 py-4 italic">Loading incident history...</div>
+        </div>
+        <footer class="pt-16 pb-8 border-t border-slate-200 dark:border-white/10 mt-12">
+          <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+            <div
+              class="flex items-center gap-8 text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+              <a class="hover:text-primary transition-colors" href="#">Privacy Policy</a>
+              <a class="hover:text-primary transition-colors" href="#">Terms of Service</a>
+              <a class="hover:text-primary transition-colors" href="#">Documentation</a>
+            </div>
+            <p class="text-[11px] font-bold text-slate-400 dark:text-slate-500">
+              © 2024 TIME TASK BD. ALL RIGHTS RESERVED.
+            </p>
+          </div>
+        </footer>
+      </div>
+    </main>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../supabase-client.js"></script>
+  <script>
+    // ─── Supabase Alias ──────────────────────────────────────────────
+    const _sb = window.supabaseClient || null;
+    const normalizeRole = (v) => String(v || "").trim().toLowerCase();
+    function escapeHtml(s) {
+      return String(s ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    const sidebar = document.getElementById("mainSidebar");
+    const toggleBtn = document.getElementById("sidebarToggle");
+    toggleBtn.addEventListener("click", () => sidebar.classList.toggle("sidebar-collapsed"));
+
+    const subTabs = document.querySelectorAll("#tabsContainer a");
+    subTabs.forEach((tab) => {
+      tab.addEventListener("click", (e) => {
+        subTabs.forEach((t) => t.classList.remove("active-tab-nav"));
+        tab.classList.add("active-tab-nav");
+      });
+    });
+    document.getElementById("logoutBtn").addEventListener("click", async () => {
+      if (_sb?.auth) await _sb.auth.signOut();
+      window.location.href = "/Admin Dashboard/Admin_Login.html";
+    });
+
+    // ─── Admin Session Guard (needed for RLS updates/inserts) ───────
+    async function requireAdminSession() {
+      if (!_sb?.auth) {
+        window.location.href = "/Admin Dashboard/Admin_Login.html";
+        return false;
+      }
+      const { data: { session }, error } = await _sb.auth.getSession();
+      if (error || !session) {
+        window.location.href = "/Admin Dashboard/Admin_Login.html";
+        return false;
+      }
+      const { data: profile, error: profErr } = await _sb
+        .from('profiles')
+        .select('role')
+        .eq('id', session.user.id)
+        .single();
+      if (profErr || normalizeRole(profile?.role) !== 'admin') {
+        window.location.href = "/Admin Dashboard/Admin_Login.html";
+        return false;
+      }
+      return true;
+    }
+
+    // ─── Live Metrics (Supabase-based, no localhost dependency) ─────
+    const MAX_HISTORY = 10;
+    const apiHistory = [];
+    const loadHistory = [];
+
+    function renderSparkline(containerId, history, maxVal) {
+      const el = document.getElementById(containerId);
+      if (!el) return;
+      const cap = maxVal || Math.max(...history, 1);
+      el.innerHTML = history.map((v, i) => {
+        const pct = Math.min(Math.max((v / cap) * 100, 5), 100);
+        const isLast = i === history.length - 1;
+        return `<div class="${isLast ? 'bg-primary' : 'bg-primary/30'} w-full rounded-sm" style="height:${pct}%"></div>`;
+      }).join('');
+    }
+
+    async function fetchMetrics() {
+      try {
+        const startedAt = performance.now();
+        const res = await fetch('/api/metrics', { cache: 'no-store' });
+        if (!res.ok) throw new Error(`Metrics API error: ${res.status}`);
+        const metrics = await res.json();
+        const fallbackRtt = Math.max(1, Math.round(performance.now() - startedAt));
+
+        // Real metrics from backend proxy
+        const rawApiMs = Number(metrics?.api_response_time);
+        const apiMs = Number.isFinite(rawApiMs) && rawApiMs > 0 ? rawApiMs : fallbackRtt;
+        const loadPct = Number(metrics?.server_load);
+
+        // Update API Response Time
+        const apiEl = document.getElementById('api-response-time');
+        if (apiEl) apiEl.textContent = Number.isFinite(apiMs) ? `${Math.max(0, Math.round(apiMs))}ms` : 'N/A';
+        if (Number.isFinite(apiMs)) {
+          apiHistory.push(Math.max(0, Math.round(apiMs)));
+          if (apiHistory.length > MAX_HISTORY) apiHistory.shift();
+          renderSparkline('api-sparkline', apiHistory, 500);
+        }
+
+        // Update Server Load
+        const loadEl = document.getElementById('server-load');
+        if (loadEl) loadEl.textContent = Number.isFinite(loadPct) ? `${Math.max(0, Math.min(100, loadPct)).toFixed(1)}%` : 'N/A';
+        if (Number.isFinite(loadPct)) {
+          loadHistory.push(Math.max(0, Math.min(100, loadPct)));
+          if (loadHistory.length > MAX_HISTORY) loadHistory.shift();
+          renderSparkline('load-sparkline', loadHistory, 100);
+        }
+      } catch (err) {
+        console.warn('Metrics fetch failed:', err.message);
+        const apiEl = document.getElementById('api-response-time');
+        const loadEl = document.getElementById('server-load');
+        if (apiEl && apiEl.textContent === '—') apiEl.textContent = 'Offline';
+        if (loadEl && loadEl.textContent === '—') loadEl.textContent = 'Offline';
+      }
+    }
+
+    // ─── Overall Status Banner ───────────────────────────────────────
+    function updateOverallBanner(components) {
+      const hasOutage = components.some(c => c.status === 'outage');
+      const hasDegraded = components.some(c => c.status === 'degraded');
+      const dot = document.getElementById('status-dot');
+      const text = document.getElementById('status-banner-text');
+      const banner = document.getElementById('overall-status-banner');
+
+      if (hasOutage) {
+        dot.className = 'w-3 h-3 rounded-full bg-red-500';
+        text.textContent = 'Major Outage — some services are down';
+        banner.className = 'p-4 rounded-xl flex items-center gap-3 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20';
+        text.className = 'font-bold text-red-700 dark:text-red-400';
+      } else if (hasDegraded) {
+        dot.className = 'w-3 h-3 rounded-full bg-amber-500 animate-pulse';
+        text.textContent = 'Partial Degradation — performance may be affected';
+        banner.className = 'p-4 rounded-xl flex items-center gap-3 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20';
+        text.className = 'font-bold text-amber-700 dark:text-amber-400';
+      } else {
+        dot.className = 'w-3 h-3 rounded-full bg-primary animate-pulse';
+        text.textContent = 'All Systems Operational';
+        banner.className = 'p-4 rounded-xl flex items-center gap-3 bg-primary/10 border border-primary/20';
+        text.className = 'font-bold text-slate-700 dark:text-white';
+      }
+      document.getElementById('status-last-updated').textContent =
+        'Updated ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+
+    // ─── Fetch Supabase DB Status Data ──────────────────────────────
+    async function loadDatabaseData() {
+      if (!_sb) return;
+
+      try {
+        const ok = await requireAdminSession();
+        if (!ok) return;
+
+        // 1. Fetch Components
+        const { data: components, error: compErr } = await _sb
+          .from('system_components')
+          .select('*')
+          .order('name', { ascending: true });
+
+        if (!compErr && components && components.length > 0) {
+          renderComponents(components);
+          updateOverallBanner(components);
+        } else {
+          document.getElementById('component-health-list').innerHTML = `<div class="text-sm text-red-500 py-4 italic">No components found.</div>`;
+        }
+
+        // 2. Fetch Incidents
+        const { data: incidents, error: incErr } = await _sb
+          .from('system_incidents')
+          .select('*')
+          .order('incident_date', { ascending: false });
+
+        if (!incErr && incidents) {
+          renderIncidents(incidents);
+        } else {
+          document.getElementById('incident-history-list').innerHTML = `<div class="text-sm text-red-500 py-4 italic">No incidents found.</div>`;
+        }
+      } catch (e) {
+        console.error("DB Fetch Error:", e);
+      }
+    }
+
+    function renderComponents(components) {
+      const list = document.getElementById('component-health-list');
+      list.innerHTML = components.map(c => {
+        let titleColor = "text-[#4c9a66] dark:text-primary/60";
+        let capStatus = "Operational";
+        if (c.status === 'degraded') {
+          titleColor = "text-amber-600 dark:text-amber-500";
+          capStatus = "Degraded";
+        } else if (c.status === 'outage') {
+          titleColor = "text-red-500 dark:text-red-400";
+          capStatus = "Outage";
+        }
+
+        const barsHtml = (c.history_90d || []).slice(-30).map(status => {
+          let color = 'bg-primary';
+          if (status === 'degraded') color = 'bg-amber-400';
+          else if (status === 'outage') color = 'bg-red-500';
+          else if (status === 'maintenance') color = 'bg-primary/20';
+          return `<div class="w-1.5 h-6 ${color} rounded-full"></div>`;
+        }).join('');
+
+        return `
+          <div class="flex flex-col md:flex-row md:items-center gap-4 bg-white dark:bg-[#1a2e1f] border border-gray-100 dark:border-white/10 px-4 py-4 rounded-lg justify-between mb-2 shadow-sm">
+            <div class="flex items-center gap-4">
+              <div class="text-primary flex items-center justify-center rounded-lg bg-[#e7f3eb] dark:bg-white/5 shrink-0 size-12">
+                <span class="material-symbols-outlined">${escapeHtml(c.icon || 'settings')}</span>
+              </div>
+              <div class="flex flex-col justify-center">
+                <p class="text-[#0d1b12] dark:text-white text-base font-bold leading-normal line-clamp-1">${escapeHtml(c.name)}</p>
+                <p class="${titleColor} text-sm font-normal leading-normal">
+                  ${escapeHtml(capStatus)} • ${escapeHtml(c.uptime_percentage)}% uptime
+                </p>
+              </div>
+            </div>
+            <div class="flex flex-col items-end gap-2">
+              <div class="flex gap-[2px]">
+                ${barsHtml}
+              </div>
+              <p class="text-[10px] text-gray-400 uppercase font-bold">Past 30 Days (Sampled)</p>
+              <select onchange="updateComponentStatus('${c.id}', this.value)"
+                class="text-xs bg-slate-50 dark:bg-black/20 dark:text-white border border-slate-200 dark:border-white/10 rounded-lg px-2 py-1 font-semibold focus:ring-2 focus:ring-primary/30 outline-none cursor-pointer"
+                style="color: ${c.status === 'operational' ? '#059669' : c.status === 'degraded' ? '#d97706' : '#dc2626'}">
+                <option value="operational" ${c.status === 'operational' ? 'selected' : ''}>✅ Operational</option>
+                <option value="degraded"    ${c.status === 'degraded' ? 'selected' : ''}>⚠️ Degraded</option>
+                <option value="outage"      ${c.status === 'outage' ? 'selected' : ''}>🔴 Outage</option>
+              </select>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderIncidents(incidents) {
+      const list = document.getElementById('incident-history-list');
+      if (incidents.length === 0) {
+        list.innerHTML = `<div class="text-sm text-green-500 dark:text-primary py-4 italic">No recent incidents. All systems operational.</div>`;
+        return;
+      }
+
+      list.innerHTML = incidents.map(inc => {
+        let dotColor = 'bg-primary';
+        let tagColor = 'bg-primary/20 text-[#0d1b12] dark:text-primary';
+
+        if (inc.severity === 'maintenance' || inc.status === 'Scheduled' || inc.status === 'Investigating') {
+          dotColor = 'bg-amber-400';
+          tagColor = 'bg-amber-100 text-amber-800';
+        }
+        if (inc.severity === 'major') {
+          dotColor = 'bg-red-500';
+          tagColor = 'bg-red-100 text-red-800';
+        }
+
+        const dateStr = new Date(inc.incident_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+
+        return `
+          <div class="relative pl-8 border-l-2 border-primary/20">
+            <div class="absolute -left-[9px] top-0 size-4 ${dotColor} rounded-full border-2 border-white dark:border-background-dark"></div>
+            <h3 class="text-sm font-bold text-gray-500 uppercase tracking-widest mb-4">
+              ${escapeHtml(dateStr)}
+            </h3>
+            <div class="bg-white dark:bg-[#1a2e1f] border border-gray-100 dark:border-white/10 p-4 rounded-lg shadow-sm">
+              <div class="flex justify-between items-start mb-2">
+                <p class="font-bold text-lg dark:text-white">${escapeHtml(inc.title)}</p>
+                <span class="${tagColor} text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider">${escapeHtml(inc.status)}</span>
+              </div>
+              <p class="text-sm text-gray-600 dark:text-gray-400 mb-2 leading-relaxed">
+                ${escapeHtml(inc.description)}
+              </p>
+              ${inc.resolved_time_str ? `<p class="text-[12px] text-gray-400 dark:text-slate-500 italic">${escapeHtml(inc.resolved_time_str)}</p>` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // ─── Update Component Status ─────────────────────────────────────
+    async function updateComponentStatus(id, newStatus) {
+      if (!_sb) return;
+      try {
+        const ok = await requireAdminSession();
+        if (!ok) return;
+
+        // Update status
+        await _sb.from('system_components')
+          .update({ status: newStatus, updated_at: new Date().toISOString() })
+          .eq('id', id);
+        // Append to history_90d and trim to last 90
+        const { data } = await _sb.from('system_components').select('history_90d').eq('id', id).single();
+        const hist = [...(data?.history_90d || []), newStatus].slice(-90);
+        await _sb.from('system_components').update({ history_90d: hist }).eq('id', id);
+        loadDatabaseData();
+      } catch (e) {
+        console.error('Failed to update status:', e);
+      }
+    }
+
+    // ─── Incident Form Helpers ───────────────────────────────────────
+    function toggleIncidentForm() {
+      const form = document.getElementById('incident-form');
+      form.classList.toggle('hidden');
+      if (!form.classList.contains('hidden')) {
+        document.getElementById('inc-title').focus();
+      }
+    }
+
+    async function submitIncident() {
+      if (!_sb) return;
+      const ok = await requireAdminSession();
+      if (!ok) return;
+      const title = document.getElementById('inc-title').value.trim();
+      const desc = document.getElementById('inc-desc').value.trim();
+      if (!title || !desc) { alert('Title and description are required.'); return; }
+      if (title.length > 150 || desc.length > 2000) { alert('Incident title/description is too long.'); return; }
+      const obj = {
+        title,
+        description: desc,
+        status: document.getElementById('inc-status').value,
+        severity: document.getElementById('inc-severity').value,
+        incident_date: new Date().toISOString(),
+        resolved_time_str: document.getElementById('inc-resolved-str').value.trim() || null,
+      };
+      try {
+        const { error } = await _sb.from('system_incidents').insert(obj);
+        if (error) throw error;
+        // Reset form fields
+        ['inc-title', 'inc-desc', 'inc-resolved-str'].forEach(id => document.getElementById(id).value = '');
+        toggleIncidentForm();
+        loadDatabaseData();
+      } catch (e) {
+        alert('Failed to submit incident.');
+      }
+    }
+
+    // ─── Theme Toggle Logic ────────────────────────────────────────
+    const themeToggleBtn = document.getElementById("darkModeToggle");
+    const themeIcon = document.getElementById("darkIcon");
+    const html = document.documentElement;
+
+    function updateTheme(theme) {
+      if (theme === "dark") {
+        html.classList.add("dark");
+        html.classList.remove("light");
+        themeIcon.textContent = "dark_mode";
+      } else {
+        html.classList.add("light");
+        html.classList.remove("dark");
+        themeIcon.textContent = "light_mode";
+      }
+      localStorage.setItem("theme", theme);
+    }
+
+    themeToggleBtn.addEventListener("click", () => {
+      const currentTheme = html.classList.contains("dark") ? "light" : "dark";
+      updateTheme(currentTheme);
+    });
+
+    // Initialize Theme
+    const isInitialDark = document.documentElement.classList.contains("dark");
+    updateTheme(isInitialDark ? "dark" : "light");
+
+    // Initialize (auth-gated)
+    async function bootSystemStatus() {
+      const ok = await requireAdminSession();
+      if (!ok) return;
+      await fetchMetrics();
+      await loadDatabaseData();
+      setInterval(fetchMetrics, 5_000);
+      setInterval(loadDatabaseData, 60_000);
+      if (_sb) {
+        _sb.channel('system_status_realtime')
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'system_components' }, loadDatabaseData)
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'system_incidents' }, loadDatabaseData)
+          .subscribe();
+      }
+    }
+    document.addEventListener("DOMContentLoaded", bootSystemStatus);
+  </script>
+</body>
+
+</html>

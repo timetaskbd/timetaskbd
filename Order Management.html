@@ -1,0 +1,998 @@
+<!doctype html>
+<html class="light" lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <title>Time Task BD - Order Now</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400;500;600;700&amp;display=swap"
+    rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&amp;display=swap"
+    rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+    rel="stylesheet" />
+  <!-- Supabase Client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../supabase-client.js"></script>
+  <script src="../auth-guard.js"></script>
+  <script src="../navbar-auth.js"></script>
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            primary: "#13ec5b",
+            "primary-dark": "#0eb947",
+            "background-light": "#f6f8f6",
+            "background-dark": "#102216",
+            "footer-light": "#f0f2f0",
+            "footer-dark": "#1a2e20",
+            "brand-bg": "#f6f8f6",
+            "card-bg": "#ffffff",
+            "card-border": "#e2e8f0",
+            "accent-green": "#13ec5b",
+            "accent-green-hover": "#0dbd49",
+            "accent-green-dim": "rgba(19, 236, 91, 0.1)",
+            "primary-text": "#1a1c1e",
+            "secondary-text": "#64748b",
+            "input-bg": "#f8fafc",
+            "deep-navy": "#f1f5f9",
+            "text-main": "#111827",
+            "text-muted": "#4b5563",
+          },
+          fontFamily: {
+            display: ["Manrope", "sans-serif"],
+          },
+          borderRadius: {
+            DEFAULT: "0.25rem",
+            lg: "0.5rem",
+            xl: "0.75rem",
+            "2xl": "1rem",
+            "3xl": "1.5rem",
+            full: "9999px",
+          },
+        },
+      },
+    };
+  </script>
+  <style type="text/tailwindcss">
+    :root {
+        --brand-bg: #f6f8f6;
+        --card-bg: #ffffff;
+        --accent-green: #13ec5b;
+        --accent-glow: rgba(19, 236, 91, 0.15);
+        --glass-bg: rgba(255, 255, 255, 0.8);
+        --glass-border: rgba(19, 236, 91, 0.3);
+      }
+      .material-symbols-outlined {
+        font-variation-settings:
+          "FILL" 0,
+          "wght" 400,
+          "GRAD" 0,
+          "opsz" 24;
+      }
+      body {
+        font-family: "Manrope", sans-serif;
+        background-color: var(--brand-bg);
+        color: #1a1c1e;
+      }
+      .btn-primary {
+        background: linear-gradient(135deg, #13ec5b 0%, #0dbd49 100%);
+        transition: all 0.3s ease;
+        color: #ffffff;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+      }
+      .btn-primary:hover {
+        filter: brightness(1.05);
+        box-shadow: 0 10px 15px -3px rgba(19, 236, 91, 0.3);
+      }
+      .glass-panel {
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+      }
+      .no-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+      .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+      .status-badge {
+            @apply inline-flex items-center justify-center px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider min-w-[110px];
+        }
+    </style>
+</head>
+
+<body class="bg-background-light dark:bg-background-dark text-[#0d1b12] dark:text-white min-h-screen flex flex-col">
+  <!-- Universal Header from INDEX.Html -->
+  <header id="main-header"
+    class="sticky top-0 z-50 w-full bg-white/95 dark:bg-background-dark/95 backdrop-blur-md border-b border-[#e7f3eb] dark:border-white/10">
+    <div class="max-w-[1280px] mx-auto h-20 flex items-center justify-between">
+      <div class="flex items-center shrink-0">
+        <a class="flex items-center gap-2 group" href="#">
+          <div class="size-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
+            <span class="material-symbols-outlined text-2xl">update</span>
+          </div>
+          <span class="text-xl font-bold tracking-tight text-[#0d1b12] dark:text-white ml-1">Time Task <span
+              class="text-primary">BD</span></span>
+        </a>
+      </div>
+      <div class="flex items-center justify-end flex-grow gap-8 ml-auto">
+        <nav class="hidden lg:flex items-center gap-10">
+          <a class="text-sm font-medium hover:text-primary transition-colors text-[#0d1b12] dark:text-gray-300"
+            href="/Web Dashboard/Home_Page.html">Home</a>
+          <a class="text-sm font-medium hover:text-primary transition-colors text-[#0d1b12] dark:text-gray-300"
+            href="/Web Dashboard/Blog_Page.html">Blog</a>
+          <a class="text-sm font-medium hover:text-primary transition-colors text-[#0d1b12] dark:text-gray-300"
+            href="Video_Gallery_Page.html">Video Gallery
+          </a>
+          <a class="text-sm font-medium hover:text-primary transition-colors text-[#0d1b12] dark:text-gray-300"
+            href="/Web Dashboard/About_Page.html">About Us</a>
+          <a class="text-sm font-medium hover:text-primary transition-colors text-[#0d1b12] dark:text-gray-300"
+            href="/Web Dashboard/Contact_Page.html">Contact Us</a>
+        </nav>
+        <!-- Auth Container (Targeted by navbar-auth.js) -->
+        <div class="flex items-center gap-3" id="navbar-auth-container">
+          <!-- navbar-auth.js will inject Dark Mode and Profile here -->
+        </div>
+      </div>
+    </div>
+  </header>
+  <nav class="bg-white/50 border-b border-gray-100 backdrop-blur-sm">
+    <div class="max-w-[1280px] mx-auto w-full px-4">
+      <div class="flex gap-4 overflow-x-auto no-scrollbar px-3 py-3">
+        <a class="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold text-gray-600 hover:bg-white hover:shadow-sm transition-all"
+          href="/Buyer Dashboard/Buyer Index.html">
+          <span class="material-symbols-outlined text-[20px]">grid_view</span>
+          Dashboard
+        </a>
+        <a class="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold text-gray-600 hover:bg-white hover:shadow-sm transition-all"
+          href="/Buyer Dashboard/Wallet.html">
+          <span class="material-symbols-outlined text-[20px]">account_balance_wallet</span>
+          Wallet
+        </a>
+        <a class="flex items-center gap-2 px-6 py-2 rounded-xl text-sm font-bold bg-primary text-text-main shadow-lg shadow-primary/20 hover:bg-primary-dark transition-all scale-105"
+          href="/Buyer Dashboard/Order Management.html">
+          <span class="material-symbols-outlined text-[20px]">add_shopping_cart</span>
+          Order Now
+        </a>
+        <a class="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold text-gray-600 hover:bg-white hover:shadow-sm transition-all"
+          href="/Buyer Dashboard/Communication to Admin.html">
+          <span class="material-symbols-outlined text-[20px]">chat_bubble</span>
+          Inbox
+        </a>
+      </div>
+    </div>
+  </nav>
+  <!-- Universal Footer from INDEX.Html -->
+  <main class="max-w-[1280px] mx-auto px-6 py-10 flex-grow">
+    <section class="mb-14">
+      <div class="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
+        <div>
+          <h1 class="text-4xl font-black tracking-tight text-text-main">
+            Place a New Order
+          </h1>
+          <p class="text-text-muted mt-2 font-medium max-w-xl">
+            Scale your presence with premium verified accounts and
+            high-performance social assets.
+          </p>
+        </div>
+        <div
+          class="flex items-center gap-2 px-4 py-2 bg-white rounded-full border border-gray-100 text-xs font-bold text-gray-600 shadow-sm self-start">
+          <span class="size-2 bg-primary rounded-full animate-pulse"></span>
+          Infrastructure Live
+        </div>
+      </div>
+      <div class="glass-panel rounded-3xl overflow-hidden">
+        <div class="grid grid-cols-1 lg:grid-cols-12">
+          <div class="lg:col-span-8 p-8 md:p-12">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
+              <div class="space-y-3">
+                <label class="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                  <span class="material-symbols-outlined text-lg text-primary-dark">layers</span>
+                  Service Type
+                </label>
+                <select id="service-type-select"
+                  class="w-full rounded-2xl border-gray-100 bg-white h-16 px-5 focus:ring-primary focus:border-primary font-bold text-text-main appearance-none shadow-sm transition-all">
+                  <option value="" disabled selected>Select Service</option>
+                </select>
+              </div>
+              <div class="space-y-3">
+                <label class="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                  <span class="material-symbols-outlined text-lg text-primary-dark">token</span>
+                  Order Id
+                </label>
+                <div class="relative group">
+                  <input id="order-id-input"
+                    class="w-full rounded-2xl border-gray-100 bg-white h-16 pl-5 pr-32 font-mono font-bold text-text-main focus:ring-primary focus:border-primary shadow-sm"
+                    readonly="" value="" />
+                  <button id="generate-id-btn"
+                    class="absolute right-2 top-2 bottom-2 px-4 bg-gray-50 hover:bg-primary/10 hover:text-primary-dark text-gray-500 rounded-xl transition-all font-bold text-xs uppercase tracking-tight flex items-center gap-1 border border-gray-100">
+                    <span class="material-symbols-outlined text-sm">cached</span>
+                    Generate ID
+                  </button>
+                </div>
+              </div>
+              <div class="space-y-3">
+                <label class="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                  <span class="material-symbols-outlined text-lg text-primary-dark">analytics</span>
+                  Target Quantity
+                </label>
+                <input id="target-quantity-input"
+                  class="w-full rounded-2xl border-gray-100 bg-white h-16 px-5 focus:ring-primary focus:border-primary font-bold text-text-main shadow-sm"
+                  placeholder="e.g. 100" type="number" min="100" value="100" />
+              </div>
+              <div class="space-y-3">
+                <label class="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                  <span class="material-symbols-outlined text-lg text-primary-dark">sell</span>
+                  Market Value
+                </label>
+                <div
+                  class="h-16 bg-white border border-gray-100 rounded-2xl px-5 flex items-center font-black text-primary-dark shadow-sm">
+                  <span id="market-value-display">$0.00</span>
+                  <span class="text-xs text-gray-400 ml-2 font-bold uppercase tracking-widest">per unit</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div
+            class="lg:col-span-4 bg-[#0a0c0b] text-white p-8 md:p-12 flex flex-col justify-between border-l border-white/5">
+            <div>
+              <div class="flex items-center gap-2 mb-2">
+                <span class="size-2 bg-primary rounded-full"></span>
+                <h3 class="text-sm font-black uppercase tracking-[0.2em] text-gray-400">
+                  Order Checkout
+                </h3>
+              </div>
+              <div class="space-y-2">
+                <div class="flex justify-between items-center">
+                  <span class="text-sm font-medium text-gray-500">Per Unit Price</span>
+                  <span id="checkout-unit-price" class="font-bold text-lg text-white">$0.00</span>
+                </div>
+                <div class="flex justify-between items-center">
+                  <span class="text-sm font-medium text-gray-500">Service Subtotal</span>
+                  <span id="checkout-subtotal" class="font-bold text-lg text-white">$0.00</span>
+                </div>
+                <div class="pt-2 border-t border-white/10 flex justify-between items-end">
+                  <div class="flex flex-col">
+                    <span class="text-[10px] font-black uppercase tracking-[0.1em] text-primary mb-1">Total Due</span>
+                    <span id="checkout-total-due" class="text-5xl font-black">$0.00</span>
+                  </div>
+                </div>
+                <button id="confirm-order-btn"
+                  class="group w-full bg-primary hover:bg-primary-dark text-[#0a0c0b] font-black text-lg py-4 rounded-2xl shadow-[0_12px_40px_rgba(19,236,91,0.25)] transition-all flex items-center justify-center gap-3">
+                  Confirm Order
+                  <span
+                    class="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section class="mb-14">
+      <div class="flex items-center justify-between mb-8">
+        <div class="flex items-center gap-3">
+          <div class="size-12 bg-white rounded-2xl flex items-center justify-center border border-gray-100 shadow-sm">
+            <span class="material-symbols-outlined text-primary-dark text-3xl">insights</span>
+          </div>
+          <div>
+            <h2 class="text-2xl font-black text-text-main">
+              Platform Summary
+            </h2>
+            <p class="text-sm font-medium text-text-muted">
+              Consolidated overview of active assets and spends.
+            </p>
+          </div>
+        </div>
+      </div>
+      <div id="platform-summary-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <!-- Dynamic Platform Cards will be injected here -->
+        <div class="col-span-full text-center text-gray-500 py-8">Loading platform data...</div>
+      </div>
+    </section>
+    <section>
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
+        <div>
+          <h2 class="text-2xl font-black text-text-main">
+            Recent Order Activity
+          </h2>
+          <p class="text-sm font-medium text-text-muted mt-1">
+            Real-time status tracking for your latest deployments.
+          </p>
+        </div>
+        <div class="flex items-center gap-3">
+          <button
+            class="flex items-center gap-2 px-5 py-2.5 bg-white border border-gray-200 rounded-2xl text-sm font-bold text-gray-600 hover:bg-gray-50 hover:shadow-sm transition-all">
+            <span class="material-symbols-outlined text-lg">tune</span>
+            Adjust View
+          </button>
+        </div>
+      </div>
+      <div class="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse table-fixed min-w-[1000px]">
+            <thead>
+              <tr class="bg-gray-50/50 border-b border-gray-100">
+                <th
+                  class="w-[140px] px-8 py-6 text-[11px] font-black uppercase tracking-widest text-gray-400 text-left">
+                  Date
+                </th>
+                <th
+                  class="w-[150px] px-4 py-6 text-[11px] font-black uppercase tracking-widest text-gray-400 text-center">
+                  Status
+                </th>
+                <th
+                  class="w-[140px] px-4 py-6 text-[11px] font-black uppercase tracking-widest text-gray-400 text-center">
+                  Order ID
+                </th>
+                <th
+                  class="w-[160px] px-8 py-6 text-[11px] font-black uppercase tracking-widest text-gray-400 text-left">
+                  Target Platform
+                </th>
+                <th
+                  class="w-[160px] px-4 py-6 text-[11px] font-black uppercase tracking-widest text-gray-400 text-center">
+                  Units
+                </th>
+                <th
+                  class="w-[160px] px-4 py-6 text-[11px] font-black uppercase tracking-widest text-gray-400 text-center">
+                  Investment
+                </th>
+                <th
+                  class="w-[160px] px-4 py-6 text-[11px] font-black uppercase tracking-widest text-gray-400 text-center">
+                  Invoice</th>
+              </tr>
+            </thead>
+            <tbody id="recent-activity-tbody" class="divide-y divide-gray-50">
+            </tbody>
+          </table>
+        </div>
+        <div
+          class="px-8 py-6 bg-gray-50/50 border-t border-gray-100 flex flex-col sm:flex-row gap-6 justify-between items-center">
+          <p class="text-xs text-gray-400 font-black uppercase tracking-widest">
+            Showing 3 of 42 active campaigns
+          </p>
+          <div class="flex gap-2">
+            <button
+              class="size-10 flex items-center justify-center border border-gray-200 rounded-xl hover:bg-white text-gray-400 transition-all">
+              <span class="material-symbols-outlined text-lg">chevron_left</span>
+            </button>
+            <button
+              class="size-10 flex items-center justify-center bg-gray-900 text-white font-black text-xs rounded-xl shadow-md">
+              1
+            </button>
+            <button
+              class="size-10 flex items-center justify-center border border-gray-200 rounded-xl hover:bg-white text-gray-600 text-xs font-black transition-all">
+              2
+            </button>
+            <button
+              class="size-10 flex items-center justify-center border border-gray-200 rounded-xl hover:bg-white text-gray-400 transition-all">
+              <span class="material-symbols-outlined text-lg">chevron_right</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+  <footer class="bg-footer-light dark:bg-footer-dark pt-16 pb-8 border-t border-[#e7f3eb] dark:border-white/5">
+    <div class="max-w-[1280px] mx-auto">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
+        <div class="space-y-6">
+          <div class="flex items-center gap-3">
+            <div class="size-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
+              <span class="material-symbols-outlined text-2xl">update</span>
+            </div>
+            <span class="text-xl font-bold tracking-tight text-[#0d1b12] dark:text-white">Time Task <span
+                class="text-primary">BD</span></span>
+          </div>
+          <p class="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">
+            Empowering your digital productivity through innovative task
+            management and streamlined earning opportunities.
+          </p>
+          <div class="flex gap-4">
+            <a class="size-10 rounded-xl border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-black transition-all"
+              href="#">
+              <span class="material-symbols-outlined text-[20px]">public</span>
+            </a>
+            <a class="size-10 rounded-xl border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-black transition-all"
+              href="#">
+              <span class="material-symbols-outlined text-[20px]">share</span>
+            </a>
+            <a class="size-10 rounded-xl border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-black transition-all"
+              href="#">
+              <span class="material-symbols-outlined text-[20px]">alternate_email</span>
+            </a>
+          </div>
+        </div>
+        <div>
+          <h4 class="text-sm font-bold uppercase tracking-widest mb-6 text-[#0d1b12] dark:text-white">
+            Quick Links
+          </h4>
+          <ul class="space-y-4">
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="/Web Dashboard/Home_Page.html">Home</a>
+            </li>
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="/Web Dashboard/Blog_Page.html">Our Blog</a>
+            </li>
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="/Web Dashboard/About_Page.html">About Us</a>
+            </li>
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="/Web Dashboard/Contact_Page.html">Contact</a>
+            </li>
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="/Web Dashboard/Help_and_FAQ_Page.html">FAQ Support</a>
+            </li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="text-sm font-bold uppercase tracking-widest mb-6 text-[#0d1b12] dark:text-white">
+            Services &amp; Legal
+          </h4>
+          <ul class="space-y-4">
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="/Web Dashboard/About_Page.html">About Us</a>
+            </li>
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="/Web Dashboard/Privacy_Policy_Page.html">Privacy Policy</a>
+            </li>
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="/Web Dashboard/Terms_of_Service_Page.html">Terms of Service</a>
+            </li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="text-sm font-bold uppercase tracking-widest mb-6 text-[#0d1b12] dark:text-white">
+            Contact Info
+          </h4>
+          <ul class="space-y-4">
+            <li class="flex items-start gap-3">
+              <span class="material-symbols-outlined text-primary text-[20px]">mail</span>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary"
+                href="mailto:support@timetaskbd.com">support@timetaskbd.com</a>
+            </li>
+            <li class="flex items-start gap-3">
+              <span class="material-symbols-outlined text-primary text-[20px]">call</span>
+              <span class="text-sm text-gray-600 dark:text-gray-400">+880 1234 567890</span>
+            </li>
+            <li class="flex items-start gap-3">
+              <span class="material-symbols-outlined text-primary text-[20px]">location_on</span>
+              <span class="text-sm text-gray-600 dark:text-gray-400">Dhaka, Bangladesh</span>
+            </li>
+          </ul>
+          <div class="mt-8 pt-8 border-t border-[#e7f3eb] dark:border-white/5">
+            <p class="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-4">
+              Social Media
+            </p>
+            <div class="flex gap-4">
+              <a class="text-[#4c9a66] hover:text-primary transition-colors" href="#">
+                <svg class="size-6" fill="currentColor" viewBox="0 0 24 24">
+                  <path
+                    d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z">
+                  </path>
+                </svg>
+              </a>
+              <a class="text-[#4c9a66] hover:text-primary transition-colors" href="#">
+                <svg class="size-6" fill="currentColor" viewBox="0 0 24 24">
+                  <path
+                    d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.84 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z">
+                  </path>
+                </svg>
+              </a>
+              <a class="text-[#4c9a66] hover:text-primary transition-colors" href="#">
+                <svg class="size-6" fill="currentColor" viewBox="0 0 24 24">
+                  <path
+                    d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z">
+                  </path>
+                </svg>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div
+        class="pt-8 border-t border-[#e7f3eb] dark:border-white/5 flex flex-col md:flex-row items-center justify-between gap-4">
+        <p class="text-sm text-gray-500 dark:text-gray-400">
+          Copyright © 2024
+          <span class="text-[#0d1b12] dark:text-white font-semibold">Time Task BD</span>. All rights reserved.
+        </p>
+        <p class="text-sm text-gray-500 dark:text-gray-400">
+          Developed with <span class="text-primary font-bold">★</span> by
+          <a class="text-primary font-medium hover:underline" href="#">Digital Dynamics Agency</a>
+        </p>
+      </div>
+    </div>
+  </footer>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      // --- Notification Dropdown Logic ---
+      const notifBtn = document.getElementById("notificationBtn");
+      const notifDropdown = document.getElementById("notificationDropdown");
+
+      if (notifBtn && notifDropdown) {
+        // ১. বাটনে ক্লিক করলে ড্রপডাউন দেখা যাবে বা লুকিয়ে যাবে (Toggle)
+        notifBtn.addEventListener("click", (e) => {
+          e.stopPropagation(); // বাটনে ক্লিক করলে যেন নিচের ডকুমেন্ট ক্লিক লজিক কাজ না করে
+          notifDropdown.classList.toggle("hidden");
+        });
+
+        // ২. ড্রপডাউন এর বাইরে স্ক্রিনের কোথাও ক্লিক করলে ড্রপডাউন বন্ধ হয়ে যাবে
+        document.addEventListener("click", (e) => {
+          // যদি ক্লিক ড্রপডাউনের ভেতরে না হয় এবং ক্লিকটি বাটনের ওপরেও না হয়
+          if (!notifDropdown.contains(e.target) && e.target !== notifBtn) {
+            notifDropdown.classList.add("hidden");
+          }
+        });
+      }
+
+      // ৩. কিবোর্ডের Escape বাটন চাপলে ড্রপডাউন বন্ধ হবে
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && notifDropdown) {
+          notifDropdown.classList.add("hidden");
+          // আপনার যদি মডাল ফাংশন থাকে তবে সেটিও এখানে কল করতে পারেন
+          if (typeof closeModal === "function") {
+            closeModal();
+          }
+        }
+      });
+    });
+  </script>
+  <script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+
+    // Use the window.supabaseClient if available, otherwise fallback to creating one (though auth-guard.js should have handled it)
+    // We'll rely on window.supabaseClient from the previously loaded script
+    const _supabase = window.supabaseClient;
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      // Elements
+      const serviceSelect = document.getElementById("service-type-select");
+      const orderIdInput = document.getElementById("order-id-input");
+      const generateIdBtn = document.getElementById("generate-id-btn");
+      const quantityInput = document.getElementById("target-quantity-input");
+      const marketValueDisplay = document.getElementById("market-value-display");
+      const checkoutUnitPrice = document.getElementById("checkout-unit-price");
+      const checkoutSubtotal = document.getElementById("checkout-subtotal");
+      const checkoutTotalDue = document.getElementById("checkout-total-due");
+      const confirmBtn = document.getElementById("confirm-order-btn");
+      const activityTableBody = document.getElementById("recent-activity-tbody");
+      const platformSummaryContainer = document.getElementById("platform-summary-container");
+
+      let currentPrice = 0;
+      let currentUser = null;
+
+      // 1. Initialize & Fetch User
+      async function init() {
+        const { data: { session } } = await _supabase.auth.getSession();
+        if (session) {
+          currentUser = session.user;
+          // Fetch profile for balance if needed (not displayed in this specific UI part but needed for logic)
+          // The balance might be displayed in the navbar (handled by navbar-auth.js)
+        }
+
+        await loadMarketAssets();
+        await loadRecentOrders();
+        await loadPlatformSummary();
+        generateOrderId(); // Initial ID
+      }
+
+      // 2. Load Market Assets
+      async function loadMarketAssets() {
+        // Source of truth (Admin): market_assets
+        // Only show assets that are Active + Market Open
+        const { data, error } = await _supabase
+          .from('market_assets')
+          .select('id, platform_name, current_price, market_status, is_active')
+          .eq('is_active', true)
+          .eq('market_status', 'Open')
+          .order('platform_name');
+
+        if (error) {
+          console.error("Error loading assets:", error);
+          serviceSelect.innerHTML = '<option value="" disabled selected>Failed to load services</option>';
+          return;
+        }
+
+        serviceSelect.innerHTML = '<option value="" disabled selected>Select Service</option>';
+
+        (data || []).forEach(asset => {
+          const name = asset.platform_name;
+          const price = Number(asset.current_price);
+          if (!name || !Number.isFinite(price)) return;
+
+          const option = document.createElement("option");
+          option.value = name;
+          option.dataset.price = String(price);
+          option.textContent = `${name} - ৳${price.toFixed(2)}/unit`;
+          serviceSelect.appendChild(option);
+        });
+
+        // If admin turned everything off, show a helpful empty state
+        if (!data || data.length === 0) {
+          serviceSelect.innerHTML = '<option value="" disabled selected>No open services available</option>';
+        }
+      }
+
+      // 3. Form Logic
+      function generateOrderId() {
+        const randomId = Math.floor(10000 + Math.random() * 90000);
+        orderIdInput.value = `OID-${randomId}`;
+      }
+
+      function updateCalculations() {
+        const qty = parseInt(quantityInput.value) || 0;
+        const selectedOption = serviceSelect.options[serviceSelect.selectedIndex];
+
+        if (selectedOption && !selectedOption.disabled) {
+          currentPrice = parseFloat(selectedOption.dataset.price) || 0;
+        } else {
+          currentPrice = 0;
+        }
+
+        const total = qty * currentPrice;
+
+        // Update UI
+        marketValueDisplay.textContent = `৳${currentPrice.toFixed(2)}`;
+        checkoutUnitPrice.textContent = `৳${currentPrice.toFixed(2)}`;
+        checkoutSubtotal.textContent = `৳${total.toFixed(2)}`;
+        checkoutTotalDue.textContent = `৳${total.toFixed(2)}`;
+      }
+
+      // Events
+      generateIdBtn.addEventListener("click", generateOrderId);
+      serviceSelect.addEventListener("change", updateCalculations);
+      quantityInput.addEventListener("input", updateCalculations);
+
+      // 4. Submit Order
+      confirmBtn.addEventListener("click", async () => {
+        if (!currentUser) {
+          alert("Please login first.");
+          return;
+        }
+
+        const platform = serviceSelect.value;
+        const quantity = parseInt(quantityInput.value);
+        const totalCost = parseFloat(checkoutTotalDue.textContent.replace(/[^\d.]/g, ''));
+        const orderId = orderIdInput.value;
+
+        if (!platform) {
+          alert("Please select a service.");
+          return;
+        }
+        if (!quantity || quantity < 100) {
+          alert("Minimum quantity is 100.");
+          return;
+        }
+
+        confirmBtn.disabled = true;
+        confirmBtn.innerHTML = `Processing...`;
+
+        try {
+          const { data, error } = await _supabase.rpc('create_order_deduct_balance', {
+            p_order_id: orderId,
+            p_platform: platform,
+            p_quantity: quantity,
+            p_price_per_unit: currentPrice,
+            p_total_cost: totalCost
+          });
+
+          if (error) throw error;
+
+          if (data && data.success) {
+            alert("Order placed successfully!");
+            // Reset form
+            quantityInput.value = 100;
+            serviceSelect.selectedIndex = 0;
+            generateOrderId();
+            updateCalculations();
+
+            // Refresh Data
+            await loadRecentOrders();
+            await loadPlatformSummary();
+
+            // Refresh Balance (if navbar exposes a function, otherwise reload or wait for polling)
+            if (window.updateUserBalance) window.updateUserBalance();
+
+          } else {
+            alert("Failed: " + (data?.message || "Unknown error"));
+          }
+
+        } catch (err) {
+          console.error(err);
+          alert("Error placing order: " + err.message);
+        } finally {
+          confirmBtn.disabled = false;
+          confirmBtn.innerHTML = `Confirm Order <span class="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>`;
+        }
+      });
+
+      // 5. Load Recent Orders
+      async function loadRecentOrders() {
+        if (!currentUser) return;
+
+        // Fetch orders
+        const { data: orders, error: ordersError } = await _supabase
+          .from('orders')
+          .select('*')
+          .eq('buyer_id', currentUser.id)
+          .order('created_at', { ascending: false })
+          .limit(20);
+
+        if (ordersError) {
+          console.error(ordersError);
+          return;
+        }
+
+        // Fetch market assets for icons
+        const { data: assets } = await _supabase
+          .from('market_assets')
+          .select('platform_name, icon_svg');
+
+        const iconMap = {};
+        if (assets) {
+          assets.forEach(a => { iconMap[a.platform_name] = a.icon_svg; });
+        }
+
+        // Fetch invoices for this buyer to build a map: order_id → invoice
+        const { data: invoices } = await _supabase
+          .from('invoices')
+          .select('order_id, invoice_id, sent_to_buyer')
+          .eq('buyer_id', currentUser.id);
+
+        const invoiceMap = {};
+        if (invoices) {
+          invoices.forEach(inv => { invoiceMap[inv.order_id] = inv; });
+        }
+
+        if (!orders || orders.length === 0) {
+          activityTableBody.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-gray-500">No orders found.</td></tr>`;
+          return;
+        }
+
+        activityTableBody.innerHTML = orders.map(order => {
+          const date = new Date(order.created_at).toLocaleDateString();
+          const time = new Date(order.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+          let statusClass = "bg-gray-100 text-gray-600";
+          if (order.status === 'completed') statusClass = "bg-primary/15 text-primary-dark";
+          else if (order.status === 'processing') statusClass = "bg-blue-50 text-blue-600";
+          else if (order.status === 'pending') statusClass = "bg-amber-50 text-amber-600";
+          else if (order.status === 'cancelled') statusClass = "bg-red-50 text-red-600";
+
+          const iconSvg = iconMap[order.platform] || '<span class="material-symbols-outlined text-gray-500 text-lg">public</span>';
+
+          // ── Invoice column logic ──────────────────────────────────
+          const inv = invoiceMap[order.order_id];
+          let invoiceColHtml;
+
+          if (inv && inv.sent_to_buyer) {
+            // Admin sent invoice → active download button
+            invoiceColHtml = `
+              <a href="/Admin Dashboard/Invoice Demo.html?invoice_id=${inv.invoice_id}" target="_blank"
+                class="inline-flex items-center gap-2 px-3 py-1.5 bg-primary/10 hover:bg-primary text-primary-dark hover:text-gray-900 rounded-xl transition-all border border-primary/20 group/btn">
+                <span class="material-symbols-outlined text-lg">download</span>
+                <span class="text-[10px] font-black uppercase tracking-widest">Get Invoice</span>
+              </a>`;
+          } else if (inv) {
+            // Invoice row exists but not yet sent → warning icon
+            invoiceColHtml = `
+              <span title="Invoice pending — waiting for admin to send"
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 text-amber-600 rounded-xl border border-amber-200 text-[10px] font-black uppercase tracking-widest cursor-default">
+                <span class="material-symbols-outlined text-base">error_outline</span>
+                Pending
+              </span>`;
+          } else {
+            // No invoice row yet
+            invoiceColHtml = `
+              <span class="inline-flex items-center gap-1 text-gray-300 text-[10px] font-bold uppercase px-2">
+                <span class="material-symbols-outlined text-base">remove</span>
+              </span>`;
+          }
+
+          return `
+                <tr class="hover:bg-gray-50/40 transition-colors group">
+                  <td class="px-8 py-7 align-middle">
+                    <div class="flex flex-col min-w-[90px]">
+                      <p class="text-sm font-black text-text-main whitespace-nowrap">${date}</p>
+                      <p class="text-[10px] text-gray-400 font-bold uppercase mt-1">${time}</p>
+                    </div>
+                  </td>
+                  <td class="px-4 py-7 align-middle text-center">
+                    <span class="status-badge ${statusClass} mx-auto capitalize">${order.status}</span>
+                  </td>
+                  <td class="px-4 py-7 align-middle text-center">
+                    <span class="text-sm font-mono font-bold text-gray-500 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100 inline-block">${order.order_id}</span>
+                  </td>
+                  <td class="px-8 py-7 align-middle">
+                    <div class="flex items-center gap-3">
+                      <div class="size-8 rounded-lg bg-zinc-100 flex items-center justify-center overflow-hidden p-1.5">
+                        ${iconSvg.startsWith('<svg') ? iconSvg.replace('class="', 'class="w-full h-full ') : iconSvg}
+                      </div>
+                      <span class="text-sm font-bold text-text-main truncate">${order.platform}</span>
+                    </div>
+                  </td>
+                  <td class="px-4 py-7 align-middle text-center">
+                    <p class="text-sm font-bold text-text-main">${order.quantity}</p>
+                  </td>
+                  <td class="px-4 py-7 align-middle text-center">
+                    <p class="text-sm font-black text-text-main">৳${Number(order.total_cost || 0).toFixed(2)}</p>
+                  </td>
+                  <td class="px-4 py-7 align-middle text-center">
+                    ${invoiceColHtml}
+                  </td>
+                </tr>
+                `;
+        }).join('');
+      }
+
+
+      // 6. Platform Summary Cards
+      async function loadPlatformSummary() {
+        if (!currentUser) return;
+
+        // Fetch orders
+        const { data: orders, error: ordersError } = await _supabase
+          .from('orders')
+          .select('*')
+          .eq('buyer_id', currentUser.id);
+
+        if (ordersError || !orders) return;
+
+        // Fetch tasks for this buyer to compute progress reliably even if orders.completed_quantity is stale/missing
+        // Tasks are created by admin_push_order_to_workers with created_by = buyer_id
+        const { data: tasks, error: tasksError } = await _supabase
+          .from('tasks')
+          .select('order_id, total_units, remaining_units, status, updated_at')
+          .eq('created_by', currentUser.id);
+
+        // Fetch market assets for icons
+        const { data: assets, error: assetsError } = await _supabase
+          .from('market_assets')
+          .select('platform_name, icon_svg'); // Assuming column names
+
+        // Create a map for icons: platform_name -> icon_svg
+        const iconMap = {};
+        if (assets) {
+          assets.forEach(a => {
+            iconMap[a.platform_name] = a.icon_svg;
+          });
+        }
+
+        // Group by platform
+        const summary = {};
+        orders.forEach(order => {
+          if (!summary[order.platform]) {
+            summary[order.platform] = {
+              name: order.platform,
+              total_qty: 0,
+              total_spend: 0,
+              active_order: null
+            };
+          }
+          summary[order.platform].total_qty += order.quantity;
+          summary[order.platform].total_spend += order.total_cost;
+
+          // Find active order (processing) for progress bar
+          if (order.status === 'processing') {
+            // Assuming one active order per platform or taking the latest
+            summary[order.platform].active_order = order;
+          }
+        });
+
+        const taskByOrderId = new Map();
+        (tasks || []).forEach(t => {
+          if (!t?.order_id) return;
+          // keep latest row if duplicates exist
+          taskByOrderId.set(t.order_id, t);
+        });
+
+        const html = Object.values(summary).map(item => {
+          let progress = 0;
+          if (item.active_order) {
+            const q = Number(item.active_order.quantity) || 0;
+            const completedQty = Number(item.active_order.completed_quantity);
+
+            if (Number.isFinite(completedQty) && q > 0) {
+              progress = Math.round((completedQty / q) * 100);
+            } else {
+              // Fallback: compute from tasks table by order_id
+              const t = taskByOrderId.get(item.active_order.order_id);
+              const totalUnits = Number(t?.total_units) || q;
+              const remainingUnits = Number(t?.remaining_units);
+              if (totalUnits > 0 && Number.isFinite(remainingUnits)) {
+                progress = Math.round(((totalUnits - remainingUnits) / totalUnits) * 100);
+              }
+            }
+          }
+          if (!Number.isFinite(progress)) progress = 0;
+          progress = Math.max(0, Math.min(100, progress));
+
+          // Use fetched icon or fallback
+          const iconSvg = iconMap[item.name] || '<span class="material-symbols-outlined">public</span>';
+
+          return `
+                <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-all group">
+                    <div class="flex justify-between items-start mb-6">
+                        <div class="size-12 bg-gray-50 rounded-2xl flex items-center justify-center text-2xl group-hover:bg-primary/10 group-hover:text-primary transition-colors overflow-hidden p-2">
+                            ${iconSvg.startsWith('<svg') ? iconSvg.replace('class="', 'class="w-full h-full ') : iconSvg}
+                        </div>
+                        <span class="px-3 py-1 bg-gray-50 rounded-lg text-[10px] font-black uppercase tracking-widest text-gray-400">
+                            ${item.name}
+                        </span>
+                    </div>
+                    <div class="space-y-1 mb-6">
+                        <h3 class="text-3xl font-black text-text-main">${item.total_qty.toLocaleString()}</h3>
+                        <p class="text-xs font-bold text-gray-400 uppercase tracking-wide">Total Units Acquired</p>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="flex justify-between text-xs font-bold">
+                            <span class="text-gray-500">Active Progress</span>
+                            <span class="text-primary-dark">${progress}%</span>
+                        </div>
+                        <div class="h-2 bg-gray-100 rounded-full overflow-hidden">
+                            <div class="h-full bg-primary rounded-full transition-all duration-1000" style="width: ${progress}%"></div>
+                        </div>
+                        <div class="pt-4 border-t border-gray-50 flex justify-between items-center">
+                            <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total Spend</span>
+                            <span class="text-sm font-black text-text-main">৳${Number(item.total_spend || 0).toFixed(2)}</span>
+                        </div>
+                    </div>
+                </div>
+                `;
+        }).join('');
+
+        if (html) {
+          platformSummaryContainer.innerHTML = html;
+        } else {
+          platformSummaryContainer.innerHTML = '<div class="col-span-full text-center text-gray-400 py-8">No platform activity yet.</div>';
+        }
+      }
+
+      init();
+
+      // Live update service list when Admin changes market assets
+      _supabase
+        .channel('buyer_market_assets_live')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'market_assets' }, async () => {
+          const prev = serviceSelect.value;
+          await loadMarketAssets();
+          // Preserve selection if still available
+          if (prev) {
+            const exists = [...serviceSelect.options].some(o => o.value === prev);
+            if (exists) serviceSelect.value = prev;
+          }
+          updateCalculations();
+        })
+        .subscribe();
+
+      // Live update orders + task progress for this buyer (units/progress)
+      _supabase
+        .channel('buyer_orders_live')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'orders', filter: `buyer_id=eq.${currentUser?.id}` }, async () => {
+          await loadRecentOrders();
+          await loadPlatformSummary();
+        })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks', filter: `created_by=eq.${currentUser?.id}` }, async () => {
+          await loadPlatformSummary();
+        })
+        .subscribe();
+    });
+  </script>
+</body>
+
+</html>

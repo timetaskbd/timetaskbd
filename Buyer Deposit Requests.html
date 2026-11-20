@@ -1,0 +1,1032 @@
+<!doctype html>
+<html class="light" lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <title>Admin Panel - Time Task BD</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+    rel="stylesheet" />
+  <script id="tailwind-config">
+    // Immediately apply theme to avoid flash
+    (function () {
+      const theme = localStorage.getItem("theme");
+      if (
+        theme === "dark" ||
+        (!theme && window.matchMedia("(prefers-color-scheme: dark)").matches)
+      ) {
+        document.documentElement.classList.add("dark");
+      } else {
+        document.documentElement.classList.remove("dark");
+      }
+    })();
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            primary: "#13ec5b",
+            "background-light": "#f6f8f6",
+            "background-dark": "#0d1b12",
+            "sidebar-deep": "#102216",
+            "accent-green": "#13ec5b",
+          },
+          fontFamily: {
+            display: ["Manrope"],
+          },
+          borderRadius: {
+            DEFAULT: "0.25rem",
+            lg: "0.5rem",
+            xl: "0.75rem",
+            "2xl": "1rem",
+            full: "9999px",
+          },
+        },
+      },
+    };
+  </script>
+  <style type="text/tailwindcss">
+    @layer base {
+        body {
+          @apply font-display bg-background-light dark:bg-background-dark text-slate-900 dark:text-white;
+        }
+      }
+
+      /* Sidebar Transitions */
+      .sidebar-transition {
+        @apply transition-all duration-300 ease-in-out;
+      }
+
+      /* Active Tab Notch Logic */
+      .sidebar-item-active {
+        @apply bg-background-light text-sidebar-deep font-bold relative !important;
+        border-radius: 40px 0 0 40px;
+        margin-left: 10px;
+        width: calc(100% - 10px) !important;
+      }
+
+      .sidebar-item-active::before {
+        content: "";
+        position: absolute;
+        right: 0;
+        top: -40px;
+        width: 40px;
+        height: 40px;
+        background: transparent;
+        border-radius: 50%;
+        box-shadow: 20px 20px 0 0 #f6f8f6;
+        pointer-events: none;
+      }
+      .dark .sidebar-item-active::before {
+        box-shadow: 20px 20px 0 0 #0d1b12;
+      }
+
+      .sidebar-item-active::after {
+        content: "";
+        position: absolute;
+        right: 0;
+        bottom: -40px;
+        width: 40px;
+        height: 40px;
+        background: transparent;
+        border-radius: 50%;
+        box-shadow: 20px -20px 0 0 #f6f8f6;
+        pointer-events: none;
+      }
+      .dark .sidebar-item-active::after {
+        box-shadow: 20px -20px 0 0 #0d1b12;
+      }
+
+      .dark .sidebar-item-active {
+        @apply bg-background-dark text-white !important;
+      }
+
+      .sidebar-item {
+        @apply flex items-center py-4 text-white/70 hover:text-white transition-all duration-200 cursor-pointer w-full relative;
+      }
+
+      .sidebar-item .material-symbols-outlined {
+        @apply font-light text-[24px];
+      }
+
+      .sidebar-item-active .material-symbols-outlined {
+        @apply text-sidebar-deep;
+      }
+
+      .dark .sidebar-item-active .material-symbols-outlined {
+        @apply text-primary;
+      }
+
+      /*.sidebar-item-active span {
+        @apply text-sidebar-deep;
+      }*/
+
+      /* Tooltip Logic - Show only when collapsed */
+      .nav-tooltip {
+        @apply invisible absolute left-full ml-4 px-2 py-1 bg-sidebar-deep text-white text-[10px] rounded whitespace-nowrap opacity-0 transition-opacity z-50 pointer-events-none;
+      }
+
+      /* Collapsed Sidebar States */
+      .sidebar-collapsed {
+        @apply w-20 pl-0;
+      }
+      .sidebar-collapsed .logo-text,
+      .sidebar-collapsed .item-text,
+      .sidebar-collapsed .menu-label,
+      .sidebar-collapsed .system-card-text {
+        @apply hidden;
+      }
+      .sidebar-collapsed .sidebar-item {
+        @apply justify-center px-0;
+      }
+      .sidebar-collapsed .sidebar-item:hover .nav-tooltip {
+        @apply visible opacity-100;
+      }
+      .sidebar-collapsed .sidebar-header {
+        @apply px-0 justify-center;
+      }
+
+      /* Custom Scrollbar */
+      .custom-scrollbar::-webkit-scrollbar {
+        width: 4px;
+      }
+      .custom-scrollbar::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+      }
+
+      .active-tab-nav {
+        @apply bg-primary text-slate-900 dark:text-white shadow-lg shadow-primary/20;
+      }
+    </style>
+</head>
+
+<body class="flex min-h-screen overflow-hidden">
+  <!-- Sidebar -->
+  <aside id="mainSidebar"
+    class="w-72 bg-sidebar-deep flex-shrink-0 flex flex-col h-screen sticky top-0 sidebar-transition pl-2">
+    <!-- Logo Section -->
+    <div class="sidebar-header p-6 pb-12 flex items-center gap-3 transition-all">
+      <div
+        class="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20 flex-shrink-0">
+        <span class="material-symbols-outlined text-sidebar-deep font-bold text-2xl">update</span>
+      </div>
+      <div class="flex flex-col logo-text overflow-hidden">
+        <span class="text-white font-extrabold text-lg leading-tight tracking-tight whitespace-nowrap">Time Task
+          BD</span>
+        <span class="text-primary/60 text-[10px] font-bold uppercase tracking-widest whitespace-nowrap">Admin
+          Control</span>
+      </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="flex-1">
+      <div class="px-8 mb-4 menu-label">
+        <p class="text-[10px] font-bold text-white/40 uppercase tracking-[0.2em]">
+          Main Menu
+        </p>
+      </div>
+
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Admin Index.html">
+        <span class="material-symbols-outlined">dashboard</span>
+        <span class="text-sm item-text ml-4">Dashboard</span>
+        <span class="nav-tooltip">Dashboard</span>
+      </a>
+
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/System Health.html">
+        <span class="material-symbols-outlined">monitor_heart</span>
+        <span class="text-sm item-text ml-4">System Monitoring</span>
+        <span class="nav-tooltip">Security & System Monitoring</span>
+      </a>
+
+      <a class="sidebar-item sidebar-item-active px-8 group" href="/Admin Dashboard/KYC Review.html">
+        <span class="material-symbols-outlined">manage_accounts</span>
+        <span class="text-sm item-text ml-4">Management</span>
+        <span class="nav-tooltip">User & Buyer Management</span>
+      </a>
+
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/User Analytics.html">
+        <span class="material-symbols-outlined">analytics</span>
+        <span class="text-sm item-text ml-4">Analytics Section</span>
+        <span class="nav-tooltip">Analytics Section</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/User Referral Tree.html">
+        <span class="material-symbols-outlined">hub</span>
+        <span class="text-sm item-text ml-4">Referral System</span>
+        <span class="nav-tooltip">Referral System</span>
+      </a>
+
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Market Asset Price.html">
+        <span class="material-symbols-outlined">trending_up</span>
+        <span class="text-sm item-text ml-4">Market Asset Prices</span>
+        <span class="nav-tooltip">Market Asset Prices</span>
+      </a>
+
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Live Support.html">
+        <span class="material-symbols-outlined">support_agent</span>
+        <span class="text-sm item-text ml-4">Live Support</span>
+        <span class="nav-tooltip">Live Support</span>
+      </a>
+
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Buyer Communication.html">
+        <span class="material-symbols-outlined">forum</span>
+        <span class="text-sm item-text ml-4">Communication</span>
+        <span class="nav-tooltip">Communication</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/System Announcemeeent.html">
+        <span class="material-symbols-outlined">forum</span>
+        <span class="text-sm item-text ml-4">System Announcement</span>
+        <span class="nav-tooltip">System Announcement</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Invoice Management.html">
+        <span class="material-symbols-outlined">description</span>
+        <span class="text-sm item-text ml-4">Invoice Management</span>
+        <span class="nav-tooltip">Invoice Management</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Create Content.html">
+        <span class="material-symbols-outlined">edit_note</span>
+        <span class="text-sm item-text ml-4">Content Management</span>
+        <span class="nav-tooltip">Content Management</span>
+      </a>
+    </nav>
+
+    <div class="px-6 py-8">
+      <button
+        class="w-full h-10 flex items-center justify-center bg-primary text-sidebar-deep font-bold text-xs rounded-lg hover:brightness-110 transition-all shadow-lg shadow-primary/10 group relative">
+        <span class="material-symbols-outlined text-[20px] system-icon">logout</span>
+        <span class="ml-2 system-card-text">Logout</span>
+        <span class="nav-tooltip !left-full !ml-6">Logout</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main Content wrapper -->
+  <div class="flex-1 flex flex-col h-screen overflow-hidden bg-background-light dark:bg-background-dark">
+    <!-- Header -->
+    <header
+      class="h-20 bg-white dark:bg-background-dark border-b border-slate-100 dark:border-white/10 px-6 flex items-center justify-between flex-shrink-0 z-40">
+      <div class="flex items-center gap-6">
+        <button id="sidebarToggle"
+          class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 hover:text-sidebar-deep dark:hover:text-primary hover:bg-primary/10 transition-all">
+          <span class="material-symbols-outlined">menu</span>
+        </button>
+        <div class="relative w-96 group">
+          <span
+            class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 group-focus-within:text-sidebar-deep dark:group-focus-within:text-primary transition-colors">search</span>
+          <input
+            class="w-full bg-slate-100 dark:bg-sidebar-deep border border-transparent dark:border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-sm dark:text-white focus:ring-2 focus:ring-primary/20 transition-all placeholder:dark:text-slate-500"
+            placeholder="Search system records..." type="text" />
+        </div>
+      </div>
+
+      <div class="flex items-center gap-6">
+        <div class="flex items-center gap-2">
+          <button
+            class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 hover:text-sidebar-deep dark:hover:text-primary hover:bg-primary/10 transition-all relative">
+            <span class="material-symbols-outlined">notifications</span>
+            <span
+              class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-slate-900"></span>
+          </button>
+          <button id="themeToggle"
+            class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 hover:text-sidebar-deep dark:hover:text-primary hover:bg-primary/10 transition-all">
+            <span class="material-symbols-outlined">light_mode</span>
+          </button>
+        </div>
+        <div class="h-10 w-px bg-slate-200 dark:bg-white/10"></div>
+        <div class="flex items-center gap-3 cursor-pointer group">
+          <div class="text-right">
+            <p class="text-sm font-bold text-slate-900 dark:text-white group-hover:text-primary transition-colors">
+              Super Admin
+            </p>
+            <p class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-tighter">
+              System Manager
+            </p>
+          </div>
+          <div
+            class="w-12 h-12 rounded-xl border-2 border-primary/20 p-0.5 overflow-hidden group-hover:border-primary transition-all">
+            <img alt="Admin Profile" class="w-full h-full object-cover rounded-lg"
+              src="https://lh3.googleusercontent.com/aida-public/AB6AXuDI3q59cS__AXyYcqFQtKZ2-e__roEJ3Cic28K7cd-6tYYxzLfpTArNsAJE3UypttzDIKS6SoNy85-jDLh0ZMbLqXr0NEEjrbCPSgoCJZyYc4W89P8djmlf34I_NEoa2vfl5IS3jHwLSZZ6lgtwguAje5Lv9h9RbZ2fJqb36M_tmZc-iJY-XxAXsCDxVyU1bONcO3AV5LZgB1o5wURKpB9w2XEN6iWAILVT7fIzOkl2pQ4lJb5WxYgkvuNIlKakHZWN1e4bzfo25zYy" />
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Sub Navigation Tabs -->
+    <nav
+      class="sticky top-0 bg-white/50 dark:bg-background-dark/50 border-b border-gray-100 dark:border-white/5 backdrop-blur-sm relative z-30 rounded-l-[30px] ml-[110px]">
+      <div class="mx-auto w-full px-4">
+        <div id="tabsContainer" class="flex gap-4 overflow-x-auto no-scrollbar py-3">
+          <a class="flex items-center gap-2 px-4 py-2 rounded-[30px] text-sm font-semibold text-gray-700 dark:text-slate-400 hover:bg-white dark:hover:bg-white/5 hover:shadow-sm whitespace-nowrap transition-all"
+            href="/Admin Dashboard/KYC Review.html">
+            <span class="material-symbols-outlined text-[20px]">shield_person</span>
+            KYC Review
+          </a>
+          <a class="flex items-center gap-2 px-4 py-2 rounded-[30px] text-sm font-semibold text-gray-700 dark:text-slate-400 hover:bg-white dark:hover:bg-white/5 hover:shadow-sm whitespace-nowrap transition-all"
+            href="/Admin Dashboard/User Access.html">
+            <span class="material-symbols-outlined text-[20px]">manage_accounts</span>
+            User Access Management
+          </a>
+          <a class="flex items-center gap-2 px-4 py-2 rounded-[30px] text-sm font-semibold active-tab-nav whitespace-nowrap transition-all"
+            href="/Admin Dashboard/Buyer Deposit Requests.html">
+            <span class="material-symbols-outlined text-[20px]">account_balance_wallet</span>
+            Buyer Deposit Requests
+          </a>
+          <a class="flex items-center gap-2 px-4 py-2 rounded-[30px] text-sm font-semibold text-gray-700 dark:text-slate-400 hover:bg-white dark:hover:bg-white/5 hover:shadow-sm whitespace-nowrap transition-all"
+            href="/Admin Dashboard/Buyer Order Management.html">
+            <span class="material-symbols-outlined text-[20px]">receipt_long</span>
+            Buyer Order Management
+          </a>
+          <a class="flex items-center gap-2 px-4 py-2 rounded-[30px] text-sm font-semibold text-gray-700 dark:text-slate-400 hover:bg-white dark:hover:bg-white/5 hover:shadow-sm whitespace-nowrap transition-all"
+            href="/Admin Dashboard/User Task Verification.html">
+            <span class="material-symbols-outlined text-[20px]">task_alt</span>
+            Task Verification
+          </a>
+          <a class="flex items-center gap-2 px-4 py-2 rounded-[30px] text-sm font-semibold text-gray-700 dark:text-slate-400 hover:bg-white dark:hover:bg-white/5 hover:shadow-sm whitespace-nowrap transition-all"
+            href="/Admin Dashboard/User Payout Request.html">
+            <span class="material-symbols-outlined text-[20px]">payments</span>
+            Payout Request
+          </a>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main Dashboard Content -->
+    <main class="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-8 max-w-full">
+      <div class="max-w-[1600px] mx-auto w-full space-y-8">
+        <div class="mb-8">
+          <h1 class="text-2xl font-extrabold tracking-tight dark:text-white">
+            Buyer Deposit Requests
+          </h1>
+          <p class="text-gray-500 dark:text-slate-400 text-sm">
+            Verify and process 'Add Money' transactions from platform buyers.
+          </p>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+          <div
+            class="bg-white dark:bg-[#1a2e1f] p-6 rounded-2xl border border-[#e7f3eb] dark:border-white/10 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+              <div
+                class="size-10 bg-blue-50 dark:bg-blue-500/10 text-blue-500 rounded-xl flex items-center justify-center">
+                <span class="material-symbols-outlined">inbox</span>
+              </div>
+              <span
+                class="text-[10px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest">Lifetime</span>
+            </div>
+            <h3 id="kpi-total-requests" class="text-2xl font-black dark:text-white">--</h3>
+            <p class="text-xs text-gray-500 dark:text-slate-400 font-bold mt-1">
+              Total Deposit Requests
+            </p>
+          </div>
+          <div
+            class="bg-white dark:bg-[#1a2e1f] p-6 rounded-2xl border border-[#e7f3eb] dark:border-white/10 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+              <div
+                class="size-10 bg-orange-50 dark:bg-orange-500/10 text-orange-500 rounded-xl flex items-center justify-center">
+                <span class="material-symbols-outlined">pending_actions</span>
+              </div>
+              <span
+                class="text-[10px] font-bold text-orange-500 bg-orange-50 dark:bg-orange-500/10 px-2 py-0.5 rounded">Action
+                Required</span>
+            </div>
+            <h3 id="kpi-pending-deposits" class="text-2xl font-black text-orange-600 dark:text-orange-500">--</h3>
+            <p class="text-xs text-gray-500 dark:text-slate-400 font-bold mt-1">Pending Deposits</p>
+          </div>
+          <div
+            class="bg-white dark:bg-[#1a2e1f] p-6 rounded-2xl border border-[#e7f3eb] dark:border-white/10 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+              <div class="size-10 bg-primary/10 text-primary rounded-xl flex items-center justify-center">
+                <span class="material-symbols-outlined">payments</span>
+              </div>
+              <span
+                class="text-[10px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest">Today</span>
+            </div>
+            <h3 id="kpi-approved-today" class="text-2xl font-black dark:text-white">--</h3>
+            <p class="text-xs text-gray-500 dark:text-slate-400 font-bold mt-1">
+              Total Approved Today
+            </p>
+          </div>
+          <div
+            class="bg-white dark:bg-[#1a2e1f] p-6 rounded-2xl border border-[#e7f3eb] dark:border-white/10 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+              <div
+                class="size-10 bg-purple-50 dark:bg-purple-500/10 text-purple-500 rounded-xl flex items-center justify-center">
+                <span class="material-symbols-outlined">timer</span>
+              </div>
+              <span
+                class="text-[10px] font-bold text-purple-500 bg-purple-50 dark:bg-purple-500/10 px-2 py-0.5 rounded">Efficiency</span>
+            </div>
+            <h3 id="kpi-avg-time" class="text-2xl font-black dark:text-white">--</h3>
+            <p class="text-xs text-gray-500 dark:text-slate-400 font-bold mt-1">
+              Avg. Verification Time
+            </p>
+          </div>
+        </div>
+        <div
+          class="bg-white dark:bg-background-dark p-4 rounded-2xl border border-[#e7f3eb] dark:border-white/10 mb-6 flex flex-wrap items-center gap-4">
+          <div class="flex-1 min-w-[200px] relative">
+            <span
+              class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-500 text-sm">search</span>
+            <input id="searchInput"
+              class="w-full pl-10 h-10 bg-background-light dark:bg-sidebar-deep border border-transparent dark:border-white/10 rounded-lg text-xs dark:text-white focus:ring-1 focus:ring-primary placeholder:dark:text-slate-500"
+              placeholder="Filter by Buyer ID or TrxID..." type="text" />
+          </div>
+          <select id="statusFilter"
+            class="h-10 bg-background-light dark:bg-sidebar-deep border border-transparent dark:border-white/10 rounded-lg text-xs font-bold px-4 dark:text-white focus:ring-1 focus:ring-primary min-w-[140px]">
+            <option class="dark:bg-sidebar-deep" value="">All Statuses</option>
+            <option class="dark:bg-sidebar-deep" value="pending">Pending</option>
+            <option class="dark:bg-sidebar-deep" value="approved">Approved</option>
+            <option class="dark:bg-sidebar-deep" value="rejected">Rejected</option>
+          </select>
+          <select id="dateFilter"
+            class="h-10 bg-background-light dark:bg-sidebar-deep border border-transparent dark:border-white/10 rounded-lg text-xs font-bold px-4 dark:text-white focus:ring-1 focus:ring-primary min-w-[140px]">
+            <option class="dark:bg-sidebar-deep" value="all">All Time</option>
+            <option class="dark:bg-sidebar-deep" value="today">Today</option>
+            <option class="dark:bg-sidebar-deep" value="yesterday">Yesterday</option>
+            <option class="dark:bg-sidebar-deep" value="last7">Last 7 Days</option>
+            <option class="dark:bg-sidebar-deep" value="custom">Custom Date Range</option>
+          </select>
+          <button id="applyFiltersBtn"
+            class="h-10 px-4 bg-[#0d1b12] dark:bg-white/10 text-white rounded-lg text-xs font-bold hover:bg-opacity-90 dark:hover:bg-white/20 transition-all flex items-center gap-2">
+            <span class="material-symbols-outlined text-sm">filter_alt</span>
+            Apply Filters
+          </button>
+          <button id="resetFiltersBtn"
+            class="h-10 px-4 bg-gray-100 dark:bg-white/5 text-gray-500 dark:text-slate-400 rounded-lg text-xs font-bold hover:bg-gray-200 dark:hover:bg-white/10 transition-all">
+            Reset
+          </button>
+        </div>
+        <div
+          class="bg-white dark:bg-background-dark rounded-2xl border border-[#e7f3eb] dark:border-white/10 shadow-sm overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-background-light dark:bg-white/5 border-b border-[#e7f3eb] dark:border-white/10">
+                  <th
+                    class="px-6 py-4 text-[10px] font-black uppercase tracking-wider text-gray-500 dark:text-slate-400">
+                    Date &amp; Time
+                  </th>
+                  <th
+                    class="px-6 py-4 text-[10px] font-black uppercase tracking-wider text-gray-500 dark:text-slate-400">
+                    Buyer Info
+                  </th>
+                  <th
+                    class="px-6 py-4 text-[10px] font-black uppercase tracking-wider text-gray-500 dark:text-slate-400">
+                    Gateway
+                  </th>
+                  <th
+                    class="px-6 py-4 text-[10px] font-black uppercase tracking-wider text-gray-500 dark:text-slate-400">
+                    Amount
+                  </th>
+                  <th
+                    class="px-6 py-4 text-[10px] font-black uppercase tracking-wider text-gray-500 dark:text-slate-400">
+                    Transaction ID
+                  </th>
+                  <th
+                    class="px-6 py-4 text-[10px] font-black uppercase tracking-wider text-gray-500 dark:text-slate-400">
+                    Status
+                  </th>
+                  <th
+                    class="px-6 py-4 text-[10px] font-black uppercase tracking-wider text-gray-500 dark:text-slate-400 text-center">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody id="deposit-requests-body" class="divide-y divide-[#e7f3eb] dark:divide-white/10">
+                <tr>
+                  <td colspan="7" class="px-6 py-4 text-center text-gray-500">Loading requests...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div
+            class="px-6 py-4 bg-white dark:bg-background-dark border-t border-[#e7f3eb] dark:border-white/10 flex items-center justify-between">
+            <p id="paginationText" class="text-xs text-gray-500 dark:text-slate-400 font-bold">
+              Showing...
+            </p>
+            <div id="paginationControls" class="flex items-center gap-2">
+              <!-- Generated Dynamically -->
+            </div>
+          </div>
+        </div>
+        <footer class="pt-16 pb-8 border-t border-slate-200 dark:border-white/10 mt-12">
+          <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+            <div
+              class="flex items-center gap-8 text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+              <a class="hover:text-primary transition-colors" href="#">Privacy Policy</a>
+              <a class="hover:text-primary transition-colors" href="#">Terms of Service</a>
+              <a class="hover:text-primary transition-colors" href="#">Documentation</a>
+            </div>
+            <p class="text-[11px] font-bold text-slate-400">
+              © 2024 TIME TASK BD. ALL RIGHTS RESERVED.
+            </p>
+          </div>
+        </footer>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../supabase-client.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      // Shared Supabase Client (single bootstrap from supabase-client.js)
+      const _supabase = window.supabaseClient || null;
+
+      let currentUser = null;
+      let allDeposits = [];
+      let currentPage = 1;
+      const rowsPerPage = 15;
+
+      // Utility function to prevent XSS
+      function escapeHtml(unsafe) {
+        if (unsafe === null || unsafe === undefined) return '';
+        return String(unsafe)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#039;");
+      }
+
+      // Check Supabase Client
+      if (!_supabase) {
+        console.error("Supabase client not initialized.");
+        window.location.href = "Admin_Login.html";
+        return;
+      }
+
+      try {
+        // Check Auth
+        const { data: { session }, error: sessionError } = await _supabase.auth.getSession();
+        if (sessionError || !session) {
+          console.error("Auth Session Error:", sessionError);
+          window.location.href = "Admin_Login.html";
+          return;
+        }
+        currentUser = session.user;
+
+        // Verify Admin Role (UI Routing Only)
+        // SEC-004 FIX: Ensure database strictly enforces RLS policies on 'deposits' and RPCs
+        // using: (select role from profiles where id = auth.uid()) = 'Admin'
+        const normalizeRole = (v) => String(v || '').trim().toLowerCase();
+        const { data: profile, error: profileErr } = await _supabase.from('profiles').select('role').eq('id', currentUser.id).single();
+        if (profileErr || normalizeRole(profile?.role) !== 'admin') {
+          console.warn("Unauthorized access attempt. Role:", profile?.role);
+          await _supabase.auth.signOut();
+          window.location.href = "Admin_Login.html";
+          return;
+        }
+      } catch (authErr) {
+        console.error("Fatal Auth Guard Error:", authErr);
+        window.location.href = "Admin_Login.html";
+        return;
+      }
+
+      // Make search & dropdowns apply changes natively and smoothly without extra clicks!
+      const sInput = document.getElementById('searchInput');
+      const statusDrop = document.getElementById('statusFilter');
+      const dateDrop = document.getElementById('dateFilter');
+
+      if (sInput) sInput.addEventListener('input', () => { currentPage = 1; filterAndRender(); });
+      if (statusDrop) statusDrop.addEventListener('change', () => { currentPage = 1; filterAndRender(); });
+      if (dateDrop) dateDrop.addEventListener('change', () => { currentPage = 1; filterAndRender(); });
+
+      document.getElementById('applyFiltersBtn').addEventListener('click', () => {
+        currentPage = 1;
+        filterAndRender();
+      });
+
+      // Attach to reset button securely:
+      document.getElementById('resetFiltersBtn').addEventListener('click', resetFilters);
+
+      // Fetch Data
+      loadDepositRequests();
+      fetchKPIStats();
+
+      async function fetchKPIStats() {
+        try {
+          // 1. Total Deposit Requests
+          const { count: totalCount } = await _supabase
+            .from('deposits')
+            .select('*', { count: 'exact', head: true });
+
+          // 2. Pending Deposits
+          const { count: pendingCount } = await _supabase
+            .from('deposits')
+            .select('*', { count: 'exact', head: true })
+            .eq('status', 'pending');
+
+          // 3. Total Approved Today
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          const todayISO = today.toISOString();
+
+          const { data: todayDeposits } = await _supabase
+            .from('deposits')
+            .select('amount')
+            .eq('status', 'approved')
+            .gte('created_at', todayISO);
+
+          const totalApprovedToday = todayDeposits ? todayDeposits.reduce((sum, item) => sum + (item.amount || 0), 0) : 0;
+
+          // 4. Avg Verification Time (Estimate from approved deposits)
+          // Note: This requires 'created_at' and ideally a 'reviewed_at' or 'updated_at' field.
+          // If 'updated_at' is not available or reliable for this purpose, we might skip or use 'created_at' diff with 'now' for recent ones?
+          // Assuming 'updated_at' exists or we can infer it. For now, let's placeholder or try to calculate if we had a log.
+          // Since the schema for deposits is simple, we might not have exact 'reviewed_at'.
+          // We will try to fetch approved deposits and see if we can find a time diff (mock logic if needed, or skip).
+          // Let's display "--" if not calculable, or calculate based on `updated_at` if schema has it (most supabase tables do or we can check).
+
+          // Let's assume we can't easily calculate accurate avg time without a dedicated 'reviewed_at' column.
+          // But if we want to show *something*, we can check if `updated_at` exists.
+          // For now, let's just update the UI with what we have.
+
+          document.getElementById('kpi-total-requests').textContent = totalCount || 0;
+          document.getElementById('kpi-pending-deposits').textContent = pendingCount || 0;
+          document.getElementById('kpi-approved-today').textContent = `৳ ${totalApprovedToday.toLocaleString()}`;
+
+          // 4. Avg Verification Time
+          // Attempt to calculate if 'updated_at' is available (Supabase often adds it)
+          // If not, we'll leave it as '--' or calculate based on creation -> now for recently approved (less accurate)
+          let recentApproved = null;
+          try {
+            const { data, error } = await _supabase
+              .from('deposits')
+              .select('created_at, updated_at') // preferred: needs updated_at column
+              .eq('status', 'approved')
+              .order('created_at', { ascending: false })
+              .limit(50);
+            if (error) throw error;
+            recentApproved = data;
+          } catch (e) {
+            // If updated_at doesn't exist yet, skip avg verification time.
+            console.warn('Avg verification time unavailable:', e?.message || e);
+            document.getElementById('kpi-avg-time').textContent = "--";
+          }
+
+          if (recentApproved && recentApproved.length > 0) {
+            let totalTimeMs = 0;
+            let count = 0;
+
+            recentApproved.forEach(item => {
+              // Fallback: If updated_at is missing, maybe we can't calc easily.
+              // But if it exists:
+              if (item.updated_at) {
+                const start = new Date(item.created_at);
+                const end = new Date(item.updated_at);
+                const diff = end - start;
+                if (diff > 0 && diff < 1000 * 60 * 60 * 24 * 7) { // Filter out outliers > 1 week (maybe manual DB edits)
+                  totalTimeMs += diff;
+                  count++;
+                }
+              }
+            });
+
+            if (count > 0) {
+              const avgMs = totalTimeMs / count;
+              const minutes = Math.floor(avgMs / (1000 * 60));
+              const hours = Math.floor(minutes / 60);
+              const mins = minutes % 60;
+
+              document.getElementById('kpi-avg-time').textContent = hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
+            } else {
+              document.getElementById('kpi-avg-time').textContent = "--";
+            }
+          } else {
+            document.getElementById('kpi-avg-time').textContent = "--";
+          }
+
+          // Subscribe to changes for real-time updates
+          _supabase
+            .channel('public:deposits')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'deposits' }, payload => {
+              // Refresh stats on any change
+              fetchKPIStats();
+              // Also refresh table if it's a new insert or status change
+              loadDepositRequests();
+            })
+            .subscribe();
+
+        } catch (error) {
+          console.error("Error fetching KPI stats:", error);
+        }
+      }
+
+      async function loadDepositRequests() {
+        const tbody = document.getElementById("deposit-requests-body");
+        tbody.innerHTML = `<tr><td colspan="7" class="px-6 py-4 text-center text-gray-500">Loading requests...</td></tr>`;
+
+        const searchVal = document.getElementById('searchInput').value.toLowerCase();
+        const statusVal = document.getElementById('statusFilter').value;
+        const dateVal = document.getElementById('dateFilter').value;
+
+        // Base query with joined profiles explicitly using inner join for related filtering
+        let query = _supabase
+          .from('deposits')
+          .select('*, profiles!inner(id, full_name, username)', { count: 'exact' });
+
+        // Apply Status Filter
+        if (statusVal) {
+          query = query.eq('status', statusVal);
+        }
+
+        // Apply Date Filter
+        if (dateVal && dateVal !== 'all') {
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+
+          if (dateVal === 'today') {
+            query = query.gte('created_at', today.toISOString());
+          } else if (dateVal === 'yesterday') {
+            const yesterday = new Date(today);
+            yesterday.setDate(yesterday.getDate() - 1);
+            query = query.gte('created_at', yesterday.toISOString())
+                         .lt('created_at', today.toISOString());
+          } else if (dateVal === 'last7') {
+            const last7 = new Date(today);
+            last7.setDate(last7.getDate() - 7);
+            query = query.gte('created_at', last7.toISOString());
+          }
+        }
+
+        // Apply Search Filter (TrxID or Username/Name)
+        if (searchVal) {
+          query = query.or(`transaction_id.ilike.%${searchVal}%,profiles.username.ilike.%${searchVal}%,profiles.full_name.ilike.%${searchVal}%`);
+        }
+
+        // Apply Server-Side Pagination
+        const startIndex = (currentPage - 1) * rowsPerPage;
+        const endIndex = startIndex + rowsPerPage - 1;
+
+        query = query.range(startIndex, endIndex).order('created_at', { ascending: false });
+
+        const { data: depositsData, count: totalItems, error: depositsError } = await query;
+
+        if (depositsError) {
+          console.error("Error fetching deposits:", depositsError);
+          tbody.innerHTML = `<tr><td colspan="7" class="px-6 py-4 text-center text-red-500">Error loading data: ${escapeHtml(depositsError.message)}</td></tr>`;
+          return;
+        }
+
+        if (!depositsData || depositsData.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="7" class="px-6 py-4 text-center text-gray-500">No matching requests found</td></tr>`;
+          updatePaginationDOMDataMathSyncMapRootObjectScaleProcedureMapDOMRenderCallTargetNodesSafelyNatively(0, 0, 0, 1);
+          return;
+        }
+
+        const totalPages = Math.ceil(totalItems / rowsPerPage) || 1;
+
+        tbody.innerHTML = depositsData.map(deposit => {
+          const date = new Date(deposit.created_at).toLocaleDateString("en-US", { month: 'short', day: 'numeric', year: 'numeric' });
+          const time = new Date(deposit.created_at).toLocaleTimeString("en-US", { hour: '2-digit', minute: '2-digit' });
+          const username = deposit.profiles?.username || 'Unknown';
+          const fullName = deposit.profiles?.full_name || 'Unknown User';
+
+          let statusBadge = '';
+          let actionButtons = '';
+
+          if (deposit.status === 'pending') {
+            statusBadge = `<span class="px-3 py-1 bg-yellow-50 bg-opacity-50 text-yellow-600 text-[10px] font-black uppercase rounded-full border border-yellow-200">Pending</span>`;
+            actionButtons = `
+                <div class="flex items-center justify-center gap-2">
+                  <button data-action="approve" data-deposit-id="${escapeHtml(deposit.id)}" data-user-id="${escapeHtml(deposit.user_id)}" data-amount="${escapeHtml(deposit.amount)}" class="size-8 rounded-lg bg-primary/10 text-primary border border-primary/20 hover:bg-primary hover:text-[#0d1b12] transition-all flex items-center justify-center action-btn" title="Approve">
+                    <span class="material-symbols-outlined text-lg font-bold pointer-events-none">check</span>
+                  </button>
+                  <button data-action="reject" data-deposit-id="${escapeHtml(deposit.id)}" class="size-8 rounded-lg bg-red-50 text-red-500 border border-red-100 hover:bg-red-500 hover:text-white transition-all flex items-center justify-center action-btn" title="Reject">
+                    <span class="material-symbols-outlined text-lg font-bold pointer-events-none">close</span>
+                  </button>
+                </div>
+              `;
+          } else if (deposit.status === 'approved') {
+            statusBadge = `<span class="px-3 py-1 bg-green-50 bg-opacity-50 dark:bg-white/5 text-green-600 text-[10px] font-black uppercase rounded-full border border-green-200">Approved</span>`;
+            actionButtons = `<span class="text-[10px] font-bold text-gray-400">Verified</span>`;
+          } else {
+            statusBadge = `<span class="px-3 py-1 bg-red-50 bg-opacity-50 text-red-600 text-[10px] font-black uppercase rounded-full border border-red-200">Rejected</span>`;
+            actionButtons = `<span class="text-[10px] font-bold text-red-400">Rejected</span>`;
+          }
+
+          return `
+              <tr class="hover:bg-background-light/50 dark:hover:bg-white/5 transition-colors">
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <p class="text-sm font-bold dark:text-white">${escapeHtml(date)}</p>
+                  <p class="text-[10px] text-gray-400 dark:text-slate-500 font-medium">${escapeHtml(time)}</p>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <p class="text-sm font-bold text-gray-800 dark:text-slate-200">${escapeHtml(username)}</p>
+                  <p class="text-xs text-gray-500 dark:text-slate-400">${escapeHtml(fullName)}</p>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="flex items-center gap-2 px-3 py-1 bg-zinc-100 dark:bg-white/5 rounded-full w-fit">
+                    <span class="material-symbols-outlined text-sm text-pink-600 font-bold">account_balance_wallet</span>
+                    <span class="text-xs font-bold text-zinc-700 dark:text-zinc-300">${escapeHtml(deposit.gateway)}</span>
+                  </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <span class="text-sm font-black text-slate-700 dark:text-slate-200">৳ ${Number(deposit.amount).toLocaleString()}</span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <button class="group flex items-center gap-1.5 px-2 py-1 bg-gray-50 dark:bg-white/5 rounded border border-gray-100 dark:border-white/10 hover:border-primary/50 transition-all action-btn" data-action="copy" data-txid="${escapeHtml(deposit.transaction_id)}">
+                    <span class="text-xs font-mono font-bold text-gray-600 dark:text-slate-400 pointer-events-none">${escapeHtml(deposit.transaction_id)}</span>
+                    <span class="material-symbols-outlined text-[14px] text-gray-400 group-hover:text-primary pointer-events-none">content_copy</span>
+                  </button>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  ${statusBadge}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-center">
+                  ${actionButtons}
+                </td>
+              </tr>
+            `;
+        }).join('');
+
+        updatePaginationDOMDataMathSyncMapRootObjectScaleProcedureMapDOMRenderCallTargetNodesSafelyNatively(startIndex, Math.min(startIndex + rowsPerPage, totalItems), totalItems, totalPages);
+      }
+
+      function filterAndRender() {
+        loadDepositRequests();
+      }
+
+      function resetFilters() {
+        document.getElementById('searchInput').value = '';
+        document.getElementById('statusFilter').value = '';
+        document.getElementById('dateFilter').value = 'all';
+        currentPage = 1;
+        filterAndRender();
+      }
+
+      function updatePaginationDOMDataMathSyncMapRootObjectScaleProcedureMapDOMRenderCallTargetNodesSafelyNatively(start, end, total, pages) {
+        const textRenderParamContainerDisplayStringBoxFormatDOMUpdateCallTargetDisplayExecutionNodeEngineParamDOMMathEngineIDScaleText = document.getElementById("paginationText");
+        if (textRenderParamContainerDisplayStringBoxFormatDOMUpdateCallTargetDisplayExecutionNodeEngineParamDOMMathEngineIDScaleText) textRenderParamContainerDisplayStringBoxFormatDOMUpdateCallTargetDisplayExecutionNodeEngineParamDOMMathEngineIDScaleText.innerHTML = `Showing <span class="text-slate-900 dark:text-white">${total > 0 ? start + 1 : 0} to ${end}</span> of <span class="text-slate-900 dark:text-white">${total}</span> deposit requests`;
+
+        const htmlDOMActionBlockUpdateSystemTrackingControlsBoxNodeScaleAmountMathUpdateLimitBoxMappingValueExec = document.getElementById("paginationControls");
+        if (!htmlDOMActionBlockUpdateSystemTrackingControlsBoxNodeScaleAmountMathUpdateLimitBoxMappingValueExec) return;
+
+        let outputTargetLayoutBoxParamStringDOMSystemMappingControlsValStrUIUpdateActionMethodSysLimitRenderMapNodeExecutionStringUI = `<button onclick="window.setNewLocalScaleStateValCallRenderArrayObjCallExecutePageTrackShiftNumDOMSystemActionFunctionMappingExecuteValNodeLayerAmountUpdateCallTargetNativeScaleExecution(${currentPage - 1})" class="p-1.5 rounded-lg border border-gray-200 dark:border-white/10 text-gray-500 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors disabled:opacity-50" ${currentPage === 1 ? 'disabled' : ''}><span class="material-symbols-outlined text-sm">chevron_left</span></button>`;
+
+        let windowPageStartLimitExecEngineMappingMathUpdateMapDOMStringValueControlParamAppSysMathTargetLimitNodeScaleValueSystemValMinMath = Math.max(1, currentPage - 2);
+        let topMaxSystemNodeLimitUpdateValueSystemControlAppStringNumberMapValDOMRenderDataNumberLogicRangeConstraintMaximumLimitObjRenderControl = Math.min(pages, windowPageStartLimitExecEngineMappingMathUpdateMapDOMStringValueControlParamAppSysMathTargetLimitNodeScaleValueSystemValMinMath + 4);
+        if (topMaxSystemNodeLimitUpdateValueSystemControlAppStringNumberMapValDOMRenderDataNumberLogicRangeConstraintMaximumLimitObjRenderControl - windowPageStartLimitExecEngineMappingMathUpdateMapDOMStringValueControlParamAppSysMathTargetLimitNodeScaleValueSystemValMinMath < 4) windowPageStartLimitExecEngineMappingMathUpdateMapDOMStringValueControlParamAppSysMathTargetLimitNodeScaleValueSystemValMinMath = Math.max(1, topMaxSystemNodeLimitUpdateValueSystemControlAppStringNumberMapValDOMRenderDataNumberLogicRangeConstraintMaximumLimitObjRenderControl - 4);
+
+        for (let cIteTrackerAppObjVarNodeLayerMappingRenderEngineExecutionStringObjHtmlLocalFunctionTrackScaleLogLoopControlMapVarSysDataMap = windowPageStartLimitExecEngineMappingMathUpdateMapDOMStringValueControlParamAppSysMathTargetLimitNodeScaleValueSystemValMinMath; cIteTrackerAppObjVarNodeLayerMappingRenderEngineExecutionStringObjHtmlLocalFunctionTrackScaleLogLoopControlMapVarSysDataMap <= topMaxSystemNodeLimitUpdateValueSystemControlAppStringNumberMapValDOMRenderDataNumberLogicRangeConstraintMaximumLimitObjRenderControl; cIteTrackerAppObjVarNodeLayerMappingRenderEngineExecutionStringObjHtmlLocalFunctionTrackScaleLogLoopControlMapVarSysDataMap++) {
+          if (cIteTrackerAppObjVarNodeLayerMappingRenderEngineExecutionStringObjHtmlLocalFunctionTrackScaleLogLoopControlMapVarSysDataMap === currentPage) {
+            outputTargetLayoutBoxParamStringDOMSystemMappingControlsValStrUIUpdateActionMethodSysLimitRenderMapNodeExecutionStringUI += `<button class="size-8 rounded-lg bg-primary text-[#0d1b12] text-xs font-black shadow-sm border border-transparent shadow-primary/10">${cIteTrackerAppObjVarNodeLayerMappingRenderEngineExecutionStringObjHtmlLocalFunctionTrackScaleLogLoopControlMapVarSysDataMap}</button>`;
+          } else {
+            outputTargetLayoutBoxParamStringDOMSystemMappingControlsValStrUIUpdateActionMethodSysLimitRenderMapNodeExecutionStringUI += `<button onclick="window.setNewLocalScaleStateValCallRenderArrayObjCallExecutePageTrackShiftNumDOMSystemActionFunctionMappingExecuteValNodeLayerAmountUpdateCallTargetNativeScaleExecution(${cIteTrackerAppObjVarNodeLayerMappingRenderEngineExecutionStringObjHtmlLocalFunctionTrackScaleLogLoopControlMapVarSysDataMap})" class="size-8 rounded-lg text-xs font-bold text-gray-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10 transition-colors bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 hover:border-gray-300 dark:hover:border-white/20 shadow-sm">${cIteTrackerAppObjVarNodeLayerMappingRenderEngineExecutionStringObjHtmlLocalFunctionTrackScaleLogLoopControlMapVarSysDataMap}</button>`;
+          }
+        }
+
+        outputTargetLayoutBoxParamStringDOMSystemMappingControlsValStrUIUpdateActionMethodSysLimitRenderMapNodeExecutionStringUI += `<button onclick="window.setNewLocalScaleStateValCallRenderArrayObjCallExecutePageTrackShiftNumDOMSystemActionFunctionMappingExecuteValNodeLayerAmountUpdateCallTargetNativeScaleExecution(${currentPage + 1})" class="p-1.5 rounded-lg border border-gray-200 dark:border-white/10 text-gray-500 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors disabled:opacity-50" ${currentPage === pages ? 'disabled' : ''}><span class="material-symbols-outlined text-sm">chevron_right</span></button>`;
+
+        htmlDOMActionBlockUpdateSystemTrackingControlsBoxNodeScaleAmountMathUpdateLimitBoxMappingValueExec.innerHTML = outputTargetLayoutBoxParamStringDOMSystemMappingControlsValStrUIUpdateActionMethodSysLimitRenderMapNodeExecutionStringUI;
+      }
+
+      window.setNewLocalScaleStateValCallRenderArrayObjCallExecutePageTrackShiftNumDOMSystemActionFunctionMappingExecuteValNodeLayerAmountUpdateCallTargetNativeScaleExecution = (mappedLogicNewPageNodeExecuteNumberVarRootDOMTrack) => {
+        currentPage = mappedLogicNewPageNodeExecuteNumberVarRootDOMTrack;
+        filterAndRender();
+      };
+
+      // Secure event delegation for table actions
+      document.getElementById("deposit-requests-body").addEventListener('click', async (e) => {
+        const btn = e.target.closest('.action-btn');
+        if (!btn) return;
+
+        const action = btn.getAttribute('data-action');
+
+        if (action === 'copy') {
+          const txid = btn.getAttribute('data-txid');
+          if (txid) {
+            navigator.clipboard.writeText(txid);
+            const originalHtml = btn.innerHTML;
+            btn.innerHTML = `<span class="text-xs font-bold text-primary">Copied!</span>`;
+            setTimeout(() => { btn.innerHTML = originalHtml; }, 1500);
+          }
+        } 
+        else if (action === 'approve') {
+          const depositId = btn.getAttribute('data-deposit-id');
+          const userId = btn.getAttribute('data-user-id');
+          const amountRaw = btn.getAttribute('data-amount');
+          const amount = Number(amountRaw);
+          
+          if (!Number.isFinite(amount) || amount <= 0) {
+            alert("Invalid deposit amount. Please refresh and try again.");
+            return;
+          }
+
+          if (!confirm(`Are you sure you want to approve this deposit of ৳${amount.toLocaleString()}?`)) return;
+
+          // Throttle button
+          const originalContent = btn.innerHTML;
+          btn.innerHTML = `<span class="material-symbols-outlined animate-spin text-sm pointer-events-none">progress_activity</span>`;
+          btn.disabled = true;
+          
+          try {
+            const { data, error } = await _supabase.rpc('approve_deposit', {
+              p_deposit_id: depositId,
+              p_user_id: userId,
+              p_amount: amount
+            });
+
+            if (error) {
+              alert("Error: " + error.message);
+            } else if (!data.success) {
+              alert("Failed: " + data.message);
+            } else {
+              // SEC-002: Client-side audit log removed. Postgres backend now handles `admin_audit_log` natively.
+              alert("Deposit approved successfully!");
+              loadDepositRequests(); // Refresh list
+            }
+          } finally {
+            // Unthrottle after 5s or reload
+            setTimeout(() => {
+              btn.innerHTML = originalContent;
+              btn.disabled = false;
+            }, 5000);
+          }
+        }
+        else if (action === 'reject') {
+          const depositId = btn.getAttribute('data-deposit-id');
+          if (!confirm("Are you sure you want to reject this deposit?")) return;
+
+          // Throttle button
+          const originalContent = btn.innerHTML;
+          btn.innerHTML = `<span class="material-symbols-outlined animate-spin text-sm pointer-events-none">progress_activity</span>`;
+          btn.disabled = true;
+          
+          try {
+            const { data, error } = await _supabase.rpc('reject_deposit', {
+              p_deposit_id: depositId
+            });
+
+            if (error) {
+              alert("Error: " + error.message);
+            } else if (!data.success) {
+              alert("Failed: " + data.message);
+            } else {
+              // SEC-002: Client-side audit log removed. Postgres backend now handles `admin_audit_log` natively.
+              alert("Deposit rejected.");
+              loadDepositRequests(); // Refresh list
+            }
+          } finally {
+            setTimeout(() => {
+              btn.innerHTML = originalContent;
+              btn.disabled = false;
+            }, 5000);
+          }
+        }
+      });
+
+    });
+
+    const sidebar = document.getElementById("mainSidebar");
+    const toggleBtn = document.getElementById("sidebarToggle");
+
+    // Toggle Sidebar
+    toggleBtn.addEventListener("click", () => {
+      sidebar.classList.toggle("sidebar-collapsed");
+    });
+
+    const themeToggle = document.getElementById("themeToggle");
+    const themeIcon = themeToggle.querySelector(".material-symbols-outlined");
+
+    function updateTheme(isDark) {
+      if (isDark) {
+        document.documentElement.classList.add("dark");
+        themeIcon.textContent = "dark_mode";
+        localStorage.setItem("theme", "dark");
+      } else {
+        document.documentElement.classList.remove("dark");
+        themeIcon.textContent = "light_mode";
+        localStorage.setItem("theme", "light");
+      }
+    }
+
+    // Initialize Icon
+    if (document.documentElement.classList.contains("dark")) {
+      themeIcon.textContent = "dark_mode";
+    } else {
+      themeIcon.textContent = "light_mode";
+    }
+
+    themeToggle.addEventListener("click", () => {
+      const isDark = document.documentElement.classList.contains("dark");
+      updateTheme(!isDark);
+    });
+
+    // Simple Active Tab Highlighting for Sub-Nav
+    const subTabs = document.querySelectorAll("#tabsContainer a");
+    subTabs.forEach((tab) => {
+      tab.addEventListener("click", (e) => {
+        subTabs.forEach((t) => t.classList.remove("active-tab-nav"));
+        tab.classList.add("active-tab-nav");
+      });
+    });
+  </script>
+</body>
+
+</html>

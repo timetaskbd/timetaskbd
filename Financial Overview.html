@@ -1,0 +1,1040 @@
+<!doctype html>
+<html class="light" lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <title>Admin Panel - Time Task BD</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+    rel="stylesheet" />
+  <script>
+    (function () {
+      const savedTheme = localStorage.getItem("theme") || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+      if (savedTheme === "dark") {
+        document.documentElement.classList.add("dark");
+        document.documentElement.classList.remove("light");
+      } else {
+        document.documentElement.classList.add("light");
+        document.documentElement.classList.remove("dark");
+      }
+    })();
+  </script>
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            primary: "#13ec5b",
+            "background-light": "#f6f8f6",
+            "background-dark": "#0d1b12",
+            "sidebar-deep": "#102216",
+            "accent-green": "#13ec5b",
+          },
+          fontFamily: {
+            display: ["Manrope"],
+          },
+          borderRadius: {
+            DEFAULT: "0.25rem",
+            lg: "0.5rem",
+            xl: "0.75rem",
+            "2xl": "1rem",
+            full: "9999px",
+          },
+        },
+      },
+    };
+  </script>
+  <style type="text/tailwindcss">
+    @layer base {
+      body {
+        @apply font-display bg-background-light dark:bg-background-dark text-slate-900 dark:text-white transition-colors duration-300;
+      }
+    }
+
+      /* Sidebar Transitions */
+      .sidebar-transition {
+        @apply transition-all duration-300 ease-in-out;
+      }
+
+      /* Active Tab Notch Logic */
+      .sidebar-item-active {
+        @apply bg-background-light text-sidebar-deep font-bold relative !important;
+        border-radius: 40px 0 0 40px;
+        margin-left: 10px;
+        width: calc(100% - 10px) !important;
+      }
+
+      .sidebar-item-active::before {
+        content: "";
+        position: absolute;
+        right: 0;
+        top: -40px;
+        width: 40px;
+        height: 40px;
+        background: transparent;
+        border-radius: 50%;
+        box-shadow: 20px 20px 0 0 #f6f8f6;
+        pointer-events: none;
+      }
+
+      .sidebar-item-active::after {
+        content: "";
+        position: absolute;
+        right: 0;
+        bottom: -40px;
+        width: 40px;
+        height: 40px;
+        background: transparent;
+        border-radius: 50%;
+        box-shadow: 20px -20px 0 0 #f6f8f6;
+        pointer-events: none;
+      }
+
+      .dark .sidebar-item-active::before { box-shadow: 20px 20px 0 0 #0d1b12; }
+      .dark .sidebar-item-active::after  { box-shadow: 20px -20px 0 0 #0d1b12; }
+      .dark .sidebar-item-active { @apply bg-background-dark text-white !important; }
+
+      .sidebar-item {
+        @apply flex items-center py-4 text-white/70 hover:text-white transition-all duration-200 cursor-pointer w-full relative;
+      }
+
+      .sidebar-item .material-symbols-outlined {
+        @apply font-light text-[24px];
+      }
+
+      .sidebar-item-active .material-symbols-outlined {
+        @apply text-sidebar-deep;
+      }
+
+      .dark .sidebar-item-active .material-symbols-outlined { @apply text-primary; }
+
+      /*.sidebar-item-active span {
+        @apply text-sidebar-deep;
+      }*/
+
+      /* Tooltip Logic - Show only when collapsed */
+      .nav-tooltip {
+        @apply invisible absolute left-full ml-4 px-2 py-1 bg-sidebar-deep dark:bg-primary text-white dark:text-sidebar-deep text-[10px] rounded whitespace-nowrap opacity-0 transition-opacity z-50 pointer-events-none font-bold;
+      }
+
+      /* Collapsed Sidebar States */
+      .sidebar-collapsed {
+        @apply w-20 pl-0;
+      }
+      .sidebar-collapsed .logo-text,
+      .sidebar-collapsed .item-text,
+      .sidebar-collapsed .menu-label,
+      .sidebar-collapsed .system-card-text {
+        @apply hidden;
+      }
+      .sidebar-collapsed .sidebar-item {
+        @apply justify-center px-0;
+      }
+      .sidebar-collapsed .sidebar-item:hover .nav-tooltip {
+        @apply visible opacity-100;
+      }
+      .sidebar-collapsed .sidebar-header {
+        @apply px-0 justify-center;
+      }
+
+      /* Custom Scrollbar */
+      .custom-scrollbar::-webkit-scrollbar {
+        width: 4px;
+      }
+      .custom-scrollbar::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+      }
+
+      .active-tab-nav { @apply bg-primary text-slate-900 dark:text-white shadow-lg shadow-primary/20; }
+      .active-range {
+        background: white !important;
+        color: #4c9a66 !important;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+      }
+      .dark .active-range {
+        background: #13ec5b !important;
+        color: white !important;
+      }
+      .range-btn:hover:not(.active-range) {
+        background: rgba(8, 197, 71, 0.1);
+      }
+    </style>
+</head>
+
+<body class="flex min-h-screen overflow-hidden">
+  <!-- Sidebar -->
+  <aside id="mainSidebar"
+    class="w-72 bg-sidebar-deep flex-shrink-0 flex flex-col h-screen sticky top-0 sidebar-transition pl-2">
+    <!-- Logo Section -->
+    <div class="sidebar-header p-6 pb-12 flex items-center gap-3 transition-all">
+      <div
+        class="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20 flex-shrink-0">
+        <span class="material-symbols-outlined text-sidebar-deep font-bold text-2xl">update</span>
+      </div>
+      <div class="flex flex-col logo-text overflow-hidden">
+        <span class="text-white font-extrabold text-lg leading-tight tracking-tight whitespace-nowrap">Time Task
+          BD</span>
+        <span class="text-primary/60 text-[10px] font-bold uppercase tracking-widest whitespace-nowrap">Admin
+          Control</span>
+      </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="flex-1">
+      <div class="px-8 mb-4 menu-label">
+        <p class="text-[10px] font-bold text-white/40 uppercase tracking-[0.2em]">
+          Main Menu
+        </p>
+      </div>
+
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Admin Index.html">
+        <span class="material-symbols-outlined">dashboard</span>
+        <span class="text-sm item-text ml-4">Dashboard</span>
+        <span class="nav-tooltip">Dashboard</span>
+      </a>
+
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/System Health.html">
+        <span class="material-symbols-outlined">monitor_heart</span>
+        <span class="text-sm item-text ml-4">System Monitoring</span>
+        <span class="nav-tooltip">Security & System Monitoring</span>
+      </a>
+
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/KYC Review.html">
+        <span class="material-symbols-outlined">manage_accounts</span>
+        <span class="text-sm item-text ml-4">Management</span>
+        <span class="nav-tooltip">User & Buyer Management</span>
+      </a>
+
+      <a class="sidebar-item sidebar-item-active px-8 group" href="/Admin Dashboard/User Analytics.html">
+        <span class="material-symbols-outlined">analytics</span>
+        <span class="text-sm item-text ml-4">Analytics Section</span>
+        <span class="nav-tooltip">Analytics Section</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/User Referral Tree.html">
+        <span class="material-symbols-outlined">hub</span>
+        <span class="text-sm item-text ml-4">Referral System</span>
+        <span class="nav-tooltip">Referral System</span>
+      </a>
+
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Market Asset Price.html">
+        <span class="material-symbols-outlined">trending_up</span>
+        <span class="text-sm item-text ml-4">Market Asset Prices</span>
+        <span class="nav-tooltip">Market Asset Prices</span>
+      </a>
+
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Live Support.html">
+        <span class="material-symbols-outlined">support_agent</span>
+        <span class="text-sm item-text ml-4">Live Support</span>
+        <span class="nav-tooltip">Live Support</span>
+      </a>
+
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Buyer Communication.html">
+        <span class="material-symbols-outlined">forum</span>
+        <span class="text-sm item-text ml-4">Communication</span>
+        <span class="nav-tooltip">Communication</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/System Announcemeeent.html">
+        <span class="material-symbols-outlined">forum</span>
+        <span class="text-sm item-text ml-4">System Announcement</span>
+        <span class="nav-tooltip">System Announcement</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Invoice Management.html">
+        <span class="material-symbols-outlined">description</span>
+        <span class="text-sm item-text ml-4">Invoice Management</span>
+        <span class="nav-tooltip">Invoice Management</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Create Content.html">
+        <span class="material-symbols-outlined">edit_note</span>
+        <span class="text-sm item-text ml-4">Content Management</span>
+        <span class="nav-tooltip">Content Management</span>
+      </a>
+    </nav>
+
+    <div class="px-6 py-8">
+      <button
+        class="w-full h-10 flex items-center justify-center bg-primary text-sidebar-deep font-bold text-xs rounded-lg hover:brightness-110 transition-all shadow-lg shadow-primary/10 group relative">
+        <span class="material-symbols-outlined text-[20px] system-icon">logout</span>
+        <span class="ml-2 system-card-text">Logout</span>
+        <span class="nav-tooltip !left-full !ml-6">Logout</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main Content wrapper -->
+  <div
+    class="flex-1 flex flex-col h-screen overflow-hidden bg-background-light dark:bg-background-dark transition-colors duration-300">
+    <!-- Header -->
+    <header
+      class="h-20 bg-white dark:bg-sidebar-deep border-b border-slate-100 dark:border-white/10 px-6 flex items-center justify-between flex-shrink-0 z-40 transition-colors duration-300">
+      <div class="flex items-center gap-6">
+        <button id="sidebarToggle"
+          class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 hover:text-sidebar-deep dark:hover:text-primary hover:bg-primary/10 transition-all">
+          <span class="material-symbols-outlined">menu</span>
+        </button>
+        <div class="relative w-96 group">
+          <span
+            class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 group-focus-within:text-sidebar-deep dark:group-focus-within:text-primary transition-colors">search</span>
+          <input
+            class="w-full bg-slate-100 dark:bg-white/5 border-none rounded-xl pl-10 pr-4 py-2.5 text-sm dark:text-white dark:placeholder:text-slate-500 focus:ring-2 focus:ring-primary/20 transition-all"
+            placeholder="Search system records..." type="text" />
+        </div>
+      </div>
+
+      <div class="flex items-center gap-6">
+        <div class="flex items-center gap-2">
+          <button
+            class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 hover:text-sidebar-deep dark:hover:text-primary hover:bg-primary/10 transition-all relative">
+            <span class="material-symbols-outlined">notifications</span>
+            <span
+              class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-sidebar-deep"></span>
+          </button>
+          <button id="darkModeToggle"
+            class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 dark:hover:text-primary hover:bg-primary/10 transition-all">
+            <span id="darkIcon" class="material-symbols-outlined">light_mode</span>
+          </button>
+        </div>
+        <div class="h-10 w-px bg-slate-200 dark:bg-slate-800"></div>
+        <div class="flex items-center gap-3 cursor-pointer group">
+          <div class="text-right">
+            <p id="adminName"
+              class="text-sm font-bold text-slate-900 dark:text-white group-hover:text-primary transition-colors">
+              Super Admin
+            </p>
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
+              System Manager
+            </p>
+          </div>
+          <div
+            class="w-12 h-12 rounded-xl border-2 border-primary/20 p-0.5 overflow-hidden group-hover:border-primary transition-all">
+            <img alt="Admin Profile" class="w-full h-full object-cover rounded-lg"
+              src="https://lh3.googleusercontent.com/aida-public/AB6AXuDI3q59cS__AXyYcqFQtKZ2-e__roEJ3Cic28K7cd-6tYYxzLfpTArNsAJE3UypttzDIKS6SoNy85-jDLh0ZMbLqXr0NEEjrbCPSgoCJZyYc4W89P8djmlf34I_NEoa2vfl5IS3jHwLSZZ6lgtwguAje5Lv9h9RbZ2fJqb36M_tmZc-iJY-XxAXsCDxVyU1bONcO3AV5LZgB1o5wURKpB9w2XEN6iWAILVT7fIzOkl2pQ4lJb5WxYgkvuNIlKakHZWN1e4bzfo25zYy" />
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Sub Navigation Tabs -->
+    <nav
+      class="sticky top-0 bg-white/50 dark:bg-background-dark/50 border-b border-gray-100 dark:border-white/10 backdrop-blur-sm relative z-30 rounded-l-[30px] ml-80 transition-colors duration-300">
+      <div class="mx-auto w-full px-4">
+        <div id="tabsContainer" class="flex gap-4 overflow-x-auto no-scrollbar py-3">
+          <a class="flex items-center gap-2 px-4 py-2 rounded-[30px] text-sm font-semibold text-gray-700 dark:text-slate-300 hover:bg-white dark:hover:bg-white/5 hover:shadow-sm whitespace-nowrap transition-all"
+            href="/Admin Dashboard/User Analytics.html">
+            <span class="material-symbols-outlined text-[20px]">groups</span>
+            User Analytics
+          </a>
+          <a class="flex items-center gap-2 px-4 py-2 rounded-[30px] text-sm font-semibold text-gray-700 dark:text-slate-300 hover:bg-white dark:hover:bg-white/5 hover:shadow-sm whitespace-nowrap transition-all"
+            href="/Admin Dashboard/Buyer Analytics.html">
+            <span class="material-symbols-outlined text-[20px]">groups</span>
+            Buyer Analytics
+          </a>
+          <a class="flex items-center gap-2 px-4 py-2 rounded-[30px] text-sm font-semibold text-gray-700 dark:text-slate-300 hover:bg-white dark:hover:bg-white/5 hover:shadow-sm whitespace-nowrap transition-all"
+            href="/Admin Dashboard/Marketplace Analytics.html">
+            <span class="material-symbols-outlined text-[20px]">trending_up</span>
+            Marketplace Analytics
+          </a>
+          <a class="flex items-center gap-2 px-4 py-2 rounded-[30px] text-sm font-semibold active-tab-nav whitespace-nowrap transition-all"
+            href="/Admin Dashboard/Financial Overview.html">
+            <span class="material-symbols-outlined text-[20px]">account_balance</span>
+            Financials Overview
+          </a>
+          <a class="flex items-center gap-2 px-4 py-2 rounded-[30px] text-sm font-semibold text-gray-700 dark:text-slate-300 hover:bg-white dark:hover:bg-white/5 hover:shadow-sm whitespace-nowrap transition-all"
+            href="/Admin Dashboard/Financial Revenue Analytics.html">
+            <span class="material-symbols-outlined text-[20px]">query_stats</span>
+            Financials & Revenue
+          </a>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main Dashboard Content -->
+    <main class="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-8 max-w-full">
+      <div class="max-w-[1600px] mx-auto w-full space-y-8">
+        <!-- Row 1: Top Metric Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+          <div
+            class="bg-white dark:bg-white/5 p-5 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm transition-all duration-300">
+            <div class="flex flex-col">
+              <p class="text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider">
+                Gross Revenue
+              </p>
+              <span id="badge-gross"
+                class="w-fit mt-5 justify-center gap-2 text-emerald-500 text-xs font-bold flex items-center bg-emerald-50 dark:bg-emerald-500/10 px-2 py-1 rounded-full">
+                <span class="material-symbols-outlined text-sm">hourglass_empty</span>
+                —
+              </span>
+            </div>
+            <p id="kpi-gross" class="text-2xl font-bold text-slate-900 dark:text-white mt-3">৳ —</p>
+          </div>
+          <div
+            class="bg-white dark:bg-white/5 p-5 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm transition-all duration-300">
+            <div class="flex flex-col">
+              <p class="text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider">
+                Total User Payouts
+              </p>
+              <span id="badge-payouts"
+                class="w-fit mt-5 justify-center gap-2 text-rose-500 text-xs font-bold flex items-center bg-rose-50 dark:bg-rose-500/10 px-2 py-1 rounded-full">
+                <span class="material-symbols-outlined text-sm">hourglass_empty</span>
+                —
+              </span>
+            </div>
+            <p id="kpi-payouts" class="text-2xl font-bold text-slate-900 dark:text-white mt-3">৳ —</p>
+          </div>
+          <div
+            class="bg-white dark:bg-white/5 p-5 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm transition-all duration-300">
+            <div class="flex flex-col">
+              <p class="text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider">
+                Net Platform Profit
+              </p>
+              <span id="badge-profit"
+                class="w-fit mt-5 justify-center gap-2 text-emerald-500 text-xs font-bold flex items-center bg-emerald-50 dark:bg-emerald-500/10 px-2 py-1 rounded-full">
+                <span class="material-symbols-outlined text-sm">hourglass_empty</span>
+                —
+              </span>
+            </div>
+            <p id="kpi-profit" class="text-2xl font-bold text-slate-900 dark:text-white mt-3">৳ —</p>
+          </div>
+          <div
+            class="bg-white dark:bg-white/5 p-5 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm transition-all duration-300">
+            <div class="flex flex-col">
+              <p class="text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider">
+                Pending Withdrawals
+              </p>
+              <span id="badge-pending"
+                class="w-fit mt-5 justify-center gap-2 text-amber-500 text-xs font-bold flex items-center bg-amber-50 dark:bg-amber-500/10 px-2 py-1 rounded-full">
+                <span class="material-symbols-outlined text-sm">schedule</span>
+                — Req.
+              </span>
+            </div>
+            <p id="kpi-pending" class="text-2xl font-bold text-slate-900 dark:text-white mt-3">৳ —</p>
+          </div>
+          <div
+            class="bg-white dark:bg-white/5 p-5 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm transition-all duration-300">
+            <div class="flex flex-col">
+              <p class="text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider">
+                Buyer Deposits
+              </p>
+              <span id="badge-deposits"
+                class="w-fit mt-5 justify-center gap-2 text-emerald-500 text-xs font-bold flex items-center bg-emerald-50 dark:bg-emerald-500/10 px-2 py-1 rounded-full">
+                <span class="material-symbols-outlined text-sm">hourglass_empty</span>
+                —
+              </span>
+            </div>
+            <p id="kpi-deposits" class="text-2xl font-bold text-slate-900 dark:text-white mt-3">৳ —</p>
+          </div>
+          <div
+            class="bg-white dark:bg-white/5 p-5 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm transition-all duration-300">
+            <div class="flex flex-col">
+              <p class="text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider">
+                Avg. Payout / User
+              </p>
+              <span id="badge-margin"
+                class="w-fit mt-5 justify-center gap-2 text-emerald-500 text-xs font-bold flex items-center bg-emerald-50 dark:bg-emerald-500/10 px-2 py-1 rounded-full">
+                <span class="material-symbols-outlined text-sm">hourglass_empty</span>
+                —
+              </span>
+            </div>
+            <p id="kpi-margin" class="text-2xl font-bold text-slate-900 dark:text-white mt-3">— Tk</p>
+          </div>
+        </div>
+        <!-- Row 2: Revenue Trends Chart Area -->
+        <div
+          class="bg-white dark:bg-white/5 p-6 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm transition-colors duration-300">
+          <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+            <div>
+              <h3 class="text-lg font-bold text-slate-900 dark:text-white">
+                Revenue Trends
+              </h3>
+              <p class="text-sm text-slate-500">
+                Comparison of platform revenue vs payouts (Last 30 days)
+              </p>
+            </div>
+            <div class="flex items-center gap-3">
+              <div class="flex h-10 items-center rounded-lg bg-[#e7f3eb] dark:bg-[#1a2e1f] p-1 gap-1">
+                <button data-range="today" onclick="setRange('today')"
+                  class="range-btn h-full px-4 rounded-lg text-sm font-medium text-[#4c9a66] transition-all">Today</button>
+                <button data-range="7" onclick="setRange('7')"
+                  class="range-btn h-full px-4 rounded-lg text-sm font-medium text-[#4c9a66] transition-all active-range">7
+                  Days</button>
+                <button data-range="30" onclick="setRange('30')"
+                  class="range-btn h-full px-4 rounded-lg text-sm font-medium text-[#4c9a66] transition-all">30
+                  Days</button>
+              </div>
+              <button onclick="loadFinancialData()"
+                class="flex items-center gap-2 px-4 py-2 bg-primary dark:text-white text-sidebar-deep font-bold text-sm rounded-xl hover:bg-primary/20 transition-all">
+                <span class="material-symbols-outlined text-[18px]">refresh</span> Refresh
+              </button>
+            </div>
+          </div>
+          <div id="revenue-chart" class="h-[300px] w-full relative flex items-end gap-1 pb-6">
+            <div class="text-sm text-slate-400 italic self-center w-full text-center">Loading chart...</div>
+          </div>
+          <div class="flex justify-center gap-6 mt-4">
+            <div class="flex items-center gap-2">
+              <div class="size-3 rounded-sm bg-primary"></div>
+              <span class="text-xs text-slate-500 font-medium">Revenue</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <div class="size-3 rounded-sm bg-slate-300 dark:bg-slate-600"></div>
+              <span class="text-xs text-slate-500 font-medium">Payouts</span>
+            </div>
+          </div>
+        </div>
+        <!-- Row 3: Platform Breakdown & Service Distribution -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <!-- Left: Profit by Platform -->
+          <div
+            class="bg-white dark:bg-white/5 p-6 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm transition-all duration-300">
+            <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-6">
+              Profit by Platform
+            </h3>
+            <div id="platform-bars" class="space-y-5">
+              <div class="text-sm text-slate-400 italic">Loading...</div>
+            </div>
+          </div>
+          <!-- Right: Revenue Distribution -->
+          <div
+            class="bg-white dark:bg-white/5 p-6 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm transition-all duration-300">
+            <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-6">
+              Income Source Distribution
+            </h3>
+            <div class="flex items-center justify-center h-[200px]">
+              <div class="relative size-40">
+                <svg id="donut-svg" class="size-full -rotate-90" viewBox="0 0 36 36">
+                  <circle class="stroke-slate-100 dark:stroke-slate-800" cx="18" cy="18" fill="none" r="16"
+                    stroke-width="4"></circle>
+                  <circle id="donut-arc-a" class="stroke-primary" cx="18" cy="18" fill="none" r="16"
+                    stroke-dasharray="75, 100" stroke-linecap="round" stroke-width="4"></circle>
+                  <circle id="donut-arc-b" class="stroke-slate-400" cx="18" cy="18" fill="none" r="16"
+                    stroke-dasharray="25, 100" stroke-dashoffset="-75" stroke-linecap="round" stroke-width="4"></circle>
+                </svg>
+                <div class="absolute inset-0 flex flex-col items-center justify-center text-center">
+                  <span id="donut-pct" class="text-2xl font-bold text-slate-900 dark:text-white">—%</span>
+                  <span class="text-[10px] uppercase text-slate-400 font-bold">Deposits</span>
+                </div>
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-4 mt-6">
+              <div class="flex items-center gap-2 p-3 bg-slate-50 dark:bg-white/5 rounded-lg">
+                <div class="size-3 rounded-full bg-primary"></div>
+                <div>
+                  <p class="text-[10px] text-slate-500 font-bold uppercase">Buyer Deposits</p>
+                  <p id="donut-a-val" class="text-sm font-bold">৳ —</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-2 p-3 bg-slate-50 dark:bg-white/5 rounded-lg">
+                <div class="size-3 rounded-full bg-slate-400"></div>
+                <div>
+                  <p class="text-[10px] text-slate-500 font-bold uppercase">Task Payouts</p>
+                  <p id="donut-b-val" class="text-sm font-bold">৳ —</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Row 4: Financial Health Gauges -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div
+            class="bg-white dark:bg-white/5 p-6 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm text-center transition-all duration-300">
+            <h4 class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Burn Rate</h4>
+            <div class="relative w-48 mx-auto h-24 overflow-hidden">
+              <div class="w-48 h-48 rounded-full border-[16px] border-slate-100 dark:border-white/10"></div>
+              <div id="gauge-burn-needle"
+                class="absolute top-0 w-48 h-48 rounded-full border-[16px] border-primary border-b-transparent border-l-transparent -rotate-45">
+              </div>
+              <div id="gauge-burn-val"
+                class="absolute bottom-0 left-1/2 -translate-x-1/2 text-xl font-bold dark:text-white">—</div>
+            </div>
+            <p id="gauge-burn-sub" class="text-sm text-slate-500 mt-2">Loading...</p>
+          </div>
+          <div
+            class="bg-white dark:bg-white/5 p-6 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm text-center transition-all duration-300">
+            <h4 class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Profit Stability</h4>
+            <div class="relative w-48 mx-auto h-24 overflow-hidden">
+              <div class="w-48 h-48 rounded-full border-[16px] border-slate-100 dark:border-white/10"></div>
+              <div id="gauge-profit-needle"
+                class="absolute top-0 w-48 h-48 rounded-full border-[16px] border-emerald-500 border-b-transparent border-l-transparent rotate-[30deg]">
+              </div>
+              <div id="gauge-profit-val"
+                class="absolute bottom-0 left-1/2 -translate-x-1/2 text-xl font-bold dark:text-white">—</div>
+            </div>
+            <p id="gauge-profit-sub" class="text-sm text-slate-500 mt-2">Loading...</p>
+          </div>
+          <div
+            class="bg-white dark:bg-white/5 p-6 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm text-center transition-all duration-300">
+            <h4 class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Payout Liquidity</h4>
+            <div class="relative w-48 mx-auto h-24 overflow-hidden">
+              <div class="w-48 h-48 rounded-full border-[16px] border-slate-100 dark:border-white/10"></div>
+              <div id="gauge-liq-needle"
+                class="absolute top-0 w-48 h-48 rounded-full border-[16px] border-primary border-b-transparent border-l-transparent rotate-[10deg]">
+              </div>
+              <div id="gauge-liq-val"
+                class="absolute bottom-0 left-1/2 -translate-x-1/2 text-xl font-bold dark:text-white">—</div>
+            </div>
+            <p id="gauge-liq-sub" class="text-sm text-slate-500 mt-2">Loading...</p>
+          </div>
+        </div>
+        <!-- Row 5: Recent Large Transactions Table -->
+        <div
+          class="bg-white dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm overflow-hidden transition-colors duration-300">
+          <div
+            class="p-6 border-b border-slate-100 dark:border-white/10 flex justify-between items-center transition-colors">
+            <div>
+              <h3 class="text-lg font-bold text-slate-900 dark:text-white">
+                Recent Large Transactions
+              </h3>
+              <p class="text-sm text-slate-500">
+                Overview of major wallet movements
+              </p>
+            </div>
+            <button class="text-primary text-sm font-bold flex items-center gap-1 hover:underline">
+              View All
+              <span class="material-symbols-outlined text-sm">arrow_forward</span>
+            </button>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left">
+              <thead>
+                <tr
+                  class="bg-slate-50 dark:bg-white/5 text-slate-500 dark:text-white text-[10px] font-bold uppercase tracking-wider">
+                  <th class="px-6 py-4">Transaction ID</th>
+                  <th class="px-6 py-4">User Details</th>
+                  <th class="px-6 py-4">Type</th>
+                  <th class="px-6 py-4 text-right">Amount</th>
+                  <th class="px-6 py-4">Status</th>
+                  <th class="px-6 py-4">Date &amp; Time</th>
+                </tr>
+              </thead>
+              <tbody id="tx-tbody" class="divide-y divide-slate-100 dark:divide-white/10">
+                <tr>
+                  <td colspan="6" class="px-6 py-8 text-center text-sm text-slate-400 italic">Loading transactions...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div
+            class="p-6 border-t border-slate-100 dark:border-white/10 flex flex-col md:flex-row justify-between items-center gap-4">
+            <p class="text-xs text-slate-500 font-medium" id="tx-pagination-info">Showing 0 to 0 of 0 entries</p>
+            <div class="flex items-center gap-2">
+              <button id="tx-prev-btn" onclick="goToPage(currentTxPage - 1)"
+                class="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-50 dark:bg-white/5 text-white-500 hover:bg-primary hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                <span class="material-symbols-outlined text-sm">chevron_left</span>
+              </button>
+              <div id="tx-page-numbers" class="flex items-center gap-1">
+              </div>
+              <button id="tx-next-btn" onclick="goToPage(currentTxPage + 1)"
+                class="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-50 dark:bg-white/5 text-white-500 hover:bg-primary hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                <span class="material-symbols-outlined text-sm">chevron_right</span>
+              </button>
+            </div>
+          </div>
+        </div>
+        <footer class="pt-16 pb-8 border-t border-slate-200 dark:border-white/10 mt-12 transition-colors">
+          <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+            <div class="flex items-center gap-8 text-[11px] font-bold text-slate-400 uppercase tracking-widest">
+              <a class="hover:text-primary transition-colors" href="#">Privacy Policy</a>
+              <a class="hover:text-primary transition-colors" href="#">Terms of Service</a>
+              <a class="hover:text-primary transition-colors" href="#">Documentation</a>
+            </div>
+            <p class="text-[11px] font-bold text-slate-400">
+              © 2024 TIME TASK BD. ALL RIGHTS RESERVED.
+            </p>
+          </div>
+        </footer>
+      </div>
+    </main>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../supabase-client.js"></script>
+  <script>
+    // ─ Global State ───────────────────────────────────────────────────
+    let allTransactions = [];
+    let allOrders = [];
+    let currentRevenueRange = '7';
+    let currentTxPage = 1;
+    const txPerPage = 10;
+    const _sb = window.supabaseClient;
+
+    async function requireAdminSession() {
+      if (!_sb?.auth) return false;
+      const { data: { session }, error } = await _sb.auth.getSession();
+      if (error || !session) {
+        window.location.href = "/Admin Dashboard/Admin_Login.html";
+        return false;
+      }
+      const { data: profile, error: profErr } = await _sb
+        .from('profiles')
+        .select('role, full_name, username')
+        .eq('id', session.user.id)
+        .single();
+      if (profErr || profile?.role !== 'Admin') {
+        window.location.href = "/Admin Dashboard/Admin_Login.html";
+        return false;
+      }
+      const adminName = document.getElementById('adminName');
+      if (adminName) adminName.textContent = profile.full_name || profile.username || 'Admin';
+      return true;
+    }
+
+    // ─ Helpers ──────────────────────────────────────────────────────────
+    const fmt = n => '৳ ' + Number(n).toLocaleString('en-IN', { maximumFractionDigits: 0 });
+
+    function initials(name) {
+      if (!name) return '?';
+      return name.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase();
+    }
+
+    function setGauge(needleId, valId, subId, pct, valText, subText, color) {
+      const isDark = document.documentElement.classList.contains('dark');
+      const container = document.getElementById(needleId)?.parentElement;
+      if (container) {
+        const bgCircle = container.querySelector('div:first-child');
+        if (bgCircle) bgCircle.style.borderColor = isDark ? '#1e293b' : '#f1f5f9';
+      }
+
+      const safePct = Number.isFinite(pct) ? Math.min(100, Math.max(0, pct)) : 0;
+      const deg = -90 + (safePct / 100) * 180;
+      const needle = document.getElementById(needleId);
+      if (needle) {
+        needle.style.transform = `rotate(${deg}deg) translateZ(0)`;
+        // Make sure the visible quarter-arc is colored, and hidden sides stay transparent.
+        needle.style.borderTopColor = color;
+        needle.style.borderRightColor = color;
+        needle.style.borderBottomColor = 'transparent';
+        needle.style.borderLeftColor = 'transparent';
+      }
+      const valEl = document.getElementById(valId);
+      if (valEl) valEl.textContent = valText;
+      const subEl = document.getElementById(subId);
+      if (subEl) subEl.textContent = subText;
+    }
+
+    function renderTransactions() {
+      const tbody = document.getElementById('tx-tbody');
+      if (!tbody) return;
+      const startIdx = (currentTxPage - 1) * txPerPage;
+      const endIdx = startIdx + txPerPage;
+      const pageRows = allTransactions.slice(startIdx, endIdx);
+
+      if (allTransactions.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-8 text-center text-sm text-slate-400 italic">No transactions found</td></tr>';
+        const info = document.getElementById('tx-pagination-info');
+        if (info) info.textContent = 'Showing 0 to 0 of 0 entries';
+        const numbers = document.getElementById('tx-page-numbers');
+        if (numbers) numbers.innerHTML = '';
+        const prev = document.getElementById('tx-prev-btn');
+        if (prev) prev.disabled = true;
+        const next = document.getElementById('tx-next-btn');
+        if (next) next.disabled = true;
+        return;
+      }
+
+      tbody.innerHTML = pageRows.map(tx => {
+        const name = tx.profiles?.full_name || 'Unknown';
+        const email = tx.profiles?.email || '';
+        const ini = initials(name);
+        const isDeposit = tx._type === 'Deposit';
+        const typeCls = isDeposit ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600';
+        const stMap = { approved: 'bg-emerald-500 text-emerald-500', paid: 'bg-emerald-500 text-emerald-500', pending: 'bg-amber-500 text-amber-500', rejected: 'bg-red-500 text-red-500' };
+        const st = stMap[tx.status] || 'bg-slate-400 text-slate-400';
+        const stLabel = tx.status ? tx.status.charAt(0).toUpperCase() + tx.status.slice(1) : '—';
+        const dateStr = new Date(tx.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + ' • ' + new Date(tx.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        return `<tr class="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+          <td class="px-6 py-4 text-sm font-mono text-slate-400">#${tx.id.slice(-6).toUpperCase()}</td>
+          <td class="px-6 py-4">
+            <div class="flex items-center gap-3">
+              <div class="size-8 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xs font-extrabold flex-shrink-0">${ini}</div>
+              <div>
+                <p class="text-sm font-bold text-slate-900 dark:text-white transition-colors">${name}</p>
+                <p class="text-xs text-slate-400">${email}</p>
+              </div>
+            </div>
+          </td>
+          <td class="px-6 py-4"><span class="text-xs font-semibold px-2 py-1 ${typeCls} rounded">${tx._type}</span></td>
+          <td class="px-6 py-4 text-right text-sm font-bold dark:text-white transition-colors">${fmt(tx.amount)}</td>
+          <td class="px-6 py-4"><div class="flex items-center gap-1.5 ${st.split(' ')[1]} text-xs font-bold"><span class="size-2 rounded-full ${st.split(' ')[0]}"></span>${stLabel}</div></td>
+          <td class="px-6 py-4 text-xs text-slate-500">${dateStr}</td>
+        </tr>`;
+      }).join('');
+
+      const totalPages = Math.ceil(allTransactions.length / txPerPage);
+      const info = document.getElementById('tx-pagination-info');
+      if (info) info.textContent = `Showing ${startIdx + 1} to ${Math.min(endIdx, allTransactions.length)} of ${allTransactions.length} entries`;
+
+      const prevBtn = document.getElementById('tx-prev-btn');
+      const nextBtn = document.getElementById('tx-next-btn');
+      if (prevBtn) prevBtn.disabled = currentTxPage === 1;
+      if (nextBtn) nextBtn.disabled = currentTxPage === totalPages;
+
+      let pagesHtml = '';
+      for (let i = 1; i <= totalPages; i++) {
+        if (totalPages <= 7 || i === 1 || i === totalPages || (i >= currentTxPage - 1 && i <= currentTxPage + 1)) {
+          const activeCls = i === currentTxPage ? 'bg-primary text-white font-bold shadow shadow-primary/30' : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800';
+          pagesHtml += `<button onclick="goToPage(${i})" class="w-8 h-8 flex items-center justify-center rounded-lg text-xs transition-all ${activeCls}">${i}</button>`;
+        } else if (i === currentTxPage - 2 || i === currentTxPage + 2) {
+          pagesHtml += `<span class="px-1 text-slate-400">...</span>`;
+        }
+      }
+      const pageNumContainer = document.getElementById('tx-page-numbers');
+      if (pageNumContainer) pageNumContainer.innerHTML = pagesHtml.replace(/(<span[^>]*>\.\.\.<\/span>)+/g, '$1');
+    }
+
+    function goToPage(page) {
+      if (page >= 1 && page <= Math.ceil(allTransactions.length / txPerPage)) {
+        currentTxPage = page;
+        renderTransactions();
+      }
+    }
+
+    // ─ Sidebar & Theme ──────────────────────────────────────────────────
+    const sidebar = document.getElementById("mainSidebar");
+    const toggleBtn = document.getElementById("sidebarToggle");
+    if (toggleBtn) toggleBtn.addEventListener("click", () => sidebar.classList.toggle("sidebar-collapsed"));
+
+    function updateThemeUI(theme) {
+      const darkIcon = document.getElementById('darkIcon');
+      if (theme === 'dark') {
+        document.documentElement.classList.add('dark');
+        document.documentElement.classList.remove('light');
+        if (darkIcon) darkIcon.textContent = 'dark_mode';
+      } else {
+        document.documentElement.classList.remove('dark');
+        document.documentElement.classList.add('light');
+        if (darkIcon) darkIcon.textContent = 'light_mode';
+      }
+      if (typeof renderTransactions === 'function') renderTransactions();
+    }
+
+    const darkModeToggle = document.getElementById('darkModeToggle');
+    if (darkModeToggle) {
+      darkModeToggle.addEventListener('click', () => {
+        const isDark = document.documentElement.classList.contains('dark');
+        const newTheme = isDark ? 'light' : 'dark';
+        localStorage.setItem('theme', newTheme);
+        updateThemeUI(newTheme);
+      });
+    }
+
+    // Initialize UI
+    const initialTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    updateThemeUI(initialTheme);
+
+    // Sub Navigation
+    const subTabs = document.querySelectorAll("#tabsContainer a");
+    subTabs.forEach(tab => tab.addEventListener("click", () => {
+      subTabs.forEach(t => t.classList.remove("active-tab-nav"));
+      tab.classList.add("active-tab-nav");
+    }));
+
+    function setRange(range) {
+      currentRevenueRange = range;
+      const btns = document.querySelectorAll('.range-btn');
+      btns.forEach(b => {
+        if (b.getAttribute('data-range') === range) {
+          b.classList.add('active-range');
+        } else {
+          b.classList.remove('active-range');
+        }
+      });
+      renderRevenueChart();
+    }
+
+    function renderRevenueChart() {
+      const chart = document.getElementById('revenue-chart');
+      if (!chart) return;
+      if (!allOrders.length) {
+        chart.innerHTML = `<div class="text-sm text-slate-400 italic self-center w-full text-center">No revenue data yet</div>`;
+        return;
+      }
+
+      const rangeLabel = document.querySelector('p.text-sm.text-slate-500');
+      if (rangeLabel) {
+        const labels = { today: 'Today\'s Data', '7': 'Last 7 Days', '30': 'Last 30 Days' };
+        rangeLabel.textContent = `Comparison of platform revenue vs payouts (${labels[currentRevenueRange]})`;
+      }
+
+      const map = {};
+      const now = new Date();
+      now.setHours(0, 0, 0, 0);
+
+      const filteredOrders = allOrders.filter(o => {
+        const date = new Date(o.created_at);
+        const diff = (now - date) / (1000 * 60 * 60 * 24);
+        if (currentRevenueRange === 'today') return diff < 1;
+        if (currentRevenueRange === '7') return diff < 7;
+        if (currentRevenueRange === '30') return diff < 30;
+        return true;
+      });
+
+      filteredOrders.forEach(o => {
+        const key = o.created_at.substring(0, 10);
+        map[key] = (map[key] || 0) + parseFloat(o.total_cost || 0);
+      });
+
+      let entries = Object.entries(map).sort((a, b) => a[0].localeCompare(b[0]));
+      // If today, show last few records. If 7/30, show appropriate count.
+      if (currentRevenueRange === 'today') entries = entries.slice(-1);
+      else if (currentRevenueRange === '7') entries = entries.slice(-7);
+      else entries = entries.slice(-15); // Show last 15 days for 30d view to keep it readable
+
+      const maxVal = Math.max(...entries.map(e => e[1]), 1);
+      chart.innerHTML = entries.map(([key, rev]) => {
+        const pct = Math.max(5, (rev / maxVal) * 100).toFixed(0);
+        const label = new Date(key).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+
+        return `<div class="flex-1 flex flex-col gap-1 h-full items-center justify-end">
+          <div class="w-full bg-primary/20 rounded-t relative group" style="height:${pct}%">
+            <div class="absolute inset-x-0 bottom-0 h-full bg-primary rounded-t-sm opacity-70"></div>
+            <div class="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[10px] py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">${fmt(rev)}</div>
+          </div>
+          <span class="text-[9px] text-slate-400 mt-2 truncate w-full text-center px-0.5">${label}</span>
+        </div>`;
+      }).join('');
+    }
+
+    // ─ Main Fetch ───────────────────────────────────────────────────
+    async function loadFinancialData() {
+      if (!_sb) return;
+      try {
+        await requireAdminSession();
+
+        // Use profiles.balance as the platform liquidity source.
+        // (wallets table exists in DB but is often blocked by RLS / missing policies in this repo.)
+        const results = await Promise.allSettled([
+          _sb.from('orders').select('platform, total_cost, created_at, status').neq('status', 'cancelled'),
+          _sb.from('withdrawals').select('amount, status'),
+          _sb.from('deposits').select('amount, status'),
+          _sb.from('task_submissions').select('payout_amount, user_id').eq('status', 'approved'),
+          _sb.from('profiles').select('balance').not('balance', 'is', null),
+        ]);
+
+        const [ordersRes, withdrawalsRes, depositsRes, taskSubRes, profilesRes] = results.map(r => {
+          if (r.status === 'fulfilled') return r.value;
+          return { data: null, error: r.reason };
+        });
+
+        if (ordersRes.error || withdrawalsRes.error || depositsRes.error || taskSubRes.error || profilesRes.error) {
+          console.warn('Financial Overview partial errors:', {
+            orders: ordersRes.error?.message || ordersRes.error,
+            withdrawals: withdrawalsRes.error?.message || withdrawalsRes.error,
+            deposits: depositsRes.error?.message || depositsRes.error,
+            task_submissions: taskSubRes.error?.message || taskSubRes.error,
+            profiles: profilesRes.error?.message || profilesRes.error,
+          });
+        }
+
+        const orders = ordersRes.data || [];
+        const withdrawals = withdrawalsRes.data || [];
+        const deposits = depositsRes.data || [];
+        const taskSubs = taskSubRes.data || [];
+        const balances = profilesRes.data || [];
+
+        // ─ KPI calculations ─
+        const grossRevenue = orders.reduce((s, o) => s + parseFloat(o.total_cost || 0), 0);
+        const paidPayouts = withdrawals.filter(w => w.status === 'paid').reduce((s, w) => s + parseFloat(w.amount || 0), 0);
+        const netProfit = grossRevenue - paidPayouts;
+        const pendingWd = withdrawals.filter(w => w.status === 'pending');
+        const pendingSum = pendingWd.reduce((s, w) => s + parseFloat(w.amount || 0), 0);
+        const buyerDeposits = deposits.filter(d => d.status === 'approved').reduce((s, d) => s + parseFloat(d.amount || 0), 0);
+        const taskPayoutSum = taskSubs.reduce((s, t) => s + parseFloat(t.payout_amount || 0), 0);
+        const uniqueUsers = new Set(taskSubs.map(t => t.user_id)).size;
+        const avgMargin = uniqueUsers > 0 ? Math.round(taskPayoutSum / uniqueUsers) : 0;
+        const totalWalletBal = balances.reduce((s, p) => s + parseFloat(p.balance || 0), 0);
+
+        // KPI Cards
+        document.getElementById('kpi-gross').textContent = fmt(grossRevenue);
+        document.getElementById('kpi-payouts').textContent = fmt(paidPayouts);
+        document.getElementById('kpi-profit').textContent = fmt(netProfit);
+        document.getElementById('kpi-pending').textContent = fmt(pendingSum);
+        document.getElementById('kpi-deposits').textContent = fmt(buyerDeposits);
+        document.getElementById('kpi-margin').textContent = avgMargin.toLocaleString() + ' Tk';
+        document.getElementById('badge-pending').innerHTML =
+          `<span class="material-symbols-outlined text-sm">schedule</span>${pendingWd.length} Req.`;
+
+        // KPI badges
+        const profitPct = grossRevenue > 0 ? ((netProfit / grossRevenue) * 100).toFixed(1) : 0;
+        document.getElementById('badge-gross').innerHTML =
+          `<span class="material-symbols-outlined text-sm">trending_up</span>${profitPct}% margin`;
+        document.getElementById('badge-profit').innerHTML =
+          `<span class="material-symbols-outlined text-sm">trending_up</span>${profitPct}%`;
+
+        allOrders = orders;
+        renderRevenueChart();
+
+        // ─ Platform Bars ─
+        const platMap = {};
+        orders.forEach(o => { platMap[o.platform] = (platMap[o.platform] || 0) + parseFloat(o.total_cost || 0); });
+        const platArr = Object.entries(platMap).sort((a, b) => b[1] - a[1]);
+        const maxPlat = Math.max(...platArr.map(p => p[1]), 1);
+        document.getElementById('platform-bars').innerHTML = platArr.length === 0
+          ? '<p class="text-sm text-slate-400 italic">No data</p>'
+          : platArr.map(([plat, rev]) => {
+            const w = Math.max(2, (rev / maxPlat) * 100).toFixed(0);
+            return `<div class="space-y-2">
+                <div class="flex justify-between text-sm"><span class="font-medium">${plat}</span><span class="font-bold">${fmt(rev)}</span></div>
+                <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden"><div class="bg-primary h-full rounded-full" style="width:${w}%"></div></div>
+              </div>`;
+          }).join('');
+
+        // ─ Income Source Distribution (Donut) ─
+        const total = buyerDeposits + taskPayoutSum;
+        const aPct = total > 0 ? (buyerDeposits / total) * 100 : 0;
+        const bPct = 100 - aPct;
+        document.getElementById('donut-arc-a').setAttribute('stroke-dasharray', `${aPct.toFixed(1)}, 100`);
+        document.getElementById('donut-arc-b').setAttribute('stroke-dasharray', `${bPct.toFixed(1)}, 100`);
+        document.getElementById('donut-arc-b').setAttribute('stroke-dashoffset', `-${aPct.toFixed(1)}`);
+        document.getElementById('donut-pct').textContent = aPct.toFixed(0) + '%';
+        document.getElementById('donut-a-val').textContent = fmt(buyerDeposits);
+        document.getElementById('donut-b-val').textContent = fmt(taskPayoutSum);
+
+        // ─ Financial Health Gauges ─
+        const burnPct = grossRevenue > 0 ? (paidPayouts / grossRevenue) * 100 : 0;
+        const burnLabel = burnPct < 20 ? 'Low' : burnPct < 50 ? 'Moderate' : 'High';
+        const burnColor = burnPct < 20 ? '#13ec5b' : burnPct < 50 ? '#f59e0b' : '#ef4444';
+        setGauge('gauge-burn-needle', 'gauge-burn-val', 'gauge-burn-sub',
+          Math.min(burnPct, 100), burnLabel, `Burn rate ${burnPct.toFixed(1)}% of revenue`, burnColor);
+
+        const stabilityPct = grossRevenue > 0 ? (netProfit / grossRevenue) * 100 : 0;
+        const stabLabel = stabilityPct > 60 ? 'Stable' : stabilityPct > 20 ? 'Moderate' : 'Low';
+        setGauge('gauge-profit-needle', 'gauge-profit-val', 'gauge-profit-sub',
+          Math.min(Math.max(stabilityPct, 0), 100), stabLabel, `${stabilityPct.toFixed(1)}% profit margin`, '#10b981');
+
+        const liqPct = pendingSum > 0 ? Math.min((totalWalletBal / pendingSum) * 100, 200) : 100;
+        const liqLabel = liqPct >= 100 ? liqPct.toFixed(0) + '%' : 'Low';
+        const liqColor = liqPct >= 100 ? '#13ec5b' : '#f59e0b';
+        setGauge('gauge-liq-needle', 'gauge-liq-val', 'gauge-liq-sub',
+          Math.min(liqPct / 2, 100), liqLabel, pendingSum > 0 ? `Wallet covers ${liqPct.toFixed(0)}% of pending` : 'No pending withdrawals', liqColor);
+
+        // ─ Transactions Table ─
+        const [depTxRes, wdTxRes] = await Promise.all([
+          _sb.from('deposits').select('id, amount, status, created_at, gateway, user_id, profiles(full_name, email)').order('created_at', { ascending: false }).limit(500),
+          _sb.from('withdrawals').select('id, amount, status, created_at, method, user_id, profiles(full_name, email)').order('created_at', { ascending: false }).limit(500),
+        ]);
+        allTransactions = [
+          ...(depTxRes.data || []).map(r => ({ ...r, _type: 'Deposit', _detail: r.gateway })),
+          ...(wdTxRes.data || []).map(r => ({ ...r, _type: 'Withdrawal', _detail: r.method })),
+        ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+        currentTxPage = 1;
+        renderTransactions();
+
+      } catch (e) {
+        console.error('Financial Overview error:', e);
+      }
+    }
+
+    setTimeout(loadFinancialData, 400);
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,965 @@
+<!doctype html>
+<html class="light" lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <title>Financial & Revenue Analytics â€” Time Task BD Admin</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+    rel="stylesheet" />
+  <script>
+    (function () {
+      const savedTheme = localStorage.getItem("theme") || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+      if (savedTheme === "dark") {
+        document.documentElement.classList.add("dark");
+        document.documentElement.classList.remove("light");
+      } else {
+        document.documentElement.classList.add("light");
+        document.documentElement.classList.remove("dark");
+      }
+    })();
+  </script>
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            primary: "#13ec5b",
+            "background-light": "#f6f8f6",
+            "background-dark": "#0d1b12",
+            "sidebar-deep": "#102216",
+            "accent-green": "#13ec5b",
+          },
+          fontFamily: { display: ["Manrope"] },
+          borderRadius: { DEFAULT: "0.25rem", lg: "0.5rem", xl: "0.75rem", "2xl": "1rem", full: "9999px" },
+        },
+      },
+    };
+  </script>
+  <style type="text/tailwindcss">
+    @layer base { body { @apply font-display bg-background-light dark:bg-background-dark text-slate-900 dark:text-white transition-colors duration-300; } }
+    .sidebar-transition { @apply transition-all duration-300 ease-in-out; }
+    .sidebar-item-active {
+      @apply bg-background-light text-sidebar-deep font-bold relative !important;
+      border-radius: 40px 0 0 40px; margin-left: 10px; width: calc(100% - 10px) !important;
+    }
+    .sidebar-item-active::before {
+      content: ""; position: absolute; right: 0; top: -40px; width: 40px; height: 40px;
+      background: transparent; border-radius: 50%; box-shadow: 20px 20px 0 0 #f6f8f6; pointer-events: none;
+    }
+    .sidebar-item-active::after {
+      content: ""; position: absolute; right: 0; bottom: -40px; width: 40px; height: 40px;
+      background: transparent; border-radius: 50%; box-shadow: 20px -20px 0 0 #f6f8f6; pointer-events: none;
+    }
+    .dark .sidebar-item-active::before { box-shadow: 20px 20px 0 0 #0d1b12; }
+    .dark .sidebar-item-active::after  { box-shadow: 20px -20px 0 0 #0d1b12; }
+    .dark .sidebar-item-active { @apply bg-background-dark text-white !important; }
+    .sidebar-item { @apply flex items-center py-4 text-white/70 hover:text-white transition-all duration-200 cursor-pointer w-full relative; }
+    .sidebar-item .material-symbols-outlined { @apply font-light text-[24px]; }
+    .sidebar-item-active .material-symbols-outlined { @apply text-sidebar-deep; }
+    .dark .sidebar-item-active .material-symbols-outlined { @apply text-primary; }
+    .nav-tooltip { @apply invisible absolute left-full ml-4 px-2 py-1 bg-sidebar-deep text-white text-[10px] rounded whitespace-nowrap opacity-0 transition-opacity z-50 pointer-events-none; }
+    .sidebar-collapsed { @apply w-20 pl-0; }
+    .sidebar-collapsed .logo-text, .sidebar-collapsed .item-text, .sidebar-collapsed .menu-label, .sidebar-collapsed .system-card-text { @apply hidden; }
+    .sidebar-collapsed .sidebar-item { @apply justify-center px-0; }
+    .sidebar-collapsed .sidebar-item:hover .nav-tooltip { @apply visible opacity-100; }
+    .sidebar-collapsed .sidebar-header { @apply px-0 justify-center; }
+    .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+    .active-tab-nav { @apply bg-primary text-sidebar-deep dark:text-white shadow-lg shadow-primary/20; }
+    .filter-btn { @apply px-4 py-2 rounded-lg text-sm font-bold transition-all duration-200 border border-transparent; }
+    .filter-btn.active { @apply bg-primary text-sidebar-deep shadow-md shadow-primary/20; }
+    .filter-btn:not(.active) { @apply bg-white dark:bg-white/5 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-white/10 hover:border-primary hover:text-primary; }
+    .kpi-card { @apply bg-white dark:bg-[#1a2e1f] p-6 rounded-xl border border-[#cee8d7] dark:border-white/10 shadow-sm hover:shadow-md transition-shadow; }
+    .skeleton { @apply animate-pulse bg-slate-200 dark:bg-slate-800 rounded; }
+    .badge { @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold; }
+    .badge-green { @apply bg-green-100 text-green-700; }
+    .badge-orange { @apply bg-orange-100 text-orange-700; }
+    .badge-red { @apply bg-red-100 text-red-700; }
+    .badge-blue { @apply bg-blue-100 text-blue-700; }
+    .badge-purple { @apply bg-purple-100 text-purple-700; }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+  </style>
+</head>
+
+<body class="flex min-h-screen overflow-hidden">
+
+  <!-- Sidebar -->
+  <aside id="mainSidebar"
+    class="w-72 bg-sidebar-deep flex-shrink-0 flex flex-col h-screen sticky top-0 sidebar-transition pl-2">
+    <div class="sidebar-header p-6 pb-12 flex items-center gap-3 transition-all">
+      <div
+        class="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20 flex-shrink-0">
+        <span class="material-symbols-outlined text-sidebar-deep font-bold text-2xl">update</span>
+      </div>
+      <div class="flex flex-col logo-text overflow-hidden">
+        <span class="text-white font-extrabold text-lg leading-tight tracking-tight whitespace-nowrap">Time Task
+          BD</span>
+        <span class="text-primary/60 text-[10px] font-bold uppercase tracking-widest whitespace-nowrap">Admin
+          Control</span>
+      </div>
+    </div>
+    <nav class="flex-1">
+      <div class="px-8 mb-4 menu-label">
+        <p class="text-[10px] font-bold text-white/40 uppercase tracking-[0.2em]">Main Menu</p>
+      </div>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Admin Index.html">
+        <span class="material-symbols-outlined">dashboard</span>
+        <span class="text-sm item-text ml-4">Dashboard</span>
+        <span class="nav-tooltip">Dashboard</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/System Health.html">
+        <span class="material-symbols-outlined">monitor_heart</span>
+        <span class="text-sm item-text ml-4">System Monitoring</span>
+        <span class="nav-tooltip">System Monitoring</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/KYC Review.html">
+        <span class="material-symbols-outlined">manage_accounts</span>
+        <span class="text-sm item-text ml-4">Management</span>
+        <span class="nav-tooltip">User & Buyer Management</span>
+      </a>
+      <a class="sidebar-item sidebar-item-active px-8 group" href="/Admin Dashboard/Financial Revenue Analytics.html">
+        <span class="material-symbols-outlined">analytics</span>
+        <span class="text-sm item-text ml-4">Analytics Section</span>
+        <span class="nav-tooltip">Analytics Section</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/User Referral Tree.html">
+        <span class="material-symbols-outlined">hub</span>
+        <span class="text-sm item-text ml-4">Referral System</span>
+        <span class="nav-tooltip">Referral System</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Market Asset Price.html">
+        <span class="material-symbols-outlined">trending_up</span>
+        <span class="text-sm item-text ml-4">Market Asset Prices</span>
+        <span class="nav-tooltip">Market Asset Prices</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Live Support.html">
+        <span class="material-symbols-outlined">support_agent</span>
+        <span class="text-sm item-text ml-4">Live Support</span>
+        <span class="nav-tooltip">Live Support</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Buyer Communication.html">
+        <span class="material-symbols-outlined">forum</span>
+        <span class="text-sm item-text ml-4">Communication</span>
+        <span class="nav-tooltip">Communication</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/System Announcement.html">
+        <span class="material-symbols-outlined">campaign</span>
+        <span class="text-sm item-text ml-4">System Announcement</span>
+        <span class="nav-tooltip">System Announcement</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Invoice Management.html">
+        <span class="material-symbols-outlined">description</span>
+        <span class="text-sm item-text ml-4">Invoice Management</span>
+        <span class="nav-tooltip">Invoice Management</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Create Content.html">
+        <span class="material-symbols-outlined">edit_note</span>
+        <span class="text-sm item-text ml-4">Content Management</span>
+        <span class="nav-tooltip">Content Management</span>
+      </a>
+    </nav>
+    <div class="px-6 py-8">
+      <button
+        class="logout-btn w-full h-10 flex items-center justify-center bg-primary text-sidebar-deep font-bold text-xs rounded-lg hover:brightness-110 transition-all shadow-lg shadow-primary/10 group relative">
+        <span class="material-symbols-outlined text-[20px]">logout</span>
+        <span class="ml-2 system-card-text">Logout</span>
+        <span class="nav-tooltip !left-full !ml-6">Logout</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <div class="flex-1 flex flex-col h-screen overflow-hidden bg-background-light dark:bg-background-dark">
+
+    <!-- Header -->
+    <header
+      class="h-20 bg-white dark:bg-[#111f16] border-b border-slate-100 dark:border-white/10 px-6 flex items-center justify-between flex-shrink-0 z-40 transition-colors duration-300">
+      <div class="flex items-center gap-6">
+        <button id="sidebarToggle"
+          class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-white/70 hover:text-sidebar-deep dark:hover:text-primary hover:bg-primary/10 transition-all">
+          <span class="material-symbols-outlined">menu</span>
+        </button>
+        <div class="relative w-96 group">
+          <span
+            class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-sidebar-deep dark:group-focus-within:text-primary transition-colors">search</span>
+          <input
+            class="w-full bg-slate-100 dark:bg-white/5 border-none rounded-xl pl-10 pr-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 dark:text-white transition-all"
+            placeholder="Search system records..." type="text" />
+        </div>
+      </div>
+      <div class="flex items-center gap-6">
+        <div class="flex items-center gap-2">
+          <button
+            class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-white/70 hover:text-sidebar-deep dark:hover:text-primary hover:bg-primary/10 transition-all relative">
+            <span class="material-symbols-outlined">notifications</span>
+            <span
+              class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-[#111f16]"></span>
+          </button>
+          <button id="darkModeToggle"
+            class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-white/70 hover:text-sidebar-deep dark:hover:text-primary hover:bg-primary/10 transition-all">
+            <span id="darkIcon" class="material-symbols-outlined">light_mode</span>
+          </button>
+        </div>
+        <div class="h-10 w-px bg-slate-200 dark:bg-white/10"></div>
+        <div class="flex items-center gap-3 cursor-pointer group">
+          <div class="text-right">
+            <p class="text-sm font-bold text-slate-900 dark:text-white group-hover:text-primary transition-colors">Super
+              Admin</p>
+            <p class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-tighter">System
+              Manager</p>
+          </div>
+          <div
+            class="w-12 h-12 rounded-xl border-2 border-primary/20 p-0.5 overflow-hidden group-hover:border-primary transition-all">
+            <img alt="Admin" class="w-full h-full object-cover rounded-lg"
+              src="https://lh3.googleusercontent.com/aida-public/AB6AXuDI3q59cS__AXyYcqFQtKZ2-e__roEJ3Cic28K7cd-6tYYxzLfpTArNsAJE3UypttzDIKS6SoNy85-jDLh0ZMbLqXr0NEEjrbCPSgoCJZyYc4W89P8djmlf34I_NEoa2vfl5IS3jHwLSZZ6lgtwguAje5Lv9h9RbZ2fJqb36M_tmZc-iJY-XxAXsCDxVyU1bONcO3AV5LZgB1o5wURKpB9w2XEN6iWAILVT7fIzOkl2pQ4lJb5WxYgkvuNIlKakHZWN1e4bzfo25zYy" />
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Sub-Nav Tabs -->
+    <nav
+      class="sticky top-0 bg-white/50 dark:bg-[#111f16]/50 border-b border-gray-100 dark:border-white/10 backdrop-blur-sm relative z-30 rounded-l-[30px] ml-80 transition-colors duration-300">
+      <div class="mx-auto w-full px-4">
+        <div id="tabsContainer" class="flex gap-4 overflow-x-auto no-scrollbar py-3">
+          <a class="flex items-center gap-2 px-4 py-2 rounded-[30px] text-sm font-semibold text-gray-700 dark:text-slate-300 hover:bg-white dark:hover:bg-white/5 hover:shadow-sm whitespace-nowrap transition-all"
+            href="/Admin Dashboard/User Analytics.html">
+            <span class="material-symbols-outlined text-[20px]">groups</span>User Analytics
+          </a>
+          <a class="flex items-center gap-2 px-4 py-2 rounded-[30px] text-sm font-semibold text-gray-700 dark:text-slate-300 hover:bg-white dark:hover:bg-white/5 hover:shadow-sm whitespace-nowrap transition-all"
+            href="/Admin Dashboard/Buyer Analytics.html">
+            <span class="material-symbols-outlined text-[20px]">groups</span>Buyer Analytics
+          </a>
+          <a class="flex items-center gap-2 px-4 py-2 rounded-[30px] text-sm font-semibold text-gray-700 dark:text-slate-300 hover:bg-white dark:hover:bg-white/5 hover:shadow-sm whitespace-nowrap transition-all"
+            href="/Admin Dashboard/Marketplace Analytics.html">
+            <span class="material-symbols-outlined text-[20px]">trending_up</span>Marketplace Analytics
+          </a>
+          <a class="flex items-center gap-2 px-4 py-2 rounded-[30px] text-sm font-semibold text-gray-700 dark:text-slate-300 hover:bg-white dark:hover:bg-white/5 hover:shadow-sm whitespace-nowrap transition-all"
+            href="/Admin Dashboard/Financial Overview.html">
+            <span class="material-symbols-outlined text-[20px]">account_balance</span>Financials Overview
+          </a>
+          <a class="flex items-center gap-2 px-4 py-2 rounded-[30px] text-sm font-semibold active-tab-nav whitespace-nowrap transition-all"
+            href="/Admin Dashboard/Financial Revenue Analytics.html">
+            <span class="material-symbols-outlined text-[20px]">query_stats</span>Financials & Revenue
+          </a>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-8">
+      <div class="max-w-[1600px] mx-auto w-full space-y-6">
+
+        <!-- Page Heading + Filter Bar -->
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <h1 class="text-3xl font-black text-[#0d1c12] dark:text-white tracking-tight">Financial & Revenue Analytics
+            </h1>
+            <p class="text-[#499c65] dark:text-primary text-sm mt-1 flex items-center gap-2">
+              <span class="size-2 rounded-full bg-primary animate-pulse"></span>
+              Live Â· Last updated: <span id="lastUpdated">Just now</span>
+            </p>
+          </div>
+          <div class="flex items-center gap-3 flex-wrap">
+            <!-- Date Filter Buttons -->
+            <div
+              class="flex gap-2 bg-[#e7f4eb] dark:bg-[#1a2e1f] border border-slate-200 dark:border-white/10 rounded-xl p-1">
+              <button class="filter-btn active" data-filter="today" onclick="setFilter('today',this)">Today</button>
+              <button class="filter-btn" data-filter="week" onclick="setFilter('week',this)">Week</button>
+              <button class="filter-btn" data-filter="month" onclick="setFilter('month',this)">Month</button>
+              <button class="filter-btn" data-filter="year" onclick="setFilter('year',this)">Year</button>
+            </div>
+            <button onclick="exportCSV()"
+              class="bg-primary text-sidebar-deep dark:text-sidebar-deep px-5 py-2 rounded-xl font-bold text-sm flex items-center gap-2 hover:brightness-110 transition-all shadow-md shadow-primary/20">
+              <span class="material-symbols-outlined text-lg">download</span>Export
+            </button>
+          </div>
+        </div>
+
+        <!-- KPI Cards Row 1 -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+          <div class="kpi-card xl:col-span-2">
+            <div class="flex justify-between items-start mb-3">
+              <p class="text-[#499c65] text-xs font-bold uppercase tracking-wide">Total Platform Revenue</p>
+              <span
+                class="material-symbols-outlined text-primary bg-primary/10 p-1.5 rounded-lg text-[20px]">monitoring</span>
+            </div>
+            <p id="kpi-total-revenue" class="text-3xl font-black text-[#0d1c12] dark:text-white"> 1,240,500</p>
+            <p class="text-green-600 dark:text-green-400 text-xs font-bold mt-2 flex items-center gap-1">
+              <span class="material-symbols-outlined text-xs">trending_up</span>+12.5% from last period
+            </p>
+          </div>
+          <div class="kpi-card xl:col-span-2">
+            <div class="flex justify-between items-start mb-3">
+              <p class="text-[#499c65] text-xs font-bold uppercase tracking-wide">Admin Net Profit</p>
+              <span
+                class="material-symbols-outlined text-primary bg-primary/10 p-1.5 rounded-lg text-[20px]">account_balance</span>
+            </div>
+            <p id="kpi-net-profit" class="text-3xl font-black text-[#0d1c12] dark:text-white"> 450,200</p>
+            <p class="text-green-600 dark:text-green-400 text-xs font-bold mt-2 flex items-center gap-1">
+              <span class="material-symbols-outlined text-xs">trending_up</span>+8.2% healthy margin
+            </p>
+          </div>
+          <div class="kpi-card xl:col-span-2">
+            <div class="flex justify-between items-start mb-3">
+              <p class="text-[#499c65] text-xs font-bold uppercase tracking-wide">Today's Earnings</p>
+              <span
+                class="material-symbols-outlined text-primary bg-primary/10 p-1.5 rounded-lg text-[20px]">today</span>
+            </div>
+            <p id="kpi-today" class="text-3xl font-black text-[#0d1c12] dark:text-white"> 12,450</p>
+            <p class="text-green-600 dark:text-green-400 text-xs font-bold mt-2 flex items-center gap-1">
+              <span class="material-symbols-outlined text-xs">trending_up</span>+5.4% vs yesterday
+            </p>
+          </div>
+        </div>
+
+        <!-- KPI Cards Row 2 -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div class="kpi-card cursor-pointer group" onclick="scrollToPayouts()">
+            <div class="flex justify-between items-start mb-3">
+              <p class="text-[#499c65] text-xs font-bold uppercase tracking-wide">Pending Payouts</p>
+              <span
+                class="material-symbols-outlined text-orange-500 bg-orange-100 dark:bg-orange-500/10 p-1.5 rounded-lg text-[20px]">pending_actions</span>
+            </div>
+            <p id="kpi-pending" class="text-3xl font-black text-[#0d1c12] dark:text-white"> 85,000</p>
+            <p class="text-orange-500 dark:text-orange-400 text-xs font-bold mt-2 flex items-center gap-1">
+              <span class="material-symbols-outlined text-xs">warning</span>24 requests awaiting review
+            </p>
+          </div>
+          <div class="kpi-card">
+            <div class="flex justify-between items-start mb-3">
+              <p class="text-[#499c65] text-xs font-bold uppercase tracking-wide">Total Deposits</p>
+              <span
+                class="material-symbols-outlined text-blue-500 bg-blue-100 dark:bg-blue-500/10 p-1.5 rounded-lg text-[20px]">arrow_downward</span>
+            </div>
+            <p id="kpi-deposits" class="text-3xl font-black text-[#0d1c12] dark:text-white"> 890,000</p>
+            <p class="text-green-600 dark:text-green-400 text-xs font-bold mt-2 flex items-center gap-1">
+              <span class="material-symbols-outlined text-xs">trending_up</span>Task funding inflow
+            </p>
+          </div>
+          <div class="kpi-card">
+            <div class="flex justify-between items-start mb-3">
+              <p class="text-[#499c65] text-xs font-bold uppercase tracking-wide">Total Withdrawals</p>
+              <span
+                class="material-symbols-outlined text-purple-500 bg-purple-100 dark:bg-purple-500/10 p-1.5 rounded-lg text-[20px]">arrow_upward</span>
+            </div>
+            <p id="kpi-withdrawals" class="text-3xl font-black text-[#0d1c12] dark:text-white"> 440,000</p>
+            <p class="text-purple-600 dark:text-purple-400 text-xs font-bold mt-2 flex items-center gap-1">
+              <span class="material-symbols-outlined text-xs">trending_down</span>Paid out to users
+            </p>
+          </div>
+        </div>
+
+        <!-- Charts Row 1: Line + Bar -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <!-- Line Chart: Daily Revenue -->
+          <div class="bg-white dark:bg-[#1a2e1f] p-6 rounded-xl border border-[#cee8d7] dark:border-white/10 shadow-sm">
+            <div class="flex justify-between items-center mb-6">
+              <div>
+                <h3 class="text-[#0d1c12] dark:text-white font-bold text-lg">Daily Revenue Trend</h3>
+                <p class="text-xs text-[#499c65] dark:text-primary">Revenue over selected period</p>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="w-3 h-3 rounded-full bg-primary inline-block"></span>
+                <span class="text-xs text-slate-500 font-medium">Revenue (BDT)</span>
+              </div>
+            </div>
+            <div class="h-64">
+              <canvas id="revenueLineChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Bar Chart: Revenue by Category -->
+          <div class="bg-white dark:bg-[#1a2e1f] p-6 rounded-xl border border-[#cee8d7] dark:border-white/10 shadow-sm">
+            <div class="flex justify-between items-center mb-6">
+              <div>
+                <h3 class="text-[#0d1c12] dark:text-white font-bold text-lg">Revenue by Platform</h3>
+                <p class="text-xs text-[#499c65] dark:text-primary">Grouped by task source</p>
+              </div>
+              <div class="flex items-center gap-3 text-xs text-slate-500 font-medium">
+                <span class="flex items-center gap-1"><span
+                    class="w-3 h-3 rounded bg-primary/30 inline-block"></span>Previous</span>
+                <span class="flex items-center gap-1"><span
+                    class="w-3 h-3 rounded bg-primary inline-block"></span>Current</span>
+              </div>
+            </div>
+            <div class="h-64">
+              <canvas id="revenueBarChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Charts Row 2: Donut + Wallet Inflow/Outflow + Gauge -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+          <!-- Donut Chart: Revenue Source -->
+          <div class="bg-white dark:bg-[#1a2e1f] p-6 rounded-xl border border-[#cee8d7] dark:border-white/10 shadow-sm">
+            <h3 class="text-[#0d1c12] dark:text-white font-bold text-lg mb-1">Revenue Sources</h3>
+            <p class="text-xs text-[#499c65] dark:text-primary mb-4">Breakdown by category</p>
+            <div class="h-64">
+              <canvas id="donutChart"></canvas>
+            </div>
+            <div id="donutLegend" class="mt-6 space-y-3 px-2"></div>
+          </div>
+
+          <!-- Wallet Inflow vs Outflow -->
+          <div class="bg-white dark:bg-[#1a2e1f] p-6 rounded-xl border border-[#cee8d7] dark:border-white/10 shadow-sm">
+            <h3 class="text-[#0d1c12] dark:text-white font-bold text-lg mb-1">Wallet Flow</h3>
+            <p class="text-xs text-[#499c65] dark:text-primary mb-5">Deposits vs. Withdrawals</p>
+            <div class="space-y-5">
+              <div class="space-y-2">
+                <div class="flex justify-between text-sm font-medium">
+                  <span class="text-[#0d1c12] dark:text-white">Inflow (Deposits)</span>
+                  <span id="flow-inflow-val" class="text-primary font-bold">0</span>
+                </div>
+                <div class="w-full h-3 bg-[#e7f4eb] dark:bg-white/5 rounded-full overflow-hidden">
+                  <div class="h-full bg-primary rounded-full inflow-bar" style="width: 0%" data-target="85"></div>
+                </div>
+                <p class="text-[10px] text-slate-400 font-medium">85% of total volume</p>
+              </div>
+              <div class="space-y-2">
+                <div class="flex justify-between text-sm font-medium">
+                  <span class="text-[#0d1c12] dark:text-white">Outflow (Withdrawals)</span>
+                  <span id="flow-outflow-val" class="text-orange-500 font-bold">0</span>
+                </div>
+                <div class="w-full h-3 bg-orange-50 dark:bg-white/5 rounded-full overflow-hidden">
+                  <div class="h-full bg-orange-500 rounded-full outflow-bar" style="width: 0%" data-target="42"></div>
+                </div>
+                <p class="text-[10px] text-slate-400 font-medium">42% of total volume</p>
+              </div>
+              <div class="space-y-2">
+                <div class="flex justify-between text-sm font-medium">
+                  <span class="text-[#0d1c12] dark:text-white">Net Margin</span>
+                  <span id="flow-comm-val" class="text-blue-500 font-bold">0</span>
+                </div>
+                <div class="w-full h-3 bg-blue-50 dark:bg-white/5 rounded-full overflow-hidden">
+                  <div class="h-full bg-blue-500 rounded-full commission-bar" style="width: 0%" data-target="30"></div>
+                </div>
+                <p class="text-[10px] text-slate-400 font-medium">Revenue retained after paid withdrawals</p>
+              </div>
+              <div class="pt-3 border-t border-[#e7f4eb] dark:border-white/10 flex justify-between items-center">
+                <span class="text-sm text-[#499c65] dark:text-primary font-medium">Net Liquidity</span>
+                <span id="flow-net-val" class="text-xl font-black text-primary">0</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Withdrawal Efficiency Gauge -->
+          <div class="bg-white dark:bg-[#1a2e1f] p-6 rounded-xl border border-[#cee8d7] dark:border-white/10 shadow-sm">
+            <div class="flex justify-between items-center mb-4">
+              <div>
+                <h3 class="text-[#0d1c12] dark:text-white font-bold text-lg">Withdrawal Efficiency</h3>
+                <p class="text-xs text-[#499c65] dark:text-primary">Processing performance</p>
+              </div>
+              <div
+                class="px-2 py-1 rounded-lg bg-green-100 dark:bg-green-500/10 text-green-700 dark:text-green-400 text-[10px] font-bold uppercase tracking-wider">
+                Fast</div>
+            </div>
+            <div class="flex flex-col items-center justify-center py-2">
+              <div class="relative size-36">
+                <svg class="size-full -rotate-90" viewBox="0 0 36 36">
+                  <path class="stroke-current text-[#e7f4eb] dark:text-white/5"
+                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none"
+                    stroke-width="3"></path>
+                  <path id="gaugeArc" class="stroke-current text-primary"
+                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none"
+                    stroke-dasharray="75, 100" stroke-linecap="round" stroke-width="3"
+                    style="transition: stroke-dasharray 1s ease-in-out;"></path>
+                </svg>
+                <div class="absolute inset-0 flex flex-col items-center justify-center">
+                  <span id="gauge-avg-time"
+                    class="text-3xl font-black text-[#0d1c12] dark:text-white leading-none">0</span>
+                  <span class="text-[10px] text-[#499c65] dark:text-primary font-bold uppercase mt-1">Hrs Avg.</span>
+                </div>
+              </div>
+              <p class="text-center text-[#499c65] text-xs mt-3 px-4">Requests processed <span
+                  class="text-primary font-bold">15% faster</span> than the 7-day average.</p>
+            </div>
+            <div class="mt-4 grid grid-cols-3 gap-2 border-t border-[#e7f4eb] dark:border-white/10 pt-4">
+              <div class="text-center">
+                <p id="gauge-success-rate" class="text-lg font-black text-[#0d1c12] dark:text-white">0%</p>
+                <p class="text-[10px] text-slate-400 font-bold">Success Rate</p>
+              </div>
+              <div class="text-center border-x border-[#e7f4eb] dark:border-white/10">
+                <p id="gauge-pending-rate" class="text-lg font-black text-orange-500">0%</p>
+                <p class="text-[10px] text-slate-400 font-bold">Pending</p>
+              </div>
+              <div class="text-center">
+                <p id="gauge-rejected-rate" class="text-lg font-black text-red-500">0%</p>
+                <p class="text-[10px] text-slate-400 font-bold">Rejected</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Revenue Forecast Panel -->
+        <div class="bg-gradient-to-br from-sidebar-deep to-[#1a3822] p-6 rounded-xl shadow-lg">
+          <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+              <div class="flex items-center gap-2 mb-1">
+                <span class="material-symbols-outlined text-primary text-[22px]">auto_graph</span>
+                <h3 class="text-white font-bold text-lg">Revenue Forecast</h3>
+              </div>
+              <p class="text-white/50 text-sm">7-day projection based on last 30-day trend</p>
+            </div>
+            <div class="flex items-center gap-6">
+              <div class="text-center">
+                <p class="text-white/50 text-[10px] font-bold uppercase tracking-wide">Expected (7 days)</p>
+                <p class="text-3xl font-black text-primary"> 87,150</p>
+              </div>
+              <div class="text-center border-x border-white/10 px-6">
+                <p class="text-white/50 text-[10px] font-bold uppercase tracking-wide">Daily Avg.</p>
+                <p class="text-3xl font-black text-white"> 12,450</p>
+              </div>
+              <div class="text-center">
+                <p class="text-white/50 text-[10px] font-bold uppercase tracking-wide">Growth Rate</p>
+                <p class="text-3xl font-black text-green-400">+5.4%</p>
+              </div>
+            </div>
+          </div>
+          <div class="mt-6 h-20">
+            <canvas id="forecastChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="pt-12 pb-6 border-t border-slate-200 dark:border-white/10 mt-12 transition-colors duration-300">
+          <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+            <div
+              class="flex items-center gap-6 text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+              <a class="hover:text-primary transition-colors" href="#">Privacy Policy</a>
+              <a class="hover:text-primary transition-colors" href="#">Terms of Service</a>
+              <a class="hover:text-primary transition-colors" href="#">Documentation</a>
+            </div>
+            <p class="text-[11px] font-bold text-slate-400 dark:text-slate-500">© 2025 TIME TASK BD. ALL RIGHTS
+              RESERVED.</p>
+          </div>
+        </footer>
+      </div>
+    </main>
+  </div>
+
+  <script src="../supabase-client.js"></script>
+  <script>
+    // Supabase Client (module-scoped)
+    const { createClient } = supabase;
+    const _sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    //  State 
+    let currentFilter = 'today';
+    let lineChartInstance, barChartInstance, donutChartInstance, forecastChartInstance;
+    let _rawOrders = [], _rawWithdrawals = [], _rawDeposits = [], _rawTaskSubs = [], _rawReferrals = [];
+
+    // Helpers
+    const fmt = n => '৳' + Number(n || 0).toLocaleString('en-IN', { maximumFractionDigits: 0 });
+    function normalizeStatus(v) { return String(v ?? '').toLowerCase().trim(); }
+    function escapeHtml(s) {
+      return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+    }
+    function csvSafe(val) {
+      const raw = String(val ?? '');
+      const prefixed = ['+', '-', '=', '@'].includes(raw[0]) ? `'${raw}` : raw;
+      const escaped = prefixed.replace(/"/g, '""');
+      return `"${escaped}"`;
+    }
+
+    function filterByPeriod(rows, dateField, period) {
+      const now = new Date();
+      return rows.filter(r => {
+        const d = new Date(r[dateField]);
+        if (period === 'today') return d.toDateString() === now.toDateString();
+        if (period === 'week') { const s = new Date(now); s.setDate(now.getDate() - 6); return d >= s; }
+        if (period === 'month') return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+        if (period === 'year') return d.getFullYear() === now.getFullYear();
+        return true;
+      });
+    }
+
+    function sumField(arr, field) { return arr.reduce((s, r) => s + parseFloat(r[field] || 0), 0); }
+
+    // Fetch All Data
+    async function loadAllData() {
+      if (!_sb) { console.error('Supabase client not ready'); return; }
+      try {
+        const [ordRes, wdRes, depRes, subRes, refRes] = await Promise.all([
+          _sb.from('orders').select('id, platform, total_cost, created_at, status'),
+          _sb.from('withdrawals').select('id, amount, status, created_at, updated_at'),
+          _sb.from('deposits').select('id, amount, status, gateway, created_at, updated_at'),
+          _sb.from('task_submissions').select('id, platform, payout_amount, status, submitted_at'),
+          _sb.from('referral_earnings').select('id, amount, status, created_at'),
+        ]);
+        _rawOrders = ordRes.data || [];
+        _rawWithdrawals = wdRes.data || [];
+        _rawDeposits = depRes.data || [];
+        _rawTaskSubs = subRes.data || [];
+        _rawReferrals = refRes.data || [];
+
+        updateKPIs();
+        initCharts();
+        animateBars();
+        document.getElementById('lastUpdated').textContent = new Date().toLocaleTimeString();
+      } catch (err) {
+        console.error('Supabase load error:', err);
+        showToast('Failed to load live data', 'error');
+      }
+    }
+
+    // KPI Cards
+    function updateKPIs() {
+      const paidWd = _rawWithdrawals.filter(w => normalizeStatus(w.status) === 'paid');
+      const pendingWd = _rawWithdrawals.filter(w => normalizeStatus(w.status) === 'pending');
+      const rejectedWd = _rawWithdrawals.filter(w => normalizeStatus(w.status) === 'rejected');
+      const totalRevenue = sumField(_rawOrders, 'total_cost');
+      const paidWdSum = sumField(paidWd, 'amount');
+      const netProfit = totalRevenue - paidWdSum;
+      const pendingSum = sumField(pendingWd, 'amount');
+      const totalDeposits = sumField(_rawDeposits.filter(d => normalizeStatus(d.status) === 'approved'), 'amount');
+      const totalPayouts = sumField(_rawTaskSubs.filter(s => normalizeStatus(s.status) === 'approved'), 'payout_amount');
+      const todayEarnings = sumField(filterByPeriod(_rawOrders, 'created_at', 'today'), 'total_cost');
+
+      document.getElementById('kpi-total-revenue').textContent = fmt(totalRevenue);
+      document.getElementById('kpi-net-profit').textContent = fmt(netProfit);
+      document.getElementById('kpi-today').textContent = fmt(todayEarnings);
+      document.getElementById('kpi-pending').textContent = fmt(pendingSum);
+      document.getElementById('kpi-deposits').textContent = fmt(totalDeposits);
+      document.getElementById('kpi-withdrawals').textContent = fmt(sumField(paidWd, 'amount'));
+
+      document.getElementById('flow-inflow-val').textContent = fmt(totalDeposits);
+      document.getElementById('flow-outflow-val').textContent = fmt(totalPayouts);
+      document.getElementById('flow-comm-val').textContent = fmt(netProfit);
+      document.getElementById('flow-net-val').textContent = fmt(netProfit);
+
+      // Wallet flow bars
+      const totalVol = (totalDeposits + totalPayouts) || 1;
+      const inflowPct = Math.min(100, Math.round(totalDeposits / totalVol * 100));
+      const outflowPct = Math.min(100, Math.round(totalPayouts / totalVol * 100));
+      const commPct = totalRevenue > 0 ? Math.min(100, Math.round((netProfit / totalRevenue) * 100)) : null;
+      document.querySelector('.inflow-bar').dataset.target = inflowPct;
+      document.querySelector('.outflow-bar').dataset.target = outflowPct;
+      document.querySelector('.commission-bar').dataset.target = commPct ?? 0;
+
+      // Forecast panel stats
+      const weekOrders = filterByPeriod(_rawOrders, 'created_at', 'week');
+      const dailyAvg = weekOrders.length > 0 ? sumField(weekOrders, 'total_cost') / 7 : todayEarnings;
+      const forecast7d = Math.round(dailyAvg * 7);
+      const forecastEls = document.querySelectorAll('.from-sidebar-deep .text-3xl');
+      if (forecastEls[0]) forecastEls[0].textContent = fmt(forecast7d);
+      if (forecastEls[1]) forecastEls[1].textContent = fmt(Math.round(dailyAvg));
+
+      // Withdrawal efficiency gauge
+      const totalWdReqs = _rawWithdrawals.length;
+      const successRate = totalWdReqs > 0 ? Math.round(paidWd.length / totalWdReqs * 100) : null;
+      const pendingRate = totalWdReqs > 0 ? Math.round(pendingWd.length / totalWdReqs * 100) : null;
+      const rejectedRate = totalWdReqs > 0 ? Math.round(rejectedWd.length / totalWdReqs * 100) : null;
+      const gaugeArc = document.getElementById('gaugeArc');
+      if (gaugeArc) gaugeArc.setAttribute('stroke-dasharray', `${successRate ?? 0}, 100`);
+
+      document.getElementById('gauge-success-rate').textContent = successRate == null ? '—' : successRate + '%';
+      document.getElementById('gauge-pending-rate').textContent = pendingRate == null ? '—' : pendingRate + '%';
+      document.getElementById('gauge-rejected-rate').textContent = rejectedRate == null ? '—' : rejectedRate + '%';
+
+      // Avg time from created_at -> updated_at for completed withdrawals
+      const durationsHours = paidWd
+        .map(w => {
+          if (!w.created_at || !w.updated_at) return null;
+          const start = new Date(w.created_at).getTime();
+          const end = new Date(w.updated_at).getTime();
+          if (!Number.isFinite(start) || !Number.isFinite(end) || end < start) return null;
+          return (end - start) / (1000 * 60 * 60);
+        })
+        .filter(v => v != null);
+      const avgTime = durationsHours.length
+        ? (durationsHours.reduce((a, b) => a + b, 0) / durationsHours.length).toFixed(1)
+        : null;
+      document.getElementById('gauge-avg-time').textContent = avgTime ?? 'N/A';
+    }
+
+    // Build Chart Data for Period
+    function buildChartData(period) {
+      const orders = filterByPeriod(_rawOrders, 'created_at', period);
+      const taskSubs = filterByPeriod(_rawTaskSubs, 'submitted_at', period);
+      const refs = filterByPeriod(_rawReferrals, 'created_at', period);
+
+      // Line chart: revenue by time bucket
+      let labels = [], revenue = [];
+      if (period === 'today') {
+        labels = Array.from({ length: 24 }, (_, i) => `${i}:00`);
+        const hMap = {};
+        orders.forEach(o => { const h = new Date(o.created_at).getHours(); hMap[h] = (hMap[h] || 0) + parseFloat(o.total_cost || 0); });
+        revenue = labels.map((_, i) => hMap[i] || 0);
+      } else if (period === 'week') {
+        const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        const dMap = {};
+        orders.forEach(o => { const k = new Date(o.created_at).toDateString(); dMap[k] = (dMap[k] || 0) + parseFloat(o.total_cost || 0); });
+        const now = new Date();
+        const last7 = Array.from({ length: 7 }, (_, i) => { const d = new Date(now); d.setDate(now.getDate() - 6 + i); return d; });
+        labels = last7.map(d => dayNames[d.getDay()]);
+        revenue = last7.map(d => dMap[d.toDateString()] || 0);
+      } else if (period === 'month') {
+        labels = ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
+        const wMap = [0, 0, 0, 0];
+        orders.forEach(o => { const day = new Date(o.created_at).getDate(); wMap[Math.min(3, Math.floor((day - 1) / 7))] += parseFloat(o.total_cost || 0); });
+        revenue = wMap;
+      } else {
+        labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const mMap = new Array(12).fill(0);
+        orders.forEach(o => { mMap[new Date(o.created_at).getMonth()] += parseFloat(o.total_cost || 0); });
+        revenue = mMap;
+      }
+
+      // Bar chart: revenue by platform
+      const platformMap = {};
+      orders.forEach(o => { if (o.platform) platformMap[o.platform] = (platformMap[o.platform] || 0) + parseFloat(o.total_cost || 0); });
+      const platforms = Object.keys(platformMap).length ? Object.keys(platformMap) : ['No Data'];
+      const current = platforms.map(p => platformMap[p] || 0);
+      const prev = current.map(v => Math.round(v * 0.8));
+
+      // Donut: revenue sources
+      const taskFees = sumField(orders, 'total_cost');
+      const taskPayouts = sumField(taskSubs.filter(s => normalizeStatus(s.status) === 'approved'), 'payout_amount');
+      const commission = Math.round(taskFees * 0.30);
+      const referral = sumField(refs, 'amount');
+
+      // 7-day forecast via linear trend
+      const nonZero = revenue.filter(v => v > 0);
+      const baseAvg = nonZero.length ? nonZero.reduce((a, b) => a + b, 0) / nonZero.length : 0;
+      const forecast = Array.from({ length: 7 }, (_, i) => Math.round(baseAvg * Math.pow(1.02, i + 1)));
+
+      return {
+        labels, revenue,
+        bar: { labels: platforms, current, prev },
+        donut: { labels: ['Task Fees', 'Task Payouts', 'Commission', 'Referral'], data: [taskFees, taskPayouts, commission, referral] },
+        forecast
+      };
+    }
+
+    // Filter Control 
+    function setFilter(f, btn) {
+      currentFilter = f;
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('lastUpdated').textContent = new Date().toLocaleTimeString();
+      initCharts();
+    }
+
+    // Theme & Chart Styling
+    function getChartTheme() {
+      const isDark = document.documentElement.classList.contains('dark');
+      return {
+        gridColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)',
+        textColor: isDark ? '#94a3b8' : '#64748b',
+        borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)'
+      };
+    }
+
+    // Charts 
+    function initCharts() {
+      const d = buildChartData(currentFilter);
+      buildLineChart(d);
+      buildBarChart(d);
+      buildDonut(d);
+      buildForecast(d);
+    }
+
+    function buildLineChart(d) {
+      const ctx = document.getElementById('revenueLineChart').getContext('2d');
+      const gradient = ctx.createLinearGradient(0, 0, 0, 256);
+      gradient.addColorStop(0, 'rgba(19,236,91,0.3)');
+      gradient.addColorStop(1, 'rgba(19,236,91,0)');
+      const theme = getChartTheme();
+      if (lineChartInstance) lineChartInstance.destroy();
+      lineChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: { labels: d.labels, datasets: [{ label: 'Revenue (৳)', data: d.revenue, borderColor: '#13ec5b', backgroundColor: gradient, borderWidth: 3, fill: true, tension: 0.4, pointRadius: 4, pointBackgroundColor: '#13ec5b', pointBorderColor: '#fff', pointBorderWidth: 2 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => '৳' + c.raw.toLocaleString() } } }, scales: { x: { grid: { display: false }, ticks: { font: { size: 10, family: 'Manrope', weight: '600' }, color: theme.textColor, maxTicksLimit: 8 } }, y: { grid: { color: theme.gridColor }, ticks: { font: { size: 10, family: 'Manrope', weight: '600' }, color: theme.textColor, callback: v => '৳' + (v >= 1000 ? (v / 1000).toFixed(0) + 'k' : v) } } } }
+      });
+    }
+    function buildBarChart(d) {
+      const theme = getChartTheme();
+      const ctx = document.getElementById('revenueBarChart').getContext('2d');
+      if (barChartInstance) barChartInstance.destroy();
+      barChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: { labels: d.bar.labels, datasets: [{ label: 'Previous', data: d.bar.prev, backgroundColor: 'rgba(19,236,91,0.25)', borderRadius: 6, borderSkipped: false }, { label: 'Current', data: d.bar.current, backgroundColor: '#13ec5b', borderRadius: 6, borderSkipped: false }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => c.dataset.label + ': ৳ ' + c.raw.toLocaleString() } } }, scales: { x: { grid: { display: false }, ticks: { font: { size: 10, family: 'Manrope', weight: '700' }, color: theme.textColor } }, y: { grid: { color: theme.gridColor }, ticks: { font: { size: 10, family: 'Manrope', weight: '600' }, color: theme.textColor, callback: v => '৳' + (v >= 1000 ? (v / 1000).toFixed(0) + 'k' : v) } } } }
+      });
+    }
+
+    function buildDonut(d) {
+      const colors = ['#13ec5b', '#0ebd48', '#facc15', '#f97316'];
+      const ctx = document.getElementById('donutChart').getContext('2d');
+      if (donutChartInstance) donutChartInstance.destroy();
+      donutChartInstance = new Chart(ctx, {
+        type: 'doughnut',
+        data: { labels: d.donut.labels, datasets: [{ data: d.donut.data, backgroundColor: colors, borderWidth: 2, borderColor: document.documentElement.classList.contains('dark') ? '#1a2e1f' : '#fff', hoverOffset: 6 }] },
+        options: { responsive: true, maintainAspectRatio: false, cutout: '72%', plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ' ৳ ' + c.raw.toLocaleString() } } } }
+      });
+      document.getElementById('donutLegend').innerHTML = d.donut.labels.map((l, i) => `
+    <div class="flex items-center justify-between text-xs">
+      <div class="flex items-center gap-2">
+        <span class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background:${colors[i]}"></span>
+        <span class="text-slate-600 dark:text-slate-400 font-medium">${escapeHtml(l)}</span>
+      </div>
+      <span class="font-bold text-slate-800 dark:text-white">${escapeHtml(fmt(d.donut.data[i]))}</span>
+    </div>
+  `).join('');
+    }
+
+    function buildForecast(d) {
+      const theme = getChartTheme();
+      const ctx = document.getElementById('forecastChart').getContext('2d');
+      if (forecastChartInstance) forecastChartInstance.destroy();
+      const labels = ['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5', 'Day 6', 'Day 7'];
+      forecastChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: { labels, datasets: [{ label: 'Forecast (৳)', data: d.forecast, borderColor: '#13ec5b', backgroundColor: 'transparent', borderWidth: 2, borderDash: [6, 4], pointRadius: 4, pointBackgroundColor: '#13ec5b', pointBorderColor: 'rgba(255,255,255,0.3)', tension: 0.4 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => '৳' + c.raw.toLocaleString() } } }, scales: { x: { grid: { color: theme.gridColor }, ticks: { font: { size: 10, family: 'Manrope', weight: '600' }, color: theme.textColor } }, y: { grid: { color: theme.gridColor }, ticks: { font: { size: 10, family: 'Manrope', weight: '600' }, color: theme.textColor, callback: v => '৳' + (v >= 1000 ? (v / 1000).toFixed(0) + 'k' : v) } } } }
+      });
+    }
+
+    // Payout stubs 
+    function scrollToPayouts() { }
+    function updatePendingCount() { }
+
+    // Animated Progress Bars 
+    function animateBars() {
+      setTimeout(() => {
+        document.querySelectorAll('.inflow-bar,.outflow-bar,.commission-bar').forEach(bar => {
+          bar.style.transition = 'width 1.2s cubic-bezier(0.4,0,0.2,1)';
+          bar.style.width = bar.dataset.target + '%';
+        });
+      }, 300);
+    }
+
+    document.getElementById('sidebarToggle').addEventListener('click', () => {
+      document.getElementById('mainSidebar').classList.toggle('sidebar-collapsed');
+    });
+
+    // â”€â”€â”€ Dark Mode Toggle â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    const themeToggle = document.getElementById('darkModeToggle');
+    const darkIcon = document.getElementById('darkIcon');
+
+    function updateThemeUI(theme) {
+      if (theme === 'dark') {
+        document.documentElement.classList.add('dark');
+        document.documentElement.classList.remove('light');
+        darkIcon.textContent = 'dark_mode';
+      } else {
+        document.documentElement.classList.add('light');
+        document.documentElement.classList.remove('dark');
+        darkIcon.textContent = 'light_mode';
+      }
+      // Re-render charts with new theme colors if data exists
+      if (_rawOrders.length > 0) {
+        initCharts();
+      }
+    }
+
+    themeToggle.addEventListener('click', () => {
+      const isDark = document.documentElement.classList.contains('dark');
+      const newTheme = isDark ? 'light' : 'dark';
+      localStorage.setItem('theme', newTheme);
+      updateThemeUI(newTheme);
+    });
+
+    // Initialize UI state on load
+    document.addEventListener('DOMContentLoaded', async () => {
+      const savedTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      updateThemeUI(savedTheme);
+      const logoutBtn = document.querySelector('button.logout-btn');
+      if (logoutBtn) {
+        logoutBtn.addEventListener('click', async () => {
+          await _sb.auth.signOut();
+          window.location.href = '/Admin Dashboard/Login.html';
+        });
+      }
+
+      // Debounced search handler placeholder for future query/filter wiring
+      const searchInput = document.querySelector('input[placeholder="Search system records..."]');
+      if (searchInput) {
+        let searchDebounce;
+        searchInput.addEventListener('input', () => {
+          clearTimeout(searchDebounce);
+          searchDebounce = setTimeout(() => {
+            // TODO: implement search
+          }, 300);
+        });
+      }
+
+      await bootWithAuthGate();
+    });
+
+    // â”€â”€â”€ Export CSV (real data) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    function exportCSV() {
+      const rows = [
+        ['Source', 'Table', 'Amount (৳)', 'Status', 'Date'],
+        ..._rawOrders.map(o => ['Order Revenue', 'orders', o.total_cost || 0, o.status, o.created_at]),
+        ..._rawDeposits.map(d => ['Buyer Deposit', 'deposits', d.amount || 0, d.status, d.created_at]),
+        ..._rawWithdrawals.map(w => ['Withdrawal', 'withdrawals', w.amount || 0, w.status, w.created_at]),
+        ..._rawTaskSubs.map(s => ['Task Payout', 'task_submissions', s.payout_amount || 0, s.status, s.submitted_at]),
+        ..._rawReferrals.map(r => ['Referral Bonus', 'referral_earnings', r.amount || 0, r.status, r.created_at]),
+      ];
+      const csv = rows.map(r => r.map(csvSafe).join(',')).join('\n');
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+      a.download = `revenue_export_${currentFilter}_${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      showToast('CSV exported successfully!');
+    }
+
+    // â”€â”€â”€ Toast Notification â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    function showToast(msg, type = 'success') {
+      const icon = type === 'success' ? 'check_circle' : 'error';
+      const t = document.createElement('div');
+      t.className = 'fixed bottom-6 right-6 bg-sidebar-deep text-white px-5 py-3 rounded-xl font-bold text-sm shadow-2xl z-[9999] flex items-center gap-2 opacity-0 transition-all duration-300';
+      const iconEl = document.createElement('span');
+      iconEl.className = 'material-symbols-outlined text-primary text-[20px]';
+      iconEl.textContent = icon;
+      const msgEl = document.createElement('span');
+      msgEl.textContent = msg;
+      t.appendChild(iconEl);
+      t.appendChild(msgEl);
+      document.body.appendChild(t);
+      requestAnimationFrame(() => { t.style.opacity = '1'; t.style.transform = 'translateY(0)'; });
+      setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateY(8px)'; setTimeout(() => t.remove(), 300); }, 3000);
+    }
+
+    // â”€â”€â”€ INIT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    async function bootWithAuthGate() {
+      const { data: { session } } = await _sb.auth.getSession();
+      if (!session?.user) {
+        window.location.href = '/Admin Dashboard/Login.html';
+        return;
+      }
+
+      const userRoleFromSession = normalizeStatus(session.user?.user_metadata?.role);
+      let profileRole = '';
+      try {
+        const { data: profile } = await _sb.from('profiles').select('role').eq('id', session.user.id).maybeSingle();
+        profileRole = normalizeStatus(profile?.role);
+      } catch (_) {
+        profileRole = '';
+      }
+
+      const effectiveRole = profileRole || userRoleFromSession;
+      if (effectiveRole !== 'admin') {
+        window.location.href = '/Admin Dashboard/Login.html';
+        return;
+      }
+
+      await loadAllData();
+      setInterval(loadAllData, 60000);
+    }
+  </script>
+
+</body>
+
+</html>

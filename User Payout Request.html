@@ -1,0 +1,1156 @@
+<!doctype html>
+<html class="light" lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <title>Admin Panel - Time Task BD</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+    rel="stylesheet" />
+  <script id="tailwind-config">
+    // Immediately apply theme to avoid flash
+    (function () {
+      const theme = localStorage.getItem("theme");
+      if (
+        theme === "dark" ||
+        (!theme && window.matchMedia("(prefers-color-scheme: dark)").matches)
+      ) {
+        document.documentElement.classList.add("dark");
+      } else {
+        document.documentElement.classList.remove("dark");
+      }
+    })();
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            primary: "#13ec5b",
+            "background-light": "#f6f8f6",
+            "background-dark": "#0d1b12",
+            "sidebar-deep": "#102216",
+            "accent-green": "#13ec5b",
+          },
+          fontFamily: {
+            display: ["Manrope"],
+          },
+          borderRadius: {
+            DEFAULT: "0.25rem",
+            lg: "0.5rem",
+            xl: "0.75rem",
+            "2xl": "1rem",
+            full: "9999px",
+          },
+        },
+      },
+    };
+  </script>
+  <style type="text/tailwindcss">
+    @layer base {
+        body {
+          @apply font-display bg-background-light dark:bg-background-dark text-slate-900 dark:text-white;
+        }
+      }
+
+      /* Sidebar Transitions */
+      .sidebar-transition {
+        @apply transition-all duration-300 ease-in-out;
+      }
+
+      /* Active Tab Notch Logic */
+      .sidebar-item-active {
+        @apply bg-background-light text-sidebar-deep font-bold relative !important;
+        border-radius: 40px 0 0 40px;
+        margin-left: 10px;
+        width: calc(100% - 10px) !important;
+      }
+
+      .sidebar-item-active::before {
+        content: "";
+        position: absolute;
+        right: 0;
+        top: -40px;
+        width: 40px;
+        height: 40px;
+        background: transparent;
+        border-radius: 50%;
+        box-shadow: 20px 20px 0 0 #f6f8f6;
+        pointer-events: none;
+      }
+      .sidebar-item-active::after {
+        content: "";
+        position: absolute;
+        right: 0;
+        bottom: -40px;
+        width: 40px;
+        height: 40px;
+        background: transparent;
+        border-radius: 50%;
+        box-shadow: 20px -20px 0 0 #f6f8f6;
+        pointer-events: none;
+      }
+
+      .dark .sidebar-item-active::before { box-shadow: 20px 20px 0 0 #0d1b12; }
+      .dark .sidebar-item-active::after  { box-shadow: 20px -20px 0 0 #0d1b12; }
+      .dark .sidebar-item-active { @apply bg-background-dark text-white !important; }
+
+      .sidebar-item {
+        @apply flex items-center py-4 text-white/70 hover:text-white transition-all duration-200 cursor-pointer w-full relative;
+      }
+
+      .sidebar-item .material-symbols-outlined {
+        @apply font-light text-[24px];
+      }
+
+      .sidebar-item-active .material-symbols-outlined {
+        @apply text-sidebar-deep;
+      }
+
+      .dark .sidebar-item-active .material-symbols-outlined {
+        @apply text-primary;
+      }
+      .dark .sidebar-item-active .material-symbols-outlined { @apply text-primary; }
+
+      /* Tooltip Logic - Show only when collapsed */
+      .nav-tooltip {
+        @apply invisible absolute left-full ml-4 px-2 py-1 bg-sidebar-deep text-white text-[10px] rounded whitespace-nowrap opacity-0 transition-opacity z-50 pointer-events-none;
+      }
+
+      /* Collapsed Sidebar States */
+      .sidebar-collapsed {
+        @apply w-20 pl-0;
+      }
+      .sidebar-collapsed .logo-text,
+      .sidebar-collapsed .item-text,
+      .sidebar-collapsed .menu-label,
+      .sidebar-collapsed .system-card-text {
+        @apply hidden;
+      }
+      .sidebar-collapsed .sidebar-item {
+        @apply justify-center px-0;
+      }
+      .sidebar-collapsed .sidebar-item:hover .nav-tooltip {
+        @apply visible opacity-100;
+      }
+      .sidebar-collapsed .sidebar-header {
+        @apply px-0 justify-center;
+      }
+
+      /* Custom Scrollbar */
+      .custom-scrollbar::-webkit-scrollbar {
+        width: 4px;
+      }
+      .custom-scrollbar::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: rgba(0, 0, 0, 0.1);
+        border-radius: 10px;
+      }
+
+      .active-tab-nav {
+        @apply bg-primary text-slate-900 dark:text-white shadow-lg shadow-primary/20;
+      }
+    </style>
+</head>
+
+<body class="flex min-h-screen overflow-hidden">
+  <!-- Sidebar -->
+  <aside id="mainSidebar"
+    class="w-72 bg-sidebar-deep flex-shrink-0 flex flex-col h-screen sticky top-0 sidebar-transition pl-2">
+    <!-- Logo Section -->
+    <div class="sidebar-header p-6 pb-12 flex items-center gap-3 transition-all">
+      <div
+        class="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20 flex-shrink-0">
+        <span class="material-symbols-outlined text-sidebar-deep font-bold text-2xl">update</span>
+      </div>
+      <div class="flex flex-col logo-text overflow-hidden">
+        <span class="text-white font-extrabold text-lg leading-tight tracking-tight whitespace-nowrap">Time Task
+          BD</span>
+        <span class="text-primary/60 text-[10px] font-bold uppercase tracking-widest whitespace-nowrap">Admin
+          Control</span>
+      </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="flex-1">
+      <div class="px-8 mb-4 menu-label">
+        <p class="text-[10px] font-bold text-white/40 uppercase tracking-[0.2em]">
+          Main Menu
+        </p>
+      </div>
+
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Admin Index.html">
+        <span class="material-symbols-outlined">dashboard</span>
+        <span class="text-sm item-text ml-4">Dashboard</span>
+        <span class="nav-tooltip">Dashboard</span>
+      </a>
+
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/System Health.html">
+        <span class="material-symbols-outlined">monitor_heart</span>
+        <span class="text-sm item-text ml-4">System Monitoring</span>
+        <span class="nav-tooltip">Security & System Monitoring</span>
+      </a>
+
+      <a class="sidebar-item sidebar-item-active px-8 group" href="/Admin Dashboard/KYC Review.html">
+        <span class="material-symbols-outlined">manage_accounts</span>
+        <span class="text-sm item-text ml-4">Management</span>
+        <span class="nav-tooltip">User & Buyer Management</span>
+      </a>
+
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/User Analytics.html">
+        <span class="material-symbols-outlined">analytics</span>
+        <span class="text-sm item-text ml-4">Analytics Section</span>
+        <span class="nav-tooltip">Analytics Section</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/User Referral Tree.html">
+        <span class="material-symbols-outlined">hub</span>
+        <span class="text-sm item-text ml-4">Referral System</span>
+        <span class="nav-tooltip">Referral System</span>
+      </a>
+
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Market Asset Price.html">
+        <span class="material-symbols-outlined">trending_up</span>
+        <span class="text-sm item-text ml-4">Market Asset Prices</span>
+        <span class="nav-tooltip">Market Asset Prices</span>
+      </a>
+
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Live Support.html">
+        <span class="material-symbols-outlined">support_agent</span>
+        <span class="text-sm item-text ml-4">Live Support</span>
+        <span class="nav-tooltip">Live Support</span>
+      </a>
+
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Buyer Communication.html">
+        <span class="material-symbols-outlined">forum</span>
+        <span class="text-sm item-text ml-4">Communication</span>
+        <span class="nav-tooltip">Communication</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/System Announcemeeent.html">
+        <span class="material-symbols-outlined">forum</span>
+        <span class="text-sm item-text ml-4">System Announcement</span>
+        <span class="nav-tooltip">System Announcement</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Invoice Management.html">
+        <span class="material-symbols-outlined">description</span>
+        <span class="text-sm item-text ml-4">Invoice Management</span>
+        <span class="nav-tooltip">Invoice Management</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Create Content.html">
+        <span class="material-symbols-outlined">edit_note</span>
+        <span class="text-sm item-text ml-4">Content Management</span>
+        <span class="nav-tooltip">Content Management</span>
+      </a>
+    </nav>
+
+    <div class="px-6 py-8">
+      <button id="logoutBtn"
+        class="w-full h-10 flex items-center justify-center bg-primary text-sidebar-deep font-bold text-xs rounded-lg hover:brightness-110 transition-all shadow-lg shadow-primary/10 group relative">
+        <span class="material-symbols-outlined text-[20px] system-icon">logout</span>
+        <span class="ml-2 system-card-text">Logout</span>
+        <span class="nav-tooltip !left-full !ml-6">Logout</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main Content wrapper -->
+  <div class="flex-1 flex flex-col h-screen overflow-hidden bg-background-light dark:bg-background-dark">
+    <!-- Header -->
+    <header
+      class="h-20 bg-white dark:bg-background-dark border-b border-slate-100 dark:border-white/10 px-6 flex items-center justify-between flex-shrink-0 z-40">
+      <div class="flex items-center gap-6">
+        <button id="sidebarToggle"
+          class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 hover:text-sidebar-deep dark:hover:text-primary hover:bg-primary/10 transition-all">
+          <span class="material-symbols-outlined">menu</span>
+        </button>
+        <div class="relative w-96 group">
+          <span
+            class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 group-focus-within:text-sidebar-deep dark:group-focus-within:text-primary transition-colors">search</span>
+          <input
+            class="w-full bg-slate-100 dark:bg-white/5 border-none rounded-xl pl-10 pr-4 py-2.5 text-sm dark:text-white focus:ring-2 focus:ring-primary/20 transition-all placeholder:dark:text-zinc-500"
+            placeholder="Search system records..." type="text" />
+        </div>
+      </div>
+
+      <div class="flex items-center gap-6">
+        <div class="flex items-center gap-2">
+          <button
+            class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 hover:text-sidebar-deep dark:hover:text-primary hover:bg-primary/10 transition-all relative">
+            <span class="material-symbols-outlined">notifications</span>
+            <span
+              class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-slate-900"></span>
+          </button>
+          <button id="themeToggle"
+            class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 hover:text-sidebar-deep dark:hover:text-primary hover:bg-primary/10 transition-all">
+            <span class="material-symbols-outlined">light_mode</span>
+          </button>
+        </div>
+        <div class="h-10 w-px bg-slate-200 dark:bg-white/10"></div>
+        <div class="flex items-center gap-3 cursor-pointer group">
+          <div class="text-right">
+            <p class="text-sm font-bold text-slate-900 dark:text-white group-hover:text-primary transition-colors">
+              Super Admin
+            </p>
+            <p class="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-tighter">
+              System Manager
+            </p>
+          </div>
+          <div
+            class="w-12 h-12 rounded-xl border-2 border-primary/20 p-0.5 overflow-hidden group-hover:border-primary transition-all">
+            <img alt="Admin Profile" class="w-full h-full object-cover rounded-lg"
+              src="https://lh3.googleusercontent.com/aida-public/AB6AXuDI3q59cS__AXyYcqFQtKZ2-e__roEJ3Cic28K7cd-6tYYxzLfpTArNsAJE3UypttzDIKS6SoNy85-jDLh0ZMbLqXr0NEEjrbCPSgoCJZyYc4W89P8djmlf34I_NEoa2vfl5IS3jHwLSZZ6lgtwguAje5Lv9h9RbZ2fJqb36M_tmZc-iJY-XxAXsCDxVyU1bONcO3AV5LZgB1o5wURKpB9w2XEN6iWAILVT7fIzOkl2pQ4lJb5WxYgkvuNIlKakHZWN1e4bzfo25zYy" />
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Sub Navigation Tabs -->
+    <nav
+      class="sticky top-0 bg-white/50 dark:bg-background-dark/50 border-b border-gray-100 dark:border-white/10 backdrop-blur-sm relative z-30 rounded-l-[30px] ml-[110px]">
+      <div class="mx-auto w-full px-4">
+        <div id="tabsContainer" class="flex gap-4 overflow-x-auto no-scrollbar py-3">
+          <a class="flex items-center gap-2 px-4 py-2 rounded-[30px] text-sm font-semibold text-gray-700 dark:text-gray-400 hover:bg-white dark:hover:bg-white/10 hover:shadow-sm whitespace-nowrap transition-all"
+            href="/Admin Dashboard/KYC Review.html">
+            <span class="material-symbols-outlined text-[20px]">shield_person</span>
+            KYC Review
+          </a>
+          <a class="flex items-center gap-2 px-4 py-2 rounded-[30px] text-sm font-semibold text-gray-700 dark:text-gray-400 hover:bg-white dark:hover:bg-white/10 hover:shadow-sm whitespace-nowrap transition-all"
+            href="/Admin Dashboard/User Access.html">
+            <span class="material-symbols-outlined text-[20px]">manage_accounts</span>
+            User Access Management
+          </a>
+          <a class="flex items-center gap-2 px-4 py-2 rounded-[30px] text-sm font-semibold text-gray-700 dark:text-gray-400 hover:bg-white dark:hover:bg-white/10 hover:shadow-sm whitespace-nowrap transition-all"
+            href="/Admin Dashboard/Buyer Deposit Requests.html">
+            <span class="material-symbols-outlined text-[20px]">account_balance_wallet</span>
+            Buyer Deposit Requests
+          </a>
+          <a class="flex items-center gap-2 px-4 py-2 rounded-[30px] text-sm font-semibold text-gray-700 dark:text-gray-400 hover:bg-white dark:hover:bg-white/10 hover:shadow-sm whitespace-nowrap transition-all"
+            href="/Admin Dashboard/Buyer Order Management.html">
+            <span class="material-symbols-outlined text-[20px]">receipt_long</span>
+            Buyer Order Management
+          </a>
+          <a class="flex items-center gap-2 px-4 py-2 rounded-[30px] text-sm font-semibold text-gray-700 dark:text-gray-400 hover:bg-white dark:hover:bg-white/10 hover:shadow-sm whitespace-nowrap transition-all"
+            href="/Admin Dashboard/User Task Verification.html">
+            <span class="material-symbols-outlined text-[20px]">task_alt</span>
+            Task Verification
+          </a>
+          <a class="flex items-center gap-2 px-4 py-2 rounded-[30px] text-sm font-semibold active-tab-nav whitespace-nowrap transition-all"
+            href="/Admin Dashboard/User Payout Request.html">
+            <span class="material-symbols-outlined text-[20px]">payments</span>Payout Request
+          </a>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main Dashboard Content -->
+    <main class="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-8 max-w-full">
+      <div class="max-w-[1600px] mx-auto w-full space-y-8">
+        <div class="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
+          <div>
+            <h1 class="text-3xl font-black text-zinc-900 dark:text-white tracking-tight">
+              Payout Requests Management
+            </h1>
+            <p class="text-zinc-600 dark:text-zinc-400 mt-2 flex items-center gap-2">
+              <span class="flex size-2 bg-yellow-400 rounded-full animate-pulse"></span>
+              pending withdrawal requests require your attention.
+            </p>
+          </div>
+          <div class="flex gap-3">
+            <button
+              class="flex items-center gap-2 px-4 py-2 bg-white dark:bg-sidebar-deep border border-zinc-200 dark:border-white/10 rounded-lg text-sm font-bold hover:bg-zinc-50 dark:hover:bg-white/5 transition-colors dark:text-slate-300">
+              <span class="material-symbols-outlined text-lg">filter_alt</span>
+              Filter
+            </button>
+            <button
+              class="flex items-center gap-2 px-4 py-2 bg-white dark:bg-sidebar-deep border border-zinc-200 dark:border-white/10 rounded-lg text-sm font-bold hover:bg-zinc-50 dark:hover:bg-white/5 transition-colors dark:text-slate-300">
+              <span class="material-symbols-outlined text-lg">download</span>
+              Export
+            </button>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div class="bg-white dark:bg-white/5 p-6 rounded-xl border border-zinc-200 dark:border-white/10 shadow-sm">
+            <div class="flex justify-between items-start mb-4">
+              <div class="p-2 bg-primary/10 rounded-lg text-primary material-symbols-outlined">
+                <span class="material-symbols-outlined">receipt_long</span>
+              </div>
+              <span
+                class="text-[10px] font-black px-2 py-0.5 rounded-full bg-primary/20 text-green-700 dark:text-primary uppercase tracking-wider">+12%</span>
+            </div>
+            <p class="text-xs font-bold text-zinc-500 dark:text-zinc-500 uppercase tracking-widest">
+              Total Request
+            </p>
+            <h3 id="kpi-total-requests" class="text-2xl font-black text-zinc-900 dark:text-white mt-1">
+
+            </h3>
+          </div>
+          <div class="bg-white dark:bg-white/5 p-6 rounded-xl border border-zinc-200 dark:border-white/10 shadow-sm">
+            <div class="flex justify-between items-start mb-4">
+              <div class="p-2 bg-primary/10 rounded-lg text-amber-500 material-symbols-outlined">
+                <span class="material-symbols-outlined">pending_actions</span>
+              </div>
+              <span
+                class="text-[10px] font-black px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400 uppercase tracking-wider">Attention</span>
+            </div>
+            <p class="text-xs font-bold text-zinc-500 dark:text-zinc-500 uppercase tracking-widest">
+              Total Pending
+            </p>
+            <h3 id="kpi-total-pending" class="text-2xl font-black text-zinc-900 dark:text-white mt-1">
+
+            </h3>
+          </div>
+          <div class="bg-white dark:bg-white/5 p-6 rounded-xl border border-zinc-200 dark:border-white/10 shadow-sm">
+            <div class="flex justify-between items-start mb-4">
+              <div class="p-2 bg-primary/10 rounded-lg text-green-600 material-symbols-outlined">
+                <span class="material-symbols-outlined">payments</span>
+              </div>
+              <span id="kpi-total-payout-badge"
+                class="text-[10px] font-black px-2 py-0.5 rounded-full bg-primary/20 text-green-700 dark:text-primary uppercase tracking-wider">৳
+                k</span>
+            </div>
+            <p class="text-xs font-bold text-zinc-500 dark:text-zinc-500 uppercase tracking-widest">
+              Total Payout
+            </p>
+            <h3 id="kpi-total-payout" class="text-2xl font-black text-zinc-900 dark:text-white mt-1">
+              ৳
+            </h3>
+          </div>
+          <div class="bg-white dark:bg-white/5 p-6 rounded-xl border border-zinc-200 dark:border-white/10 shadow-sm">
+            <div class="flex justify-between items-start mb-4">
+              <div class="p-2 bg-primary/10 rounded-lg text-primary material-symbols-outlined">
+                <span class="material-symbols-outlined">speed</span>
+              </div>
+              <div class="flex items-center gap-1 text-primary">
+                <span class="material-symbols-outlined text-sm font-bold">trending_up</span>
+                <span class="text-[10px] font-black uppercase tracking-wider">Efficient</span>
+              </div>
+            </div>
+            <p class="text-xs font-bold text-zinc-500 dark:text-zinc-500 uppercase tracking-widest">
+              AVG Paid Rate %
+            </p>
+            <h3 id="kpi-paid-rate" class="text-2xl font-black text-zinc-900 dark:text-white mt-1">
+              94.2%
+            </h3>
+          </div>
+        </div>
+        <div
+          class="bg-white dark:bg-white/5 rounded-xl border border-zinc-200 dark:border-white/10 overflow-hidden shadow-sm">
+          <!-- Control Bar -->
+          <div
+            class="p-4 border-b border-zinc-200 dark:border-white/10 flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-zinc-50/50 dark:bg-white/5">
+            <div class="relative w-full lg:w-72">
+              <span
+                class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 dark:text-zinc-500 text-sm">search</span>
+              <input id="searchInput"
+                class="w-full pl-10 pr-4 py-2 bg-white dark:bg-sidebar-deep border border-zinc-200 dark:border-white/10 rounded-lg text-sm focus:ring-primary focus:border-primary transition-all text-zinc-900 dark:text-white placeholder:dark:text-zinc-500"
+                placeholder="Search name, email, account..." type="text" />
+            </div>
+            <div class="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 lg:pb-0" id="filterContainer">
+              <button data-filter="All"
+                class="filter-btn active-filter px-4 py-1.5 rounded-full bg-primary text-[#0d1b12] text-xs font-black shadow-sm transition-all whitespace-nowrap">All
+                Payouts</button>
+              <button data-filter="pending"
+                class="filter-btn px-4 py-1.5 rounded-full bg-white dark:bg-sidebar-deep border border-zinc-200 dark:border-white/10 text-zinc-600 dark:text-zinc-400 text-xs font-bold hover:bg-zinc-50 dark:hover:bg-sidebar-deep/80 transition-all whitespace-nowrap">Pending</button>
+              <button data-filter="paid"
+                class="filter-btn px-4 py-1.5 rounded-full bg-white dark:bg-sidebar-deep border border-zinc-200 dark:border-white/10 text-zinc-600 dark:text-zinc-400 text-xs font-bold hover:bg-zinc-50 dark:hover:bg-sidebar-deep/80 transition-all whitespace-nowrap">Paid</button>
+              <button data-filter="declined"
+                class="filter-btn px-4 py-1.5 rounded-full bg-white dark:bg-sidebar-deep border border-zinc-200 dark:border-white/10 text-zinc-600 dark:text-zinc-400 text-xs font-bold hover:bg-zinc-50 dark:hover:bg-sidebar-deep/80 transition-all whitespace-nowrap">Declined</button>
+            </div>
+          </div>
+          <div class="overflow-x-auto">
+            <!--Payout Requests-->
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-zinc-50/50 dark:bg-white/5 border-b border-zinc-200 dark:border-white/10">
+                  <th class="px-6 py-4 text-xs font-black text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                    Date
+                  </th>
+                  <th class="px-6 py-4 text-xs font-black text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                    User Details
+                  </th>
+                  <th class="px-6 py-4 text-xs font-black text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                    Gateway
+                  </th>
+                  <th class="px-6 py-4 text-xs font-black text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                    Account Number
+                  </th>
+                  <th class="px-6 py-4 text-xs font-black text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                    Amount (Tk)
+                  </th>
+                  <th class="px-6 py-4 text-xs font-black text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                    Transaction ID
+                  </th>
+                  <th class="px-6 py-4 text-xs font-black text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th class="px-6 py-4 text-xs font-black text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                    Action
+                  </th>
+                </tr>
+              </thead>
+              <tbody id="payout-requests-body" class="divide-y divide-zinc-200 dark:divide-white/10">
+              </tbody>
+            </table>
+          </div>
+          <div
+            class="px-6 py-4 flex items-center justify-between border-t border-zinc-200 dark:border-white/10 bg-zinc-50/50 dark:bg-white/5">
+            <p id="paginationText" class="text-xs font-medium text-zinc-500 dark:text-zinc-400">
+              Showing <span class="text-zinc-900 dark:text-slate-100">...</span>
+            </p>
+            <div class="flex items-center gap-1" id="paginationControls">
+              <!-- Generated by JS -->
+            </div>
+          </div>
+        </div>
+        <footer class="pt-16 pb-8 border-t border-slate-200 dark:border-white/10 mt-12">
+          <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+            <div
+              class="flex items-center gap-8 text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest">
+              <a class="hover:text-primary transition-colors" href="#">Privacy Policy</a>
+              <a class="hover:text-primary transition-colors" href="#">Terms of Service</a>
+              <a class="hover:text-primary transition-colors" href="#">Documentation</a>
+            </div>
+            <p class="text-[11px] font-bold text-slate-400 dark:text-zinc-500">
+              © 2024 TIME TASK BD. ALL RIGHTS RESERVED.
+            </p>
+          </div>
+        </footer>
+      </div>
+    </main>
+  </div>
+
+  <!-- Modal Backdrop Overlay -->
+  <div id="payoutModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 hidden">
+    <!-- Modal Container -->
+    <div
+      class="relative w-full max-w-[640px] bg-white dark:bg-background-dark border border-zinc-200 dark:border-white/10 rounded-xl shadow-2xl overflow-hidden flex flex-col">
+      <!-- Close Button -->
+      <button id="closeModalButton" class="absolute top-4 right-4 text-slate-500 hover:text-primary transition-colors">
+        <span class="material-symbols-outlined" data-icon="close">close</span>
+      </button>
+      <!-- PageHeading Style Header -->
+      <div class="px-8 pt-8 pb-4">
+        <div class="flex flex-col gap-1">
+          <h2 class="text-zinc-900 dark:text-white tracking-tight text-[28px] font-bold leading-tight">
+            Fulfill Payout Request
+          </h2>
+          <p class="text-zinc-600 dark:text-zinc-400 text-sm font-normal leading-normal">
+            Verify user details and input the Transaction ID to finalize the
+            payment.
+          </p>
+        </div>
+      </div>
+      <!-- DescriptionList Style Content -->
+      <div class="px-8 py-2">
+        <div
+          class="grid grid-cols-[1fr_1fr] gap-x-6 border-t rounded-lg bg-zinc-50 dark:bg-white/5 p-5 border border-zinc-200 dark:border-white/10 shadow-md">
+          <div class="py-4 flex flex-col border-b border-zinc-200 dark:border-white/10">
+            <p class="text-zinc-500 dark:text-zinc-400 text-xs font-medium uppercase tracking-wider mb-1">
+              User Name
+            </p>
+            <!-- [SEC-010] data-modal-field used by event delegation — no brittle class-selector matching -->
+            <p data-modal-field="user-name" class="text-zinc-900 dark:text-white text-base font-semibold"></p>
+          </div>
+          <div class="py-4 flex flex-col border-b border-zinc-200 dark:border-white/10">
+            <p class="text-zinc-500 dark:text-zinc-400 text-xs font-medium uppercase tracking-wider mb-1">
+              Requested Amount
+            </p>
+            <p data-modal-field="amount" class="text-primary text-base font-bold"></p>
+          </div>
+          <div class="py-4 flex flex-col border-b border-zinc-200 dark:border-white/10">
+            <p class="text-zinc-500 dark:text-zinc-400 text-xs font-medium uppercase tracking-wider mb-1">
+              Payment Gateway
+            </p>
+            <div class="flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-pink-500"></span>
+              <p data-modal-field="gateway" class="text-zinc-900 dark:text-white text-base font-semibold">Bkash</p>
+            </div>
+          </div>
+          <div class="py-4 flex flex-col border-b border-zinc-200 dark:border-white/10">
+            <p class="text-zinc-500 dark:text-zinc-400 text-xs font-medium uppercase tracking-wider mb-1">
+              Status
+            </p>
+            <p class="text-yellow-500 text-base font-semibold">
+              Pending Payment
+            </p>
+          </div>
+        </div>
+      </div>
+      <!-- Recipient Account Details Section -->
+      <div class="px-8 pt-4 pb-2">
+        <h3 class="text-zinc-900 dark:text-white tracking-tight text-lg font-bold leading-tight mb-4">
+          Recipient Account Details
+        </h3>
+        <!-- Card Component -->
+        <div
+          class="flex items-center justify-between gap-4 rounded-lg bg-zinc-50 dark:bg-white/5 p-5 border border-zinc-200 dark:border-white/10 shadow-md">
+          <div class="flex flex-col gap-2">
+            <div class="flex flex-col gap-0.5">
+              <p id="modalDisplayAccountNumber"
+                class="text-zinc-900 dark:text-white text-xl font-bold tracking-widest font-mono">
+
+              </p>
+              <p class="text-zinc-500 dark:text-zinc-400 text-xs font-normal leading-normal uppercase">
+                User's Saved Bkash Wallet
+              </p>
+            </div>
+            <button id="btnCopyNumber"
+              class="flex min-w-[120px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-9 px-4 bg-primary hover:bg-primary/90 transition-all text-[#0d1b12] gap-2 text-sm font-bold">
+              <span class="material-symbols-outlined text-[18px]" data-icon="content_copy">content_copy</span>
+              <span class="truncate">Copy Number</span>
+            </button>
+          </div>
+          <div
+            class="hidden sm:block h-20 w-32 bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/10 rounded-lg flex items-center justify-center overflow-hidden">
+            <span class="material-symbols-outlined text-primary/40 text-4xl"
+              data-icon="account_balance_wallet">account_balance_wallet</span>
+          </div>
+        </div>
+      </div>
+      <!-- TextField Component Section -->
+      <div class="px-8 py-4">
+        <div class="flex flex-col gap-2">
+          <label class="flex flex-col w-full">
+            <div class="flex items-center justify-between pb-2">
+              <p class="text-zinc-900 dark:text-white text-sm font-bold leading-normal">
+                Transaction ID <span class="text-red-500">*</span>
+              </p>
+              <span class="text-zinc-500 dark:text-zinc-400 text-[10px] uppercase font-bold tracking-tighter">Required
+                after manual
+                transfer</span>
+            </div>
+            <input id="inputTrxId"
+              class="form-input flex w-full resize-none overflow-hidden rounded-lg text-zinc-900 dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary border border-zinc-200 dark:border-white/10 bg-zinc-100 dark:bg-white/5 focus:border-primary h-14 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 p-[15px] text-base font-mono leading-normal transition-all"
+              placeholder="Enter 10-digit TxnID (e.g. AX98765432)" type="text" value="" />
+          </label>
+        </div>
+      </div>
+      <!-- Footer Buttons -->
+      <div
+        class="px-8 py-6 bg-zinc-50/50 dark:bg-white/5 border-t border-zinc-200 dark:border-white/10 flex flex-row-reverse gap-3">
+        <button id="btnConfirmPayout"
+          class="flex-1 flex min-w-[160px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 px-5 bg-primary hover:bg-primary/90 text-[#0d1b12] text-sm font-bold leading-normal transition-all shadow-lg active:scale-[0.98]">
+          Confirm &amp; Mark as Paid
+        </button>
+        <button id="cancelModalButton"
+          class="flex-1 flex min-w-[100px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 px-5 border border-zinc-200 dark:border-white/10 bg-transparent hover:bg-zinc-100 dark:hover:bg-white/10 text-zinc-700 dark:text-zinc-400 text-sm font-medium leading-normal transition-all">
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Script for Sidebar Functionality -->
+  <script>
+    const sidebar        = document.getElementById("mainSidebar");
+    const toggleBtn      = document.getElementById("sidebarToggle");
+    const payoutModal    = document.getElementById("payoutModal");
+    const closeModalBtn  = document.getElementById("closeModalButton");
+    const cancelModalBtn = document.getElementById("cancelModalButton");
+
+    // ── Theme Toggle ──────────────────────────────────────────
+    const themeToggle = document.getElementById("themeToggle");
+    const themeIcon   = themeToggle.querySelector(".material-symbols-outlined");
+
+    function updateTheme(dark) {
+      if (dark) {
+        document.documentElement.classList.add("dark");
+        themeIcon.textContent = "dark_mode";
+        localStorage.setItem("theme", "dark");
+      } else {
+        document.documentElement.classList.remove("dark");
+        themeIcon.textContent = "light_mode";
+        localStorage.setItem("theme", "light");
+      }
+    }
+    updateTheme(document.documentElement.classList.contains("dark"));
+    themeToggle.addEventListener("click", () => {
+      updateTheme(!document.documentElement.classList.contains("dark"));
+    });
+
+    // ── Sidebar Toggle ────────────────────────────────────────
+    toggleBtn.addEventListener("click", () => {
+      sidebar.classList.toggle("sidebar-collapsed");
+    });
+
+    // ── Sub-Nav Active Tab ────────────────────────────────────
+    document.querySelectorAll("#tabsContainer a").forEach((tab) => {
+      tab.addEventListener("click", () => {
+        document.querySelectorAll("#tabsContainer a").forEach(t => t.classList.remove("active-tab-nav"));
+        tab.classList.add("active-tab-nav");
+      });
+    });
+
+    // ── Modal Close Handlers ──────────────────────────────────
+    closeModalBtn.addEventListener("click",  () => payoutModal.classList.add("hidden"));
+    cancelModalBtn.addEventListener("click", () => payoutModal.classList.add("hidden"));
+    payoutModal.addEventListener("click", (e) => {
+      if (e.target === payoutModal) payoutModal.classList.add("hidden");
+    });
+
+    // ── Logout Button ─────────────────────────────────────────
+    // Runs after Supabase CDN + supabase-client.js are loaded
+    // because the script tags for those appear after this block.
+    // We defer the signOut call to DOMContentLoaded so
+    // window.supabaseClient is guaranteed to exist.
+    document.addEventListener("DOMContentLoaded", () => {
+      const logoutBtn = document.getElementById("logoutBtn");
+      if (logoutBtn) {
+        logoutBtn.addEventListener("click", async () => {
+          const client = window.supabaseClient || null;
+          if (client) await client.auth.signOut();
+          window.location.href = "Admin_Login.html";
+        });
+      }
+    });
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../supabase-client.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      // [SEC-003] NEVER hardcode credentials — use only the shared client from supabase-client.js
+      const _supabase = window.supabaseClient || null;
+      if (!_supabase) {
+        console.error('[Payout] supabaseClient not found. Ensure supabase-client.js is loaded.');
+        window.location.href = 'Admin_Login.html';
+        return;
+      }
+
+      // [SEC-005] Always check sessionErr — a network/token error must redirect, not silently continue
+      const { data: { session }, error: sessionErr } = await _supabase.auth.getSession();
+      if (sessionErr || !session) {
+        window.location.href = 'Admin_Login.html';
+        return;
+      }
+
+      // Verify Admin Role 
+      const normalizeRole = (v) => String(v || '').trim().toLowerCase();
+      const { data: profile, error: profileErr } = await _supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', session.user.id)
+        .single();
+
+      if (profileErr || normalizeRole(profile?.role) !== 'admin') {
+        alert("Access Denied: You are not an administrator.");
+        await _supabase.auth.signOut();
+        window.location.href = "Admin_Login.html";
+        return;
+      }
+
+      let allPayouts = [];
+      let currentSearchQuery = "";
+      let currentFilter = "All"; // "All", "pending", "paid", "declined" 
+      let currentPage = 1;
+      const rowsPerPage = 15;
+      let currentWithdrawalId = null;
+
+      // Initialize both tasks simultaneously 
+      fetchKPIStats();
+      loadAllRequests();
+
+      // --- 1. Robust KPI Calculator --- 
+      async function fetchKPIStats() {
+        try {
+          // Fetch stats optimally (no large table pull for sums) 
+          const { count: totalCount } = await _supabase.from('withdrawals').select('*', { count: 'exact', head: true });
+          const { count: pendingCount } = await _supabase.from('withdrawals').select('*', { count: 'exact', head: true }).eq('status', 'pending');
+
+          const { data: paidData } = await _supabase.from('withdrawals').select('amount').eq('status', 'paid');
+          const totalPayout = paidData ? paidData.reduce((sum, item) => sum + (Number(item.amount) || 0), 0) : 0;
+          const paidCount = paidData ? paidData.length : 0;
+          const paidRate = totalCount ? ((paidCount / totalCount) * 100).toFixed(1) : 0;
+
+          // Safely Update DOM elements 
+          document.getElementById('kpi-total-requests').textContent = (totalCount || 0).toLocaleString();
+          document.getElementById('kpi-total-pending').textContent = (pendingCount || 0).toLocaleString();
+          document.getElementById('kpi-total-payout').textContent = `৳ ${totalPayout.toLocaleString()}`;
+          document.getElementById('kpi-paid-rate').textContent = `${paidRate}%`;
+
+          const payoutBadge = document.getElementById('kpi-total-payout-badge');
+          if (payoutBadge) {
+            payoutBadge.textContent = totalPayout >= 1000 ? `+৳ ${(totalPayout / 1000).toFixed(0)}k` : `+৳ ${totalPayout.toLocaleString()}`;
+          }
+        } catch (e) {
+          console.error("Failed to load KPIs: ", e);
+        }
+      }
+
+      // --- 2. Central Data Fetching System --- 
+      async function loadAllRequests() {
+        const tbody = document.getElementById("payout-requests-body");
+        if (!tbody) return;
+
+        tbody.innerHTML = `<tr><td colspan="8" class="px-6 py-8 text-center text-zinc-500 font-bold">Loading payouts securely...</td></tr>`;
+
+        // [SEC-003] Server-Side Pagination & Ordering
+        const { data: withdrawals, error } = await _supabase
+          .from("withdrawals")
+          .select("*")
+          .order("created_at", { ascending: false })
+          .range(0, 49); // Initial batch for performance
+
+        if (error || !withdrawals) {
+          tbody.innerHTML = `<tr><td colspan="8" class="px-6 py-8 text-center text-red-500 font-bold">System Error Loading Data.</td></tr>`;
+          return;
+        }
+
+        if (withdrawals.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="8" class="px-6 py-8 text-center text-zinc-500 font-bold">No payout history currently registered.</td></tr>`;
+          allPayouts = [];
+          return;
+        }
+
+        // Safely Map Relationships efficiently without massive heavy SQL joints. 
+        const userIds = [...new Set(withdrawals.map(w => w.user_id).filter(Boolean))];
+        const methodIds = [...new Set(withdrawals.map(w => w.payment_method_id).filter(Boolean))];
+
+        let profilesMap = {}, methodsMap = {};
+
+        if (userIds.length > 0) {
+          const { data: p } = await _supabase.from("profiles").select("id, full_name, email").in("id", userIds);
+          if (p) p.forEach(user => profilesMap[user.id] = user);
+        }
+
+        if (methodIds.length > 0) {
+          const { data: m } = await _supabase.from("user_payment_methods").select("id, gateway_name, account_number").in("id", methodIds);
+          if (m) m.forEach(met => methodsMap[met.id] = met);
+        }
+
+        // Store array and build view 
+        allPayouts = withdrawals.map(w => ({
+          ...w,
+          profile: profilesMap[w.user_id] || { full_name: 'Unknown', email: 'N/A' },
+          method: methodsMap[w.payment_method_id] || { gateway_name: 'Manual', account_number: '-' }
+        }));
+
+        renderTable();
+      }
+
+      // --- 3. View Renderer System --- 
+      function renderTable() {
+        const tbody = document.getElementById("payout-requests-body");
+
+        // Apply Search Logic (Matching user details or payment targets) 
+        let processedData = allPayouts.filter(item => {
+          const searchStr = currentSearchQuery.toLowerCase();
+          const nameMatch = (item.profile.full_name || "").toLowerCase().includes(searchStr);
+          const emailMatch = (item.profile.email || "").toLowerCase().includes(searchStr);
+          const acctMatch = (item.method.account_number || "").toLowerCase().includes(searchStr);
+          return nameMatch || emailMatch || acctMatch;
+        });
+
+        // [BUG-010] Apply status filtering only when a specific filter is selected
+        if (currentFilter !== "All") {
+          processedData = processedData.filter(s => s.status === currentFilter);
+        }
+
+        // Generate Pagination Boundaries 
+        const totalItems = processedData.length;
+        const totalPages = Math.ceil(totalItems / rowsPerPage) || 1;
+
+        if (currentPage > totalPages) currentPage = totalPages;
+        if (currentPage < 1) currentPage = 1;
+
+        const startIndex = (currentPage - 1) * rowsPerPage;
+        const endIndex = startIndex + rowsPerPage;
+        const paginatedData = processedData.slice(startIndex, endIndex);
+
+        if (paginatedData.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="8" class="px-6 py-10 text-center text-zinc-500 font-bold uppercase tracking-widest text-xs">No Payout Requests found matching filter parameters.</td></tr>`;
+        } else {
+          // EXACTLY RE-USE ALL existing formatting and map rendering structure directly 
+          tbody.innerHTML = paginatedData.map(item => {
+            const d = new Date(item.created_at || new Date().toISOString());
+            const date = d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+            const time = d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+
+            // [BUG-FIX] gwName/acNum must be declared BEFORE their escaped variants to avoid ReferenceError
+            const gwName      = item.method.gateway_name  || 'Bank Transfer';
+            const gwIconColor = gwName === 'Bkash' ? 'text-pink-600' : (gwName === 'Nagad' ? 'text-orange-500' : 'text-green-600');
+            const acNum       = item.method.account_number || 'Unknown Details';
+
+            // [SEC-001] Escape ALL user-controlled DB values before use in innerHTML
+            const safeName   = escapeHTML(item.profile.full_name);
+            const safeEmail  = escapeHTML(item.profile.email);
+            const safeGwName = escapeHTML(gwName);
+            const safeAcNum  = escapeHTML(acNum);
+
+            // Display rules mapping logic based on standard admin views 
+            let stateBadges = '';
+            let actionsHTML = '';
+            let trxField = '';
+
+            if (item.status === 'pending') {
+              stateBadges = `<span class="px-3 py-1 rounded-full text-[11px] font-black uppercase bg-yellow-100 text-yellow-700">Pending</span>`;
+              trxField = `<span class="text-xs font-medium text-zinc-400 italic">In processing..</span>`;
+              // [SEC-002] data-* attributes only — NO inline onclick string interpolation
+              actionsHTML = ` 
+                    <button
+                      data-action="fulfill"
+                      data-id="${escapeHTML(item.id)}"
+                      data-amount="${Number(item.amount) || 0}"
+                      data-name="${escapeHTML(item.profile.full_name)}"
+                      data-gateway="${safeGwName}"
+                      data-account="${safeAcNum}"
+                      class="bg-primary hover:bg-primary/90 text-zinc-900 px-4 py-1.5 rounded-lg text-xs font-black shadow-sm transition-all flex items-center gap-2 w-full justify-center"> 
+                       Fulfill <span class="material-symbols-outlined text-sm">send</span> 
+                    </button> 
+                 `;
+            }
+            else if (item.status === 'paid') {
+              stateBadges = `<span class="px-3 py-1 rounded-full text-[11px] font-black uppercase bg-green-100 text-green-700">Paid</span>`;
+              // [SEC-001] escapeHTML on transaction_id — stored value, must not be trusted
+              trxField = ` 
+                    <div class="flex items-center gap-1"> 
+                       <span class="text-xs font-bold text-zinc-900 dark:text-white font-mono">${escapeHTML(item.transaction_id) || '-'} </span> 
+                       <span class="material-symbols-outlined text-lg text-primary font-black">verified</span> 
+                    </div>` ;
+              actionsHTML = `<span class="text-xs font-medium text-zinc-400">Finished</span>`;
+            }
+            else {
+              stateBadges = `<span class="px-3 py-1 rounded-full text-[11px] font-black uppercase bg-red-100 text-red-700">Declined</span>`;
+              trxField = `<span class="text-xs font-medium text-red-400">Rejected Request</span>`;
+              actionsHTML = `<span class="text-xs font-medium text-zinc-400">Locked</span>`;
+            }
+
+            return `
+                 <tr class="hover:bg-zinc-50/50 dark:hover:bg-white/5 transition-colors">
+                   <td class="px-6 py-5 whitespace-nowrap">
+                     <p class="text-sm font-bold text-zinc-900 dark:text-white">${date}</p>
+                     <p class="text-[10px] text-zinc-400 font-medium mt-0.5">${time}</p>
+                   </td>
+                   <td class="px-6 py-5 whitespace-nowrap">
+                      <div class="flex flex-col">
+                        <!-- [SEC-001] All user-controlled values escaped via escapeHTML() -->
+                        <span class="text-sm font-bold text-zinc-900 dark:text-white">${safeName}</span>
+                        <span class="text-xs text-zinc-500">${safeEmail}</span>
+                      </div>
+                   </td>
+                   <td class="px-6 py-5 whitespace-nowrap">
+                      <div class="flex items-center gap-2 px-3 py-1 bg-zinc-100 dark:bg-white/5 rounded-full w-fit">
+                        <span class="material-symbols-outlined text-sm ${gwIconColor} font-bold">account_balance_wallet</span>
+                        <span class="text-xs font-bold text-zinc-700 dark:text-zinc-300">${safeGwName}</span>
+                      </div>
+                   </td>
+                   <td class="px-6 py-5 whitespace-nowrap">
+                      <code class="text-sm font-bold text-zinc-800 dark:text-zinc-200 bg-zinc-50 dark:bg-zinc-800 px-2 py-0.5 rounded border border-zinc-200 dark:border-zinc-700">${safeAcNum}</code>
+                   </td>
+                   <!-- [BUG-011] Null-safe amount display -->
+                   <td class="px-6 py-5 whitespace-nowrap font-extrabold text-zinc-900 dark:text-white text-sm">
+                      ৳ ${(Number(item.amount) || 0).toLocaleString()}
+                   </td>
+                   <td class="px-6 py-5 whitespace-nowrap">
+                      ${trxField}
+                   </td>
+                   <td class="px-6 py-5 whitespace-nowrap">
+                      ${stateBadges}
+                   </td>
+                   <td class="px-6 py-5 whitespace-nowrap text-center">
+                      ${actionsHTML}
+                   </td>
+                 </tr>
+               `;
+          }).join("");
+        }
+
+        // Trigger Controller Setup Render Phase natively 
+        updatePaginationUI(startIndex, Math.min(endIndex, totalItems), totalItems, totalPages);
+      }
+
+      // [SEC-001] HTML escape helper — must be defined before renderTable() runs
+      function escapeHTML(str) {
+        if (str === null || str === undefined) return '';
+        return String(str)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#039;');
+      }
+
+      // escapeJsQuote kept for legacy compatibility but no longer used in critical paths
+      function escapeJsQuote(str) { return (str || '').toString().replace(/'/g, "\\'"); }
+
+      function updatePaginationUI(start, end, total, pages) {
+        const pText = document.getElementById("paginationText");
+        if (pText) pText.innerHTML = `Showing <span class="text-zinc-900 dark:text-white">${total > 0 ? start + 1 : 0}</span> to <span class="text-zinc-900 dark:text-white">${end}</span> of <span class="text-zinc-900 dark:text-white">${total}</span> results`;
+
+        const pControls = document.getElementById("paginationControls");
+        if (!pControls) return;
+
+        let btnsHTML = `<button onclick="window.changePage(${currentPage - 1})" class="size-8 flex items-center justify-center rounded-lg border border-zinc-200 dark:border-white/10 bg-white dark:bg-white/5 text-zinc-500 dark:text-slate-400 hover:bg-zinc-50 dark:hover:bg-white/10 disabled:opacity-50 transition-colors" ${currentPage === 1 ? 'disabled' : ''}><span class="material-symbols-outlined text-lg">chevron_left</span></button>`;
+
+        let startPage = Math.max(1, currentPage - 2);
+        let endPage = Math.min(pages, startPage + 4);
+        if (endPage - startPage < 4) startPage = Math.max(1, endPage - 4);
+
+        for (let i = startPage; i <= endPage; i++) {
+          if (i === currentPage) {
+            btnsHTML += `<button class="size-8 flex items-center justify-center rounded-lg bg-primary text-zinc-900 text-xs font-black">${i}</button>`;
+          } else {
+            btnsHTML += `<button onclick="window.changePage(${i})" class="size-8 flex items-center justify-center rounded-lg text-zinc-600 dark:text-zinc-400 text-xs font-bold bg-white dark:bg-white/5 hover:bg-zinc-50 dark:hover:bg-white/10 transition-colors border border-zinc-200 dark:border-white/10">${i}</button>`;
+          }
+        }
+
+        btnsHTML += `<button onclick="window.changePage(${currentPage + 1})" class="size-8 flex items-center justify-center rounded-lg border border-zinc-200 dark:border-white/10 bg-white dark:bg-white/5 text-zinc-500 dark:text-slate-400 hover:bg-zinc-50 dark:hover:bg-white/10 disabled:opacity-50 transition-colors" ${currentPage === pages ? 'disabled' : ''}><span class="material-symbols-outlined text-lg">chevron_right</span></button>`;
+        pControls.innerHTML = btnsHTML;
+      }
+
+      window.changePage = (newPage) => {
+        currentPage = newPage;
+        renderTable();
+      };
+
+      const searchInputBox = document.getElementById("searchInput");
+      if (searchInputBox) {
+        searchInputBox.addEventListener("input", (e) => {
+          currentSearchQuery = e.target.value;
+          currentPage = 1;
+          renderTable();
+        });
+      }
+
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.addEventListener("click", (e) => {
+          document.querySelectorAll('.filter-btn').forEach(b => {
+            b.classList.remove("bg-primary", "text-zinc-900", "font-black", "shadow-sm", "border-transparent");
+            b.classList.add("bg-white", "dark:bg-sidebar-deep", "text-zinc-600", "dark:text-zinc-400", "font-bold", "border", "border-zinc-200", "dark:border-white/10");
+          });
+          const tg = e.target;
+          tg.classList.remove("bg-white", "dark:bg-sidebar-deep", "text-zinc-600", "dark:text-zinc-400", "border", "border-zinc-200", "dark:border-white/10");
+          tg.classList.add("bg-primary", "text-zinc-900", "font-black", "shadow-sm", "border-transparent");
+
+          currentFilter = tg.getAttribute("data-filter");
+          currentPage = 1;
+          renderTable();
+        });
+      });
+
+      // --- 4. Event Delegation for Fulfill button [SEC-002] ---
+      // Replaces window.openFulfillModal called from inline onclick.
+      // data-* attributes carry all values safely — no JS string interpolation.
+      document.getElementById('payout-requests-body').addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-action="fulfill"]');
+        if (!btn) return;
+
+        currentWithdrawalId = btn.dataset.id;
+        const amount   = Number(btn.dataset.amount) || 0;
+        const userName = btn.dataset.name    || '';
+        const gateway  = btn.dataset.gateway || '';
+        const account  = btn.dataset.account || '';
+
+        const modal = document.getElementById('payoutModal');
+
+        // [SEC-010] Populate modal via explicit element IDs — no brittle class-selector matching
+        const nameDisplay = modal.querySelector('[data-modal-field="user-name"]');
+        const amtDisplay  = modal.querySelector('[data-modal-field="amount"]');
+        const gwDisplay   = modal.querySelector('[data-modal-field="gateway"]');
+        // Fallback: use textContent (never innerHTML) so no XSS possible
+        if (nameDisplay) nameDisplay.textContent = userName;
+        if (amtDisplay)  amtDisplay.textContent  = `৳ ${amount.toLocaleString()}`;
+        if (gwDisplay)   gwDisplay.textContent   = gateway;
+
+        const accEl = document.getElementById('modalDisplayAccountNumber');
+        if (accEl) accEl.textContent = account;   // textContent — safe
+
+        const trxInp = document.getElementById('inputTrxId');
+        if (trxInp) trxInp.value = '';
+
+        modal.classList.remove('hidden');
+      });
+
+      // Execution engine: Handling the Actual Form Acceptance Process. 
+      const confirmAndSubmitActionBtn = document.getElementById('btnConfirmPayout');
+      const copyNumberBtn = document.getElementById('btnCopyNumber');
+
+      // Copy to Clipboard Logic
+      if (copyNumberBtn) {
+        copyNumberBtn.addEventListener('click', () => {
+          const accEl = document.getElementById('modalDisplayAccountNumber');
+          if (accEl) {
+            const textToCopy = accEl.textContent.trim();
+            navigator.clipboard.writeText(textToCopy).then(() => {
+              const originalText = copyNumberBtn.innerHTML;
+              copyNumberBtn.innerHTML = `<span class="material-symbols-outlined text-[18px]">check</span> Copied!`;
+              copyNumberBtn.classList.add('bg-green-600', 'text-white');
+              copyNumberBtn.classList.remove('bg-primary');
+
+              setTimeout(() => {
+                copyNumberBtn.innerHTML = originalText;
+                copyNumberBtn.classList.remove('bg-green-600', 'text-white');
+                copyNumberBtn.classList.add('bg-primary');
+              }, 2000);
+            }).catch(err => {
+              console.error('Failed to copy: ', err);
+              alert("Failed to copy account number.");
+            });
+          }
+        });
+      }
+
+      if (confirmAndSubmitActionBtn) {
+        confirmAndSubmitActionBtn.addEventListener('click', async () => {
+          const trxInpTarget = document.getElementById('inputTrxId');
+          const transaction_ID = trxInpTarget ? trxInpTarget.value.trim() : null;
+
+          if (!currentWithdrawalId) return;
+
+          // [SEC-006] Enforce Transaction ID format: 4-50 alphanumeric/dash characters
+          const TXN_ID_REGEX = /^[A-Za-z0-9\-]{4,50}$/;
+          if (!transaction_ID || !TXN_ID_REGEX.test(transaction_ID)) {
+            alert('Transaction ID must be 4–50 alphanumeric characters (letters, numbers, or hyphens only).');
+            return;
+          }
+
+          const originalHtml = confirmAndSubmitActionBtn.innerHTML;
+          confirmAndSubmitActionBtn.disabled = true;
+          confirmAndSubmitActionBtn.textContent = "Writing To Databse...⚙️";
+
+          // [SEC-001/SEC-002] Atomic Backend fulfillment via RPC
+          const { error } = await _supabase.rpc('handle_payout_fulfillment', {
+            p_withdrawal_id: currentWithdrawalId,
+            p_transaction_id: transaction_ID
+          });
+
+          confirmAndSubmitActionBtn.disabled = false;
+          confirmAndSubmitActionBtn.innerHTML = originalHtml;
+
+          if (error) {
+            // [SEC-004] Never expose raw Postgres error.message to UI
+            console.error('[Payout] handle_payout_fulfillment RPC error:', error);
+            alert('Payment processing failed. Please try again or contact support.');
+            return;
+          }
+
+          document.getElementById("payoutModal").classList.add("hidden");
+          fetchKPIStats(); // Recompute new ratios locally / API driven. 
+          loadAllRequests();
+        });
+      }
+
+      // [SEC-007] Realtime with debounce and channel reference for cleanup
+      let realtimeDebounce = null;
+      const adminWithdrawChannel = _supabase
+        .channel('admin-withdrawals')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'withdrawals' }, () => {
+          if (realtimeDebounce) clearTimeout(realtimeDebounce);
+          realtimeDebounce = setTimeout(() => {
+            fetchKPIStats();
+            loadAllRequests();
+          }, 2000);
+        })
+        .subscribe();
+
+      // [SEC-007] Clean up channel on unload to prevent connection leaks
+      window.addEventListener('beforeunload', () => {
+        _supabase.removeChannel(adminWithdrawChannel);
+      });
+    }); 
+  </script>
+
+</body>
+
+</html>

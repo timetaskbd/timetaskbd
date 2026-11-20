@@ -1,0 +1,870 @@
+<!doctype html>
+<html class="light" lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <title>Marketplace Analytics - Time Task BD</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+    rel="stylesheet" />
+  <script>
+    (function () {
+      const theme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      if (theme === 'dark') document.documentElement.classList.add('dark');
+      else document.documentElement.classList.remove('dark');
+    })();
+  </script>
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            primary: "#13ec5b",
+            "background-light": "#f6f8f6",
+            "background-dark": "#0d1b12",
+            "sidebar-deep": "#102216",
+            "accent-green": "#13ec5b",
+          },
+          fontFamily: { display: ["Manrope"] },
+          borderRadius: { DEFAULT: "0.25rem", lg: "0.5rem", xl: "0.75rem", "2xl": "1rem", full: "9999px" },
+        },
+      },
+    };
+  </script>
+  <style type="text/tailwindcss">
+    @layer base { 
+      body { @apply font-display bg-background-light text-slate-900 transition-colors duration-300; } 
+      .dark body { @apply bg-background-dark text-slate-100; }
+    }
+      .sidebar-transition { @apply transition-all duration-300 ease-in-out; }
+      .sidebar-item-active {
+        @apply bg-background-light dark:bg-background-dark text-sidebar-deep dark:text-primary font-bold relative !important;
+        border-radius: 40px 0 0 40px; margin-left: 10px; width: calc(100% - 10px) !important;
+        box-shadow: -4px 0 15px rgba(0,0,0,0.05);
+      }
+      .sidebar-item-active::before {
+        content: ""; position: absolute; right: 0; top: -40px; width: 40px; height: 40px;
+        background: transparent; border-radius: 50%; 
+        box-shadow: 20px 20px 0 0 #f6f8f6; pointer-events: none;
+      }
+      .dark .sidebar-item-active::before { box-shadow: 20px 20px 0 0 #0d1b12; }
+      .dark .sidebar-item-active::after  { box-shadow: 20px -20px 0 0 #0d1b12; }
+      .dark .sidebar-item-active { @apply bg-background-dark text-white !important; }
+
+      .sidebar-item-active::after {
+        content: ""; position: absolute; right: 0; bottom: -40px; width: 40px; height: 40px;
+        background: transparent; border-radius: 50%; 
+        box-shadow: 20px -20px 0 0 #f6f8f6; pointer-events: none;
+      }
+      .dark .sidebar-item-active::after { box-shadow: 20px -20px 0 0 #0d1b12; }
+      .sidebar-item { @apply flex items-center py-4 text-white/70 hover:text-white transition-all duration-200 cursor-pointer w-full relative; }
+      .sidebar-item .material-symbols-outlined { @apply font-light text-[24px]; }
+      .sidebar-item-active .material-symbols-outlined { @apply text-sidebar-deep dark:text-primary; }
+      .nav-tooltip { @apply invisible absolute left-full ml-4 px-2 py-1 bg-sidebar-deep dark:bg-primary text-white dark:text-sidebar-deep text-[10px] rounded whitespace-nowrap opacity-0 transition-opacity z-50 pointer-events-none font-bold; }
+      .sidebar-collapsed { @apply w-20 pl-0; }
+      .sidebar-collapsed .logo-text, .sidebar-collapsed .item-text,
+      .sidebar-collapsed .menu-label, .sidebar-collapsed .system-card-text { @apply hidden; }
+      .sidebar-collapsed .sidebar-item { @apply justify-center px-0; }
+      .sidebar-collapsed .sidebar-item:hover .nav-tooltip { @apply visible opacity-100; }
+      .sidebar-collapsed .sidebar-header { @apply px-0 justify-center; }
+      .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+      .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+      .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+      .active-tab-nav { @apply bg-primary text-slate-900 dark:text-white shadow-lg shadow-primary/20; }
+      .skeleton { @apply bg-slate-200 dark:bg-slate-800 rounded animate-pulse; }
+      .active-range { background: white; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1); color: #0d1b12 !important; }
+      .dark .active-range { background: #13ec5b; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1); color: #fff !important; }
+    </style>
+</head>
+
+<body class="flex min-h-screen overflow-hidden">
+
+  <!-- Sidebar -->
+  <aside id="mainSidebar"
+    class="w-72 bg-sidebar-deep flex-shrink-0 flex flex-col h-screen sticky top-0 sidebar-transition pl-2">
+    <div class="sidebar-header p-6 pb-12 flex items-center gap-3 transition-all">
+      <div
+        class="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20 flex-shrink-0">
+        <span class="material-symbols-outlined text-sidebar-deep font-bold text-2xl">update</span>
+      </div>
+      <div class="flex flex-col logo-text overflow-hidden">
+        <span class="text-white font-extrabold text-lg leading-tight tracking-tight whitespace-nowrap">Time Task
+          BD</span>
+        <span class="text-primary/60 text-[10px] font-bold uppercase tracking-widest whitespace-nowrap">Admin
+          Control</span>
+      </div>
+    </div>
+    <nav class="flex-1">
+      <div class="px-8 mb-4 menu-label">
+        <p class="text-[10px] font-bold text-white/40 uppercase tracking-[0.2em]">Main Menu</p>
+      </div>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Admin Index.html">
+        <span class="material-symbols-outlined">dashboard</span>
+        <span class="text-sm item-text ml-4">Dashboard</span>
+        <span class="nav-tooltip">Dashboard</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/System Health.html">
+        <span class="material-symbols-outlined">monitor_heart</span>
+        <span class="text-sm item-text ml-4">System Monitoring</span>
+        <span class="nav-tooltip">Security &amp; System Monitoring</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/KYC Review.html">
+        <span class="material-symbols-outlined">manage_accounts</span>
+        <span class="text-sm item-text ml-4">Management</span>
+        <span class="nav-tooltip">User &amp; Buyer Management</span>
+      </a>
+      <a class="sidebar-item sidebar-item-active px-8 group" href="/Admin Dashboard/User Analytics.html">
+        <span class="material-symbols-outlined">analytics</span>
+        <span class="text-sm item-text ml-4">Analytics Section</span>
+        <span class="nav-tooltip">Analytics Section</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/User Referral Tree.html">
+        <span class="material-symbols-outlined">hub</span>
+        <span class="text-sm item-text ml-4">Referral System</span>
+        <span class="nav-tooltip">Referral System</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Market Asset Price.html">
+        <span class="material-symbols-outlined">trending_up</span>
+        <span class="text-sm item-text ml-4">Market Asset Prices</span>
+        <span class="nav-tooltip">Market Asset Prices</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Live Support.html">
+        <span class="material-symbols-outlined">support_agent</span>
+        <span class="text-sm item-text ml-4">Live Support</span>
+        <span class="nav-tooltip">Live Support</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Buyer Communication.html">
+        <span class="material-symbols-outlined">forum</span>
+        <span class="text-sm item-text ml-4">Communication</span>
+        <span class="nav-tooltip">Communication</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/System Announcemeeent.html">
+        <span class="material-symbols-outlined">campaign</span>
+        <span class="text-sm item-text ml-4">System Announcement</span>
+        <span class="nav-tooltip">System Announcement</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Invoice Management.html">
+        <span class="material-symbols-outlined">description</span>
+        <span class="text-sm item-text ml-4">Invoice Management</span>
+        <span class="nav-tooltip">Invoice Management</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Create Content.html">
+        <span class="material-symbols-outlined">edit_note</span>
+        <span class="text-sm item-text ml-4">Content Management</span>
+        <span class="nav-tooltip">Content Management</span>
+      </a>
+    </nav>
+    <div class="px-6 py-8">
+      <button id="logoutBtn"
+        class="w-full h-10 flex items-center justify-center bg-primary text-sidebar-deep font-bold text-xs rounded-lg hover:brightness-110 transition-all shadow-lg shadow-primary/10 group relative">
+        <span class="material-symbols-outlined text-[20px]">logout</span>
+        <span class="ml-2 system-card-text">Logout</span>
+        <span class="nav-tooltip !left-full !ml-6">Logout</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main Content wrapper -->
+  <div
+    class="flex-1 flex flex-col h-screen overflow-hidden bg-background-light dark:bg-background-dark transition-colors duration-300">
+
+    <!-- Header -->
+    <header
+      class="h-20 bg-white dark:bg-[#102216] border-b border-slate-100 dark:border-white/5 px-6 flex items-center justify-between flex-shrink-0 z-40 transition-colors duration-300">
+      <div class="flex items-center gap-6">
+        <button id="sidebarToggle"
+          class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 hover:text-sidebar-deep dark:hover:text-primary hover:bg-primary/10 transition-all">
+          <span class="material-symbols-outlined">menu</span>
+        </button>
+        <div class="relative w-96 group">
+          <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+          <input
+            class="w-full bg-slate-100 dark:bg-white/5 border-none rounded-xl pl-10 pr-4 py-2.5 text-sm dark:text-white focus:ring-2 focus:ring-primary/20 transition-all"
+            placeholder="Search marketplace data..." type="text" />
+        </div>
+      </div>
+      <div class="flex items-center gap-6">
+        <div class="flex items-center gap-2">
+          <button
+            class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 hover:bg-primary/10 transition-all relative">
+            <span class="material-symbols-outlined">notifications</span>
+          </button>
+          <button id="darkModeToggle"
+            class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-white/5 text-slate-500 dark:hover:text-primary dark:text-slate-400 hover:bg-primary/10 transition-all">
+            <span id="darkIcon" class="material-symbols-outlined">light_mode</span>
+          </button>
+        </div>
+        <div class="h-10 w-px bg-slate-200 dark:bg-white/10"></div>
+        <div class="flex items-center gap-3 cursor-pointer group">
+          <div class="text-right">
+            <p id="adminName"
+              class="text-sm font-bold text-slate-900 dark:text-white group-hover:text-primary transition-colors">Super
+              Admin</p>
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">System Manager</p>
+          </div>
+          <div
+            class="w-12 h-12 rounded-xl border-2 border-primary/20 p-0.5 overflow-hidden group-hover:border-primary transition-all">
+            <img id="adminAvatar" alt="Admin Profile" class="w-full h-full object-cover rounded-lg"
+              src="https://lh3.googleusercontent.com/aida-public/AB6AXuDI3q59cS__AXyYcqFQtKZ2-e__roEJ3Cic28K7cd-6tYYxzLfpTArNsAJE3UypttzDIKS6SoNy85-jDLh0ZMbLqXr0NEEjrbCPSgoCJZyYc4W89P8djmlf34I_NEoa2vfl5IS3jHwLSZZ6lgtwguAje5Lv9h9RbZ2fJqb36M_tmZc-iJY-XxAXsCDxVyU1bONcO3AV5LZgB1o5wURKpB9w2XEN6iWAILVT7fIzOkl2pQ4lJb5WxYgkvuNIlKakHZWN1e4bzfo25zYy" />
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Sub Navigation Tabs -->
+    <nav
+      class="sticky top-0 bg-white/50 dark:bg-[#0d1b12]/50 border-b border-gray-100 dark:border-white/5 backdrop-blur-sm relative z-30 rounded-l-[30px] ml-80 transition-colors duration-300">
+      <div class="mx-auto w-full px-4">
+        <div id="tabsContainer" class="flex gap-4 overflow-x-auto no-scrollbar py-3">
+          <a class="flex items-center gap-2 px-4 py-2 rounded-[30px] text-sm font-semibold text-gray-700 dark:text-slate-400 hover:bg-white dark:hover:bg-white/5 hover:shadow-sm whitespace-nowrap transition-all"
+            href="/Admin Dashboard/User Analytics.html">
+            <span class="material-symbols-outlined text-[20px]">groups</span> User Analytics
+          </a>
+          <a class="flex items-center gap-2 px-4 py-2 rounded-[30px] text-sm font-semibold text-gray-700 dark:text-slate-400 hover:bg-white dark:hover:bg-white/5 hover:shadow-sm whitespace-nowrap transition-all"
+            href="/Admin Dashboard/Buyer Analytics.html">
+            <span class="material-symbols-outlined text-[20px]">groups</span> Buyer Analytics
+          </a>
+          <a class="flex items-center gap-2 px-4 py-2 rounded-[30px] text-sm font-semibold active-tab-nav whitespace-nowrap transition-all"
+            href="/Admin Dashboard/Marketplace Analytics.html">
+            <span class="material-symbols-outlined text-[20px]">trending_up</span> Marketplace Analytics
+          </a>
+          <a class="flex items-center gap-2 px-4 py-2 rounded-[30px] text-sm font-semibold text-gray-700 dark:text-slate-400 hover:bg-white dark:hover:bg-white/5 hover:shadow-sm whitespace-nowrap transition-all"
+            href="/Admin Dashboard/Financial Overview.html">
+            <span class="material-symbols-outlined text-[20px]">account_balance</span> Financials Overview
+          </a>
+          <a class="flex items-center gap-2 px-4 py-2 rounded-[30px] text-sm font-semibold text-gray-700 dark:text-slate-400 hover:bg-white dark:hover:bg-white/5 hover:shadow-sm whitespace-nowrap transition-all"
+            href="/Admin Dashboard/Financial Revenue Analytics.html">
+            <span class="material-symbols-outlined text-[20px]">query_stats</span> Financials &amp; Revenue
+          </a>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main Dashboard Content -->
+    <main class="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-8 max-w-full">
+      <div class="max-w-[1600px] mx-auto w-full space-y-8">
+
+        <!-- Page Header -->
+        <div class="flex justify-between items-center">
+          <div>
+            <h2 class="text-2xl font-bold text-slate-900 dark:text-white transition-colors duration-300">Marketplace
+              Analytics</h2>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Real-time monitoring — refreshed <span
+                id="lastRefreshed"
+                class="font-semibold text-slate-700 dark:text-primary transition-colors duration-300"></span></p>
+          </div>
+          <div class="flex items-center gap-3">
+            <div
+              class="flex h-10 items-center rounded-lg bg-[#e7f3eb] dark:bg-white/5 p-1 gap-1 transition-colors duration-300">
+              <button data-range="today" onclick="setRange('today')"
+                class="range-btn h-full px-4 rounded-lg text-sm font-medium text-[#4c9a66] transition-all">Today</button>
+              <button data-range="7" onclick="setRange('7')"
+                class="range-btn h-full px-4 rounded-lg text-sm font-medium text-[#4c9a66] transition-all active-range">7
+                Days</button>
+              <button data-range="30" onclick="setRange('30')"
+                class="range-btn h-full px-4 rounded-lg text-sm font-medium text-[#4c9a66] transition-all">30
+                Days</button>
+            </div>
+            <button onclick="loadAll()"
+              class="flex items-center gap-2 px-4 py-2 bg-primary dark:text-white text-sidebar-deep font-bold text-sm rounded-xl hover:bg-primary/20 transition-all">
+              <span class="material-symbols-outlined text-[18px]">refresh</span> Refresh
+            </button>
+          </div>
+        </div>
+
+        <!-- KPI Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <!-- Total Tasks Posted -->
+          <div
+            class="bg-white dark:bg-[#1a2e1f] p-6 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm transition-colors duration-300">
+            <div class="flex justify-between items-start mb-4">
+              <span class="text-sm font-medium text-slate-500 dark:text-slate-400">Total Tasks Posted</span>
+              <div
+                class="size-10 rounded-lg bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                <span class="material-symbols-outlined">assignment</span>
+              </div>
+            </div>
+            <p id="kpi-total-tasks" class="text-3xl font-bold tracking-tight dark:text-white">—</p>
+            <p id="kpi-total-tasks-sub" class="text-xs text-slate-500 dark:text-slate-400 mt-1">Loading...</p>
+          </div>
+          <!-- Live Tasks -->
+          <div
+            class="bg-white dark:bg-[#1a2e1f] p-6 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm transition-colors duration-300">
+            <div class="flex justify-between items-start mb-4">
+              <span class="text-sm font-medium text-slate-500 dark:text-slate-400">Live Tasks (Unfilled)</span>
+              <div
+                class="size-10 rounded-lg bg-orange-50 dark:bg-orange-500/10 flex items-center justify-center text-orange-600 dark:text-orange-400">
+                <span class="material-symbols-outlined">pending_actions</span>
+              </div>
+            </div>
+            <p id="kpi-live-tasks" class="text-3xl font-bold tracking-tight dark:text-white">—</p>
+            <p id="kpi-live-tasks-sub" class="text-xs text-slate-500 dark:text-slate-400 mt-1">Loading...</p>
+          </div>
+          <!-- Avg Completion Time -->
+          <div
+            class="bg-white dark:bg-[#1a2e1f] p-6 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm transition-colors duration-300">
+            <div class="flex justify-between items-start mb-4">
+              <span class="text-sm font-medium text-slate-500 dark:text-slate-400">Avg. Completion Time</span>
+              <div
+                class="size-10 rounded-lg bg-purple-50 dark:bg-purple-500/10 flex items-center justify-center text-purple-600 dark:text-purple-400">
+                <span class="material-symbols-outlined">timer</span>
+              </div>
+            </div>
+            <p id="kpi-avg-time" class="text-3xl font-bold tracking-tight dark:text-white">—</p>
+            <p id="kpi-avg-time-sub" class="text-xs text-slate-500 dark:text-slate-400 mt-1">Loading...</p>
+          </div>
+          <!-- Market Health Score -->
+          <div
+            class="bg-white dark:bg-[#1a2e1f] p-6 rounded-xl border border-slate-200 dark:border-white/10 border-l-4 border-l-primary shadow-sm transition-colors duration-300">
+            <div class="flex justify-between items-start mb-4">
+              <span class="text-sm font-medium text-slate-500 dark:text-slate-400">Market Health Score</span>
+              <div
+                class="size-10 rounded-lg bg-green-50 dark:bg-primary/10 flex items-center justify-center text-primary">
+                <span class="material-symbols-outlined"
+                  style="font-variation-settings:'FILL' 1">health_and_safety</span>
+              </div>
+            </div>
+            <p id="kpi-health-score" class="text-3xl font-bold tracking-tight dark:text-white">—</p>
+            <p id="kpi-health-sub" class="text-xs text-slate-500 dark:text-slate-400 mt-1">Loading...</p>
+          </div>
+        </div>
+
+        <!-- Platform Progress Cards -->
+        <div>
+          <div class="flex items-center justify-between mb-4 px-1">
+            <h3 class="text-lg font-bold dark:text-white transition-colors duration-300">Task Completion by Platform
+            </h3>
+            <span
+              class="text-xs text-slate-500 dark:text-slate-400 font-medium transition-colors duration-300">Efficiency =
+              approved submissions ÷ total units</span>
+          </div>
+          <div id="platformCardsGrid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+            <!-- Skeleton -->
+            <div
+              class="bg-white dark:bg-[#1a2e1f] p-5 rounded-xl border border-slate-200 dark:border-white/10 transition-colors duration-300">
+              <div class="flex items-center gap-3 mb-4">
+                <div class="size-10 rounded-full skeleton"></div>
+                <div class="flex-1 space-y-1.5">
+                  <div class="w-24 h-3 skeleton"></div>
+                  <div class="w-32 h-2.5 skeleton"></div>
+                </div>
+              </div>
+              <div class="w-full h-2 skeleton rounded-full"></div>
+            </div>
+            <div
+              class="bg-white dark:bg-[#1a2e1f] p-5 rounded-xl border border-slate-200 dark:border-white/10 transition-colors duration-300">
+              <div class="flex items-center gap-3 mb-4">
+                <div class="size-10 rounded-full skeleton"></div>
+                <div class="flex-1 space-y-1.5">
+                  <div class="w-24 h-3 skeleton"></div>
+                  <div class="w-32 h-2.5 skeleton"></div>
+                </div>
+              </div>
+              <div class="w-full h-2 skeleton rounded-full"></div>
+            </div>
+            <div
+              class="bg-white dark:bg-[#1a2e1f] p-5 rounded-xl border border-slate-200 dark:border-white/10 transition-colors duration-300">
+              <div class="flex items-center gap-3 mb-4">
+                <div class="size-10 rounded-full skeleton"></div>
+                <div class="flex-1 space-y-1.5">
+                  <div class="w-24 h-3 skeleton"></div>
+                  <div class="w-32 h-2.5 skeleton"></div>
+                </div>
+              </div>
+              <div class="w-full h-2 skeleton rounded-full"></div>
+            </div>
+            <div
+              class="bg-white dark:bg-[#1a2e1f] p-5 rounded-xl border border-slate-200 dark:border-white/10 transition-colors duration-300">
+              <div class="flex items-center gap-3 mb-4">
+                <div class="size-10 rounded-full skeleton"></div>
+                <div class="flex-1 space-y-1.5">
+                  <div class="w-24 h-3 skeleton"></div>
+                  <div class="w-32 h-2.5 skeleton"></div>
+                </div>
+              </div>
+              <div class="w-full h-2 skeleton rounded-full"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bottom Row: Demand Table + Flow Chart -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+          <!-- High-Demand Platform Table -->
+          <div class="lg:col-span-1 flex flex-col">
+            <div
+              class="bg-white dark:bg-[#1a2e1f] rounded-xl border border-slate-200 dark:border-white/10 shadow-sm overflow-hidden h-full transition-colors duration-300">
+              <div class="p-5 border-b border-slate-100 dark:border-white/5">
+                <h3 class="font-bold dark:text-white">High-Demand Platforms</h3>
+                <p class="text-xs text-slate-500 dark:text-slate-400">Ranked by unfilled task slots</p>
+              </div>
+              <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm">
+                  <thead class="bg-slate-50 dark:bg-white/5 text-slate-500 dark:text-primary font-medium">
+                    <tr>
+                      <th class="px-5 py-3 font-semibold">Platform</th>
+                      <th class="px-5 py-3 font-semibold text-right">Demand</th>
+                      <th class="px-5 py-3 font-semibold text-right">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody id="platformDemandBody" class="divide-y divide-slate-100 dark:divide-white/5">
+                    <tr>
+                      <td colspan="3" class="px-5 py-6">
+                        <div class="space-y-2">
+                          <div class="w-full h-3 skeleton"></div>
+                          <div class="w-4/5 h-3 skeleton"></div>
+                          <div class="w-3/4 h-3 skeleton"></div>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Task Flow Trends Chart -->
+          <div class="lg:col-span-2">
+            <div
+              class="bg-white dark:bg-[#1a2e1f] rounded-xl border border-slate-200 dark:border-white/10 shadow-sm overflow-hidden h-full flex flex-col transition-colors duration-300">
+              <div class="p-5 border-b border-slate-100 dark:border-white/5 flex items-center justify-between">
+                <div>
+                  <h3 class="font-bold dark:text-white">Task Flow Trends</h3>
+                  <p class="text-xs text-slate-500 dark:text-slate-400">Approved submissions vs. Orders placed per day
+                  </p>
+                </div>
+                <div class="flex gap-4 text-xs font-bold uppercase tracking-widest">
+                  <div class="flex items-center gap-2">
+                    <span class="size-3 rounded-sm bg-primary"></span><span class="dark:text-slate-400">Completed</span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <span class="size-3 rounded-sm bg-slate-300 dark:bg-slate-600"></span><span
+                      class="dark:text-slate-400">Orders</span>
+                  </div>
+                </div>
+              </div>
+              <div class="p-6 flex-1 min-h-[300px] relative">
+                <canvas id="taskFlowChart"></canvas>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <footer class="pt-16 pb-8 border-t border-slate-200 dark:border-white/10 mt-12 transition-colors duration-300">
+          <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+            <div
+              class="flex items-center gap-8 text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+              <a class="hover:text-primary transition-colors" href="#">Privacy Policy</a>
+              <a class="hover:text-primary transition-colors" href="#">Terms of Service</a>
+              <a class="hover:text-primary transition-colors" href="#">Documentation</a>
+            </div>
+            <p class="text-[11px] font-bold text-slate-400 dark:text-slate-500">© 2024 TIME TASK BD. ALL RIGHTS
+              RESERVED.</p>
+          </div>
+        </footer>
+
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../supabase-client.js"></script>
+  <script>
+    // ─── Sidebar Toggle ───────────────────────────────────────────────────────
+    document.getElementById('sidebarToggle').addEventListener('click', () => {
+      document.getElementById('mainSidebar').classList.toggle('sidebar-collapsed');
+    });
+
+    // ─── Supabase ─────────────────────────────────────────────────────────────
+    const _sb = window.supabaseClient ||
+      supabase.createClient(
+        'https://kdoouzlmncekkozjrsdf.supabase.co',
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtkb291emxtbmNla2tvempyc2RmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5ODY5MjIsImV4cCI6MjA4NjU2MjkyMn0.7lsbYQ594Ix8LSXLs6RHYfljiO2A5P70XAjPsqWo8bs'
+      );
+
+    // ─── State ────────────────────────────────────────────────────────────────
+    let currentRange = '7';
+    let taskFlowChartInst = null;
+    const PLATFORM_COLORS = ['#13ec5b', '#0ea5e9', '#f59e0b', '#8b5cf6', '#ef4444', '#10b981', '#f97316', '#6366f1'];
+
+    // ─── Theme Management ─────────────────────────────────────────────────────
+    function updateThemeUI(theme) {
+      if (theme === 'dark') {
+        document.documentElement.classList.add('dark');
+        document.getElementById('darkIcon').textContent = 'dark_mode';
+      } else {
+        document.documentElement.classList.remove('dark');
+        document.getElementById('darkIcon').textContent = 'light_mode';
+      }
+      if (taskFlowChartInst) loadTaskFlowChart();
+    }
+
+    function getChartTheme() {
+      const isDark = document.documentElement.classList.contains('dark');
+      return {
+        gridColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)',
+        textColor: isDark ? '#94a3b8' : '#64748b',
+        borderColor: isDark ? '#1a2e1f' : '#fff'
+      };
+    }
+
+    document.getElementById('darkModeToggle').addEventListener('click', () => {
+      const isDark = document.documentElement.classList.toggle('dark');
+      const theme = isDark ? 'dark' : 'light';
+      localStorage.setItem('theme', theme);
+      updateThemeUI(theme);
+    });
+
+    // ─── Helpers ──────────────────────────────────────────────────────────────
+    const fmtNum = n => (parseFloat(n) || 0).toLocaleString('en-US');
+    function todayISO() { return new Date().toISOString().split('T')[0]; }
+    function daysAgoISO(n) { const d = new Date(); d.setDate(d.getDate() - n); return d.toISOString().split('T')[0]; }
+    function rangeStart() {
+      if (currentRange === 'today') return todayISO() + 'T00:00:00';
+      return daysAgoISO(parseInt(currentRange)) + 'T00:00:00';
+    }
+    function rangeDays() { return currentRange === 'today' ? 1 : parseInt(currentRange); }
+    function fmtDuration(seconds) {
+      if (!seconds || isNaN(seconds)) return 'No data';
+      const s = Math.round(seconds);
+      if (s < 60) return `${s}s`;
+      const m = Math.floor(s / 60), rem = s % 60;
+      if (m < 60) return `${m}m ${rem}s`;
+      return `${Math.floor(m / 60)}h ${m % 60}m`;
+    }
+    function demandBadge(n) {
+      if (n > 500) return `<span class="px-2 py-1 bg-red-100 dark:bg-red-500/10 text-red-600 dark:text-red-400 text-[10px] font-bold rounded uppercase transition-colors">Critical</span>`;
+      if (n > 200) return `<span class="px-2 py-1 bg-orange-100 dark:bg-orange-500/10 text-orange-600 dark:text-orange-400 text-[10px] font-bold rounded uppercase transition-colors">High</span>`;
+      if (n > 50) return `<span class="px-2 py-1 bg-blue-100 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[10px] font-bold rounded uppercase transition-colors">Normal</span>`;
+      return `<span class="px-2 py-1 bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 text-[10px] font-bold rounded uppercase transition-colors">Low</span>`;
+    }
+
+    // ─── Auth Guard ───────────────────────────────────────────────────────────
+    async function checkAuth() {
+      const { data: { session } } = await _sb.auth.getSession();
+      if (!session) { window.location.href = 'Admin_Login.html'; return null; }
+      const { data: p } = await _sb.from('profiles').select('role,full_name,avatar_url').eq('id', session.user.id).single();
+      if (p?.role !== 'Admin') {
+        alert('Access Denied.'); await _sb.auth.signOut(); window.location.href = 'Admin_Login.html'; return null;
+      }
+      if (p.full_name) document.getElementById('adminName').textContent = p.full_name;
+      if (p.avatar_url) document.getElementById('adminAvatar').src = p.avatar_url;
+      return session;
+    }
+
+    // ─── Logout ───────────────────────────────────────────────────────────────
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+      await _sb.auth.signOut(); window.location.href = 'Admin_Login.html';
+    });
+
+    // ─── Range Switcher ───────────────────────────────────────────────────────
+    function setRange(r) {
+      currentRange = r;
+      document.querySelectorAll('.range-btn').forEach(b => {
+        b.classList.toggle('active-range', b.dataset.range === r);
+      });
+      loadAll();
+    }
+
+    // ─── KPI Cards ────────────────────────────────────────────────────────────
+    async function loadKPIs() {
+      const since = rangeStart();
+
+      // 1. Total tasks posted in range
+      const { count: totalTasks } = await _sb.from('tasks')
+        .select('id', { count: 'exact', head: true }).gte('created_at', since);
+      document.getElementById('kpi-total-tasks').textContent = fmtNum(totalTasks || 0);
+      document.getElementById('kpi-total-tasks-sub').textContent =
+        currentRange === 'today' ? 'Posted today' : `Posted in last ${currentRange} days`;
+
+      // 2. Live tasks — still have unfilled slots (all-time, not range-limited since tasks are cumulative)
+      const { count: liveTasks } = await _sb.from('tasks')
+        .select('id', { count: 'exact', head: true }).gt('remaining_units', 0);
+      document.getElementById('kpi-live-tasks').textContent = fmtNum(liveTasks || 0);
+      document.getElementById('kpi-live-tasks-sub').textContent = 'Tasks with unfilled slots (all-time)';
+
+      // 3. Avg completion time — from approved task_submissions in range
+      const { data: completedSubs } = await _sb.from('task_submissions')
+        .select('submitted_at, task_id').eq('status', 'approved').gte('submitted_at', since).limit(500);
+
+      let avgTimeText = 'No approved submissions yet';
+      if (completedSubs && completedSubs.length > 0) {
+        // Get task created_at to compute time deltas
+        const taskIds = [...new Set(completedSubs.map(s => s.task_id))];
+        const { data: taskTimes } = await _sb.from('tasks')
+          .select('id, created_at').in('id', taskIds);
+        const taskMap = {};
+        (taskTimes || []).forEach(t => { taskMap[t.id] = t.created_at; });
+
+        const deltas = completedSubs
+          .filter(s => taskMap[s.task_id])
+          .map(s => (new Date(s.submitted_at) - new Date(taskMap[s.task_id])) / 1000);
+
+        if (deltas.length > 0) {
+          const avgSec = deltas.reduce((a, b) => a + b, 0) / deltas.length;
+          avgTimeText = `Avg over ${fmtNum(deltas.length)} submissions`;
+          document.getElementById('kpi-avg-time').textContent = fmtDuration(avgSec);
+        } else {
+          document.getElementById('kpi-avg-time').textContent = 'N/A';
+        }
+      } else {
+        document.getElementById('kpi-avg-time').textContent = 'N/A';
+      }
+      document.getElementById('kpi-avg-time-sub').textContent = avgTimeText;
+
+      // 4. Market Health Score = approved / (approved + rejected) * 100
+      const { count: approvedCount } = await _sb.from('task_submissions')
+        .select('id', { count: 'exact', head: true }).eq('status', 'approved').gte('submitted_at', since);
+      const { count: rejectedCount } = await _sb.from('task_submissions')
+        .select('id', { count: 'exact', head: true }).eq('status', 'rejected').gte('submitted_at', since);
+
+      const total = (approvedCount || 0) + (rejectedCount || 0);
+      const health = total > 0 ? Math.round((approvedCount || 0) / total * 100) : 0;
+      document.getElementById('kpi-health-score').textContent = total > 0 ? `${health}%` : 'N/A';
+      document.getElementById('kpi-health-sub').textContent =
+        total > 0
+          ? `${fmtNum(approvedCount)} approved / ${fmtNum(total)} total submissions`
+          : 'No submissions in this period';
+    }
+
+    // ─── Platform Progress Cards ──────────────────────────────────────────────
+    async function loadPlatformCards() {
+      const since = rangeStart();
+
+      // Get all tasks grouped by platform
+      const { data: tasks } = await _sb.from('tasks')
+        .select('platform, total_units, remaining_units').gte('created_at', since);
+
+      if (!tasks || tasks.length === 0) {
+        document.getElementById('platformCardsGrid').innerHTML =
+          '<p class="col-span-4 text-center text-slate-400 py-8">No tasks posted in this range</p>';
+        return;
+      }
+
+      // Aggregate by platform
+      const platformMap = {};
+      tasks.forEach(t => {
+        const p = t.platform || 'Unknown';
+        if (!platformMap[p]) platformMap[p] = { total: 0, filled: 0 };
+        platformMap[p].total += (t.total_units || 0);
+        platformMap[p].filled += ((t.total_units || 0) - (t.remaining_units || 0));
+      });
+
+      // Sort by filled desc, take top 8
+      const sorted = Object.entries(platformMap)
+        .sort((a, b) => b[1].total - a[1].total)
+        .slice(0, 8);
+
+      const cardIcons = {
+        'Facebook': { icon: 'social_leaderboard', bg: 'bg-blue-100', text: 'text-blue-600' },
+        'Twitter': { icon: 'chat', bg: 'bg-sky-100', text: 'text-sky-600' },
+        'Instagram': { icon: 'photo_camera', bg: 'bg-pink-100', text: 'text-pink-600' },
+        'TikTok': { icon: 'music_note', bg: 'bg-purple-100', text: 'text-purple-600' },
+        'YouTube': { icon: 'smart_display', bg: 'bg-red-100', text: 'text-red-600' },
+        'Telegram': { icon: 'send', bg: 'bg-sky-100', text: 'text-sky-500' },
+        'Gmail': { icon: 'mail', bg: 'bg-red-100', text: 'text-red-500' },
+        'WhatsApp': { icon: 'chat_bubble', bg: 'bg-green-100', text: 'text-green-600' },
+      };
+      const defaultIcon = { icon: 'language', bg: 'bg-slate-100', text: 'text-slate-600' };
+
+      document.getElementById('platformCardsGrid').innerHTML = sorted.map(([platform, d]) => {
+        const eff = d.total > 0 ? Math.round(d.filled / d.total * 100) : 0;
+        const style = cardIcons[platform] || defaultIcon;
+        return `<div class="bg-white dark:bg-[#1a2e1f] p-5 rounded-xl border border-slate-200 dark:border-white/10 hover:border-primary/30 transition-all">
+            <div class="flex items-center gap-3 mb-4">
+              <div class="size-10 rounded-full ${style.bg} dark:bg-opacity-10 flex items-center justify-center">
+                <span class="material-symbols-outlined ${style.text}">${style.icon}</span>
+              </div>
+              <div>
+                <p class="text-sm font-bold dark:text-white transition-colors">${platform} Tasks</p>
+                <p class="text-xs text-slate-500 dark:text-slate-400 transition-colors">${fmtNum(d.filled)}/${fmtNum(d.total)} Completed</p>
+              </div>
+            </div>
+            <div class="flex justify-between text-xs font-bold mb-1">
+              <span class="dark:text-slate-400 transition-colors">Efficiency</span>
+              <span class="text-primary">${eff}%</span>
+            </div>
+            <div class="h-2 w-full bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden transition-colors">
+              <div class="h-full bg-primary rounded-full transition-all duration-700" style="width:${eff}%"></div>
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    // ─── Platform Demand Table ────────────────────────────────────────────────
+    async function loadDemandTable() {
+      // Demand = tasks where remaining_units > 0 (unfilled), all-time, grouped by platform
+      const { data: tasks } = await _sb.from('tasks')
+        .select('platform, remaining_units').gt('remaining_units', 0);
+
+      if (!tasks || tasks.length === 0) {
+        document.getElementById('platformDemandBody').innerHTML =
+          '<tr><td colspan="3" class="px-5 py-6 text-center text-slate-400 text-sm">No unfilled tasks</td></tr>';
+        return;
+      }
+
+      const demandMap = {};
+      tasks.forEach(t => {
+        const p = t.platform || 'Unknown';
+        demandMap[p] = (demandMap[p] || 0) + (t.remaining_units || 0);
+      });
+
+      const sorted = Object.entries(demandMap).sort((a, b) => b[1] - a[1]).slice(0, 8);
+      const dotColors = ['bg-blue-500', 'bg-sky-500', 'bg-green-500', 'bg-red-500', 'bg-purple-500', 'bg-orange-500', 'bg-pink-500', 'bg-amber-500'];
+
+      document.getElementById('platformDemandBody').innerHTML = sorted.map(([platform, demand], i) =>
+        `<tr class="hover:bg-primary/5 transition-colors">
+            <td class="px-5 py-4 font-bold dark:text-white">
+              <div class="flex items-center gap-2">
+                <span class="size-2 rounded-full ${dotColors[i % dotColors.length]}"></span>
+                ${platform}
+              </div>
+            </td>
+            <td class="px-5 py-4 text-right font-medium dark:text-slate-300 transition-colors">${fmtNum(demand)}</td>
+            <td class="px-5 py-4 text-right">${demandBadge(demand)}</td>
+          </tr>`
+      ).join('');
+    }
+
+    // ─── Task Flow Trends Chart ───────────────────────────────────────────────
+    async function loadTaskFlowChart() {
+      const days = rangeDays();
+      const since = currentRange === 'today' ? todayISO() + 'T00:00:00' : daysAgoISO(days) + 'T00:00:00';
+
+      // Dataset 1: approved task_submissions per day
+      const { data: subs } = await _sb.from('task_submissions')
+        .select('submitted_at').eq('status', 'approved').gte('submitted_at', since);
+      // Dataset 2: orders placed per day
+      const { data: orders } = await _sb.from('orders')
+        .select('created_at').gte('created_at', since);
+
+      // Build day buckets
+      let labels = [];
+      const subsMap = {}, ordersMap = {};
+
+      if (currentRange === 'today') {
+        const now = new Date();
+        for (let h = 0; h <= now.getHours(); h++) {
+          const key = String(h).padStart(2, '0') + ':00';
+          labels.push(key); subsMap[h] = 0; ordersMap[h] = 0;
+        }
+        (subs || []).forEach(s => {
+          const h = new Date(s.submitted_at).getHours();
+          if (subsMap[h] !== undefined) subsMap[h]++;
+        });
+        (orders || []).forEach(o => {
+          const h = new Date(o.created_at).getHours();
+          if (ordersMap[h] !== undefined) ordersMap[h]++;
+        });
+      } else {
+        for (let i = days - 1; i >= 0; i--) {
+          const d = daysAgoISO(i);
+          labels.push(d.slice(5));
+          subsMap[d] = 0; ordersMap[d] = 0;
+        }
+        (subs || []).forEach(s => {
+          const day = s.submitted_at.split('T')[0];
+          if (subsMap[day] !== undefined) subsMap[day]++;
+        });
+        (orders || []).forEach(o => {
+          const day = o.created_at.split('T')[0];
+          if (ordersMap[day] !== undefined) ordersMap[day]++;
+        });
+      }
+
+      const subsData = Object.values(subsMap);
+      const ordersData = Object.values(ordersMap);
+
+      const ctx = document.getElementById('taskFlowChart').getContext('2d');
+      if (taskFlowChartInst) taskFlowChartInst.destroy();
+
+      const theme = getChartTheme();
+      const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+      gradient.addColorStop(0, 'rgba(19,236,91,0.3)');
+      gradient.addColorStop(1, 'rgba(19,236,91,0)');
+
+      taskFlowChartInst = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [
+            {
+              label: 'Completed',
+              data: subsData,
+              borderColor: '#13ec5b',
+              borderWidth: 2.5,
+              pointRadius: days <= 7 ? 4 : 2,
+              pointBackgroundColor: '#13ec5b',
+              pointBorderColor: theme.borderColor,
+              pointBorderWidth: 2,
+              fill: true,
+              backgroundColor: gradient,
+              tension: 0.4,
+            },
+            {
+              label: 'Orders',
+              data: ordersData,
+              borderColor: document.documentElement.classList.contains('dark') ? '#475569' : '#cbd5e1',
+              borderWidth: 2,
+              pointRadius: days <= 7 ? 3 : 2,
+              pointBackgroundColor: document.documentElement.classList.contains('dark') ? '#475569' : '#cbd5e1',
+              fill: false,
+              borderDash: [5, 4],
+              tension: 0.4,
+            },
+          ],
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: { callbacks: { label: c => ` ${c.dataset.label}: ${fmtNum(c.parsed.y)}` } },
+          },
+          scales: {
+            x: {
+              grid: { color: theme.gridColor },
+              ticks: { color: theme.textColor, font: { size: 10 }, maxRotation: 45, maxTicksLimit: 15 }
+            },
+            y: {
+              beginAtZero: true,
+              grid: { color: theme.gridColor },
+              ticks: { color: theme.textColor, font: { size: 10 } }
+            },
+          },
+        },
+      });
+    }
+
+    // ─── Timestamp ────────────────────────────────────────────────────────────
+    function updateTimestamp() {
+      document.getElementById('lastRefreshed').textContent =
+        new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    }
+
+    // ─── Load All ─────────────────────────────────────────────────────────────
+    async function loadAll() {
+      updateTimestamp();
+      await Promise.all([
+        loadKPIs(),
+        loadPlatformCards(),
+        loadDemandTable(),
+        loadTaskFlowChart(),
+      ]);
+    }
+
+    // ─── Init ─────────────────────────────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', async () => {
+      const theme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      updateThemeUI(theme);
+      const session = await checkAuth();
+      if (session) await loadAll();
+    });
+  </script>
+</body>
+
+</html>

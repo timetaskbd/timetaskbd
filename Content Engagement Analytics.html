@@ -1,0 +1,832 @@
+<!doctype html>
+<html class="light" lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <title>Admin Panel - Content Engagement Analytics</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+  <script src="../supabase-client.js"></script>
+  <script>
+    // Theme initialization
+    (function () {
+      const theme = localStorage.getItem("theme") || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+      if (theme === "dark") {
+        document.documentElement.classList.add("dark");
+        document.documentElement.classList.remove("light");
+      } else {
+        document.documentElement.classList.add("light");
+        document.documentElement.classList.remove("dark");
+      }
+    })();
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+    rel="stylesheet" />
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            primary: "#13ec5b",
+            "background-light": "#f6f8f6",
+            "background-dark": "#0d1b12",
+            "sidebar-deep": "#102216",
+          },
+          fontFamily: { display: ["Manrope"] },
+        },
+      },
+    };
+  </script>
+  <style type="text/tailwindcss">
+    @layer base { body { @apply font-display bg-background-light text-slate-900 dark:bg-background-dark dark:text-white; } }
+    .sidebar-item { @apply flex items-center py-4 text-white/70 hover:text-white transition-all duration-200 cursor-pointer w-full relative; }
+    .sidebar-item .material-symbols-outlined { @apply font-light text-[24px]; }
+    .sidebar-item-active { @apply bg-background-light text-sidebar-deep font-bold relative !important; border-radius:40px 0 0 40px; margin-left:10px; width:calc(100% - 10px) !important; }
+    .sidebar-item-active::before { content:""; position:absolute; right:0; top:-40px; width:40px; height:40px; background:transparent; border-radius:50%; box-shadow:20px 20px 0 0 #f6f8f6; pointer-events:none; }
+    .sidebar-item-active::after { content:""; position:absolute; right:0; bottom:-40px; width:40px; height:40px; background:transparent; border-radius:50%; box-shadow:20px -20px 0 0 #f6f8f6; pointer-events:none; }
+
+    .dark .sidebar-item-active::before { box-shadow: 20px 20px 0 0 #0d1b12; }
+    .dark .sidebar-item-active::after  { box-shadow: 20px -20px 0 0 #0d1b12; }
+    .dark .sidebar-item-active { @apply bg-background-dark text-white !important; }
+
+    .sidebar-item-active .material-symbols-outlined { @apply text-sidebar-deep; }
+
+    .dark .sidebar-item-active .material-symbols-outlined { @apply text-primary; }
+    .nav-tooltip { @apply invisible absolute left-full ml-4 px-2 py-1 bg-sidebar-deep text-white text-[10px] rounded whitespace-nowrap opacity-0 transition-opacity z-50 pointer-events-none; }
+    .sidebar-collapsed { @apply w-20 pl-0; }
+    .sidebar-collapsed .logo-text, .sidebar-collapsed .item-text, .sidebar-collapsed .menu-label, .sidebar-collapsed .system-card-text { @apply hidden; }
+    .sidebar-collapsed .sidebar-item { @apply justify-center px-0; }
+    .sidebar-collapsed .sidebar-item:hover .nav-tooltip { @apply visible opacity-100; }
+    .sidebar-collapsed .sidebar-header { @apply px-0 justify-center; }
+    .custom-scrollbar::-webkit-scrollbar { width:4px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background:transparent; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.1); border-radius:10px; }
+    .active-tab-nav {@apply bg-primary text-slate-900 dark:text-white shadow-lg shadow-primary/20;}
+    .sidebar-transition { @apply transition-all duration-300 ease-in-out; }
+    .sort-arrow { opacity:.3; transition:opacity .15s; }
+    th:hover .sort-arrow { opacity:1; }
+    @keyframes shimmer { 0%{background-position:-400px 0} 100%{background-position:400px 0} }
+    .skeleton { background: linear-gradient(90deg, #e8f0ea 25%, #d4e6d9 50%, #e8f0ea 75%); background-size:800px 100%; animation: shimmer 1.4s infinite; border-radius:6px; }
+    .dark .skeleton { background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.09) 50%, rgba(255,255,255,0.04) 75%); background-size:800px 100%; animation: shimmer 1.4s infinite; }
+  </style>
+</head>
+
+<body class="flex min-h-screen overflow-hidden">
+  <!-- Sidebar -->
+  <aside id="mainSidebar"
+    class="w-72 bg-sidebar-deep flex-shrink-0 flex flex-col h-screen sticky top-0 sidebar-transition pl-2">
+    <div class="sidebar-header p-6 pb-12 flex items-center gap-3 transition-all">
+      <div
+        class="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20 flex-shrink-0">
+        <span class="material-symbols-outlined text-sidebar-deep font-bold text-2xl">update</span>
+      </div>
+      <div class="flex flex-col logo-text overflow-hidden">
+        <span class="text-white font-extrabold text-lg leading-tight tracking-tight whitespace-nowrap">Time Task
+          BD</span>
+        <span class="text-primary/60 text-[10px] font-bold uppercase tracking-widest whitespace-nowrap">Admin
+          Control</span>
+      </div>
+    </div>
+    <nav class="flex-1">
+      <div class="px-8 mb-4 menu-label">
+        <p class="text-[10px] font-bold text-white/40 uppercase tracking-[0.2em]">Main Menu</p>
+      </div>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Admin Index.html"><span
+          class="material-symbols-outlined">dashboard</span><span class="text-sm item-text ml-4">Dashboard</span><span
+          class="nav-tooltip">Dashboard</span></a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/System Health.html"><span
+          class="material-symbols-outlined">monitor_heart</span><span class="text-sm item-text ml-4">System
+          Monitoring</span><span class="nav-tooltip">System Monitoring</span></a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/KYC Review.html"><span
+          class="material-symbols-outlined">manage_accounts</span><span
+          class="text-sm item-text ml-4">Management</span><span class="nav-tooltip">User & Buyer Management</span></a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/User Analytics.html"><span
+          class="material-symbols-outlined">analytics</span><span class="text-sm item-text ml-4">Analytics
+          Section</span><span class="nav-tooltip">Analytics Section</span></a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/User Referral Tree.html"><span
+          class="material-symbols-outlined">hub</span><span class="text-sm item-text ml-4">Referral System</span><span
+          class="nav-tooltip">Referral System</span></a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Market Asset Price.html"><span
+          class="material-symbols-outlined">trending_up</span><span class="text-sm item-text ml-4">Market Asset
+          Prices</span><span class="nav-tooltip">Market Asset Prices</span></a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Live Support.html"><span
+          class="material-symbols-outlined">support_agent</span><span class="text-sm item-text ml-4">Live
+          Support</span><span class="nav-tooltip">Live Support</span></a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Buyer Communication.html"><span
+          class="material-symbols-outlined">forum</span><span class="text-sm item-text ml-4">Communication</span><span
+          class="nav-tooltip">Communication</span></a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/System Announcemeeent.html"><span
+          class="material-symbols-outlined">campaign</span><span class="text-sm item-text ml-4">System
+          Announcement</span><span class="nav-tooltip">System Announcement</span></a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Invoice Management.html"><span
+          class="material-symbols-outlined">description</span><span class="text-sm item-text ml-4">Invoice
+          Management</span><span class="nav-tooltip">Invoice Management</span></a>
+      <a class="sidebar-item sidebar-item-active px-8 group"
+        href="/Admin Dashboard/Content Engagement Analytics.html"><span
+          class="material-symbols-outlined">edit_note</span><span class="text-sm item-text ml-4">Content
+          Management</span><span class="nav-tooltip">Content Management</span></a>
+    </nav>
+    <div class="px-6 py-8">
+      <button
+        class="w-full h-10 flex items-center justify-center bg-primary text-sidebar-deep font-bold text-xs rounded-lg hover:brightness-110 transition-all shadow-lg shadow-primary/10 group relative">
+        <span class="material-symbols-outlined text-[20px]">logout</span>
+        <span class="ml-2 system-card-text">Logout</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <div class="flex-1 flex flex-col h-screen overflow-hidden bg-background-light dark:bg-background-dark">
+    <!-- Header -->
+    <header
+      class="h-20 bg-white dark:bg-[#102216] border-b border-slate-100 dark:border-white/5 px-6 flex items-center justify-between flex-shrink-0 z-40">
+      <div class="flex items-center gap-6">
+        <button id="sidebarToggle"
+          class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 hover:text-sidebar-deep dark:hover:text-primary hover:bg-primary/10 transition-all">
+          <span class="material-symbols-outlined">menu</span>
+        </button>
+        <div class="relative w-96 group">
+          <span
+            class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 group-focus-within:text-sidebar-deep dark:group-focus-within:text-primary transition-colors">search</span>
+          <input
+            class="w-full bg-slate-100 dark:bg-white/5 border-none dark:text-white rounded-xl pl-10 pr-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 transition-all placeholder:dark:text-white/30"
+            placeholder="Search system records..." type="text" />
+        </div>
+      </div>
+      <div class="flex items-center gap-6">
+        <div class="flex items-center gap-2">
+          <button
+            class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 hover:text-sidebar-deep dark:hover:text-primary hover:bg-primary/10 transition-all relative">
+            <span class="material-symbols-outlined">notifications</span>
+            <span
+              class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-[#102216]"></span>
+          </button>
+          <button id="themeToggle"
+            class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 hover:text-sidebar-deep dark:hover:text-primary hover:bg-primary/10 transition-all">
+            <span class="material-symbols-outlined dark:hidden">dark_mode</span>
+            <span class="material-symbols-outlined hidden dark:block">light_mode</span>
+          </button>
+        </div>
+        <div class="h-10 w-px bg-slate-200 dark:bg-white/10"></div>
+        <div class="flex items-center gap-3 cursor-pointer group">
+          <div class="text-right">
+            <p class="text-sm font-bold text-slate-900 dark:text-white group-hover:text-primary transition-colors">Super
+              Admin</p>
+            <p class="text-[10px] font-bold text-slate-400 dark:text-white/40 uppercase tracking-tighter">System Manager
+            </p>
+          </div>
+          <div
+            class="w-12 h-12 rounded-xl border-2 border-primary/20 p-0.5 overflow-hidden group-hover:border-primary transition-all">
+            <img alt="Admin" class="w-full h-full object-cover rounded-lg"
+              src="https://lh3.googleusercontent.com/aida-public/AB6AXuDI3q59cS__AXyYcqFQtKZ2-e__roEJ3Cic28K7cd-6tYYxzLfpTArNsAJE3UypttzDIKS6SoNy85-jDLh0ZMbLqXr0NEEjrbCPSgoCJZyYc4W89P8djmlf34I_NEoa2vfl5IS3jHwLSZZ6lgtwguAje5Lv9h9RbZ2fJqb36M_tmZc-iJY-XxAXsCDxVyU1bONcO3AV5LZgB1o5wURKpB9w2XEN6iWAILVT7fIzOkl2pQ4lJb5WxYgkvuNIlKakHZWN1e4bzfo25zYy" />
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Sub Nav -->
+    <nav
+      class="sticky top-0 bg-white/50 dark:bg-[#102216]/50 border-b border-gray-100 dark:border-white/5 backdrop-blur-sm relative z-30 rounded-l-[30px] ml-80">
+      <div class="mx-auto w-full px-4">
+        <div id="tabsContainer" class="flex gap-4 overflow-x-auto no-scrollbar py-3">
+          <a class="flex items-center gap-2 px-4 py-2 rounded-[30px] text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-white/5 hover:shadow-sm whitespace-nowrap transition-all"
+            href="/Admin Dashboard/Create Content.html"><span
+              class="material-symbols-outlined text-[20px]">edit_note</span>Create Content</a>
+          <a class="flex items-center gap-2 px-4 py-2 rounded-[30px] text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-white/5 hover:shadow-sm whitespace-nowrap transition-all"
+            href="/Admin Dashboard/Content Library.html"><span
+              class="material-symbols-outlined text-[20px]">article</span>Content Library</a>
+          <a class="flex items-center gap-2 px-4 py-2 rounded-[30px] text-sm font-semibold active-tab-nav whitespace-nowrap transition-all"
+            href="/Admin Dashboard/Content Engagement Analytics.html"><span
+              class="material-symbols-outlined text-[20px]">groups</span>Engagement Analytics</a>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Dashboard Content -->
+    <main class="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-8 max-w-full">
+      <div class="max-w-[1600px] mx-auto w-full space-y-8">
+
+        <!-- Page Header -->
+        <div class="flex justify-between items-end">
+          <div>
+            <h1 class="text-[#111813] dark:text-white text-3xl font-extrabold leading-tight tracking-tight">Content
+              Engagement Analytics</h1>
+            <p class="text-[#61896f] dark:text-primary/60 mt-1">Live metrics from your blog & video content.</p>
+          </div>
+          <div class="flex items-center gap-3">
+            <!-- Date Range Dropdown -->
+            <div class="relative">
+              <button id="dateFilterBtn"
+                class="flex items-center gap-2 px-4 py-2 bg-white dark:bg-white/5 border border-[#dbe6df] dark:border-white/10 rounded-lg text-sm font-bold hover:bg-background-light dark:hover:bg-white/10 transition-all dark:text-gray-300">
+                <span class="material-symbols-outlined text-sm">calendar_today</span>
+                <span id="dateFilterLabel">Last 30 Days</span>
+                <span class="material-symbols-outlined text-sm">expand_more</span>
+              </button>
+              <div id="dateDropdown"
+                class="hidden absolute right-0 mt-1 w-44 bg-white dark:bg-[#1a2e21] border border-[#dbe6df] dark:border-white/10 rounded-xl shadow-lg z-10 overflow-hidden">
+                <button data-days="7"
+                  class="date-opt w-full text-left px-4 py-2.5 text-sm hover:bg-background-light dark:hover:bg-white/5 font-medium dark:text-gray-300">Last
+                  7 Days</button>
+                <button data-days="30"
+                  class="date-opt w-full text-left px-4 py-2.5 text-sm bg-background-light dark:bg-primary/10 font-bold text-sidebar-deep dark:text-primary">Last
+                  30 Days</button>
+                <button data-days="90"
+                  class="date-opt w-full text-left px-4 py-2.5 text-sm hover:bg-background-light dark:hover:bg-white/5 font-medium dark:text-gray-300">Last
+                  90 Days</button>
+                <button data-days="0"
+                  class="date-opt w-full text-left px-4 py-2.5 text-sm hover:bg-background-light dark:hover:bg-white/5 font-medium dark:text-gray-300">All
+                  Time</button>
+              </div>
+            </div>
+            <button id="exportBtn"
+              class="flex items-center gap-2 px-4 py-2 bg-primary text-sidebar-deep rounded-lg text-sm font-bold shadow-lg shadow-primary/20 hover:scale-105 transition-all">
+              <span class="material-symbols-outlined text-sm">download</span>Export CSV
+            </button>
+          </div>
+        </div>
+
+        <!-- Error Banner (hidden by default) -->
+        <div id="error-banner" class="hidden items-center gap-3 px-4 py-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-500/30 rounded-xl text-sm text-red-700 dark:text-red-400 font-medium">
+          <span class="material-symbols-outlined text-[18px]">error</span>
+          <span id="error-banner-msg">Failed to load analytics data. Please refresh the page.</span>
+          <button onclick="document.getElementById('error-banner').classList.add('hidden')" class="ml-auto text-red-400 hover:text-red-600"><span class="material-symbols-outlined text-[18px]">close</span></button>
+        </div>
+
+        <!-- KPI Cards -->
+        <div class="grid grid-cols-5 gap-4">
+          <div class="flex flex-col gap-2 rounded-xl p-6 bg-white dark:bg-[#102216] border border-[#dbe6df] dark:border-white/5 shadow-sm">
+            <div class="flex justify-between items-start">
+              <p class="text-[#61896f] dark:text-primary/60 text-sm font-semibold uppercase tracking-wider">Total Views</p>
+              <span class="material-symbols-outlined text-primary bg-primary/10 rounded-full p-1">trending_up</span>
+            </div>
+            <p id="kpi-total-views" class="text-[#111813] dark:text-white tracking-tight text-3xl font-extrabold leading-tight">
+              <span class="skeleton inline-block w-20 h-8">&nbsp;</span>
+            </p>
+            <span class="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full w-fit">● Live</span>
+          </div>
+          <div class="flex flex-col gap-2 rounded-xl p-6 bg-white dark:bg-[#102216] border border-[#dbe6df] dark:border-white/5 shadow-sm">
+            <div class="flex justify-between items-start">
+              <p class="text-[#61896f] dark:text-primary/60 text-sm font-semibold uppercase tracking-wider">Total Likes</p>
+              <span class="material-symbols-outlined text-primary bg-primary/10 rounded-full p-1">thumb_up</span>
+            </div>
+            <p id="kpi-total-likes" class="text-[#111813] dark:text-white tracking-tight text-3xl font-extrabold leading-tight">
+              <span class="skeleton inline-block w-16 h-8">&nbsp;</span>
+            </p>
+            <span class="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full w-fit">● Live</span>
+          </div>
+          <div class="flex flex-col gap-2 rounded-xl p-6 bg-white dark:bg-[#102216] border border-[#dbe6df] dark:border-white/5 shadow-sm">
+            <div class="flex justify-between items-start">
+              <p class="text-[#61896f] dark:text-primary/60 text-sm font-semibold uppercase tracking-wider">Total Comments</p>
+              <span class="material-symbols-outlined text-primary bg-primary/10 rounded-full p-1">comment</span>
+            </div>
+            <p id="kpi-total-comments" class="text-[#111813] dark:text-white tracking-tight text-3xl font-extrabold leading-tight">
+              <span class="skeleton inline-block w-16 h-8">&nbsp;</span>
+            </p>
+            <span class="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full w-fit">● Live</span>
+          </div>
+          <div class="flex flex-col gap-2 rounded-xl p-6 bg-white dark:bg-[#102216] border border-[#dbe6df] dark:border-white/5 shadow-sm">
+            <div class="flex justify-between items-start">
+              <p class="text-[#61896f] dark:text-primary/60 text-sm font-semibold uppercase tracking-wider">Engagement Rate</p>
+              <span class="material-symbols-outlined text-primary bg-primary/10 rounded-full p-1">bar_chart</span>
+            </div>
+            <p id="kpi-eng-rate" class="text-[#111813] dark:text-white tracking-tight text-3xl font-extrabold leading-tight">
+              <span class="skeleton inline-block w-16 h-8">&nbsp;</span>
+            </p>
+            <span class="text-[10px] text-[#61896f] dark:text-primary/60 font-medium">(likes+comments) / views</span>
+          </div>
+          <div class="flex flex-col gap-2 rounded-xl p-6 bg-primary dark:bg-primary border border-primary/20 shadow-xl shadow-primary/10">
+            <div class="flex justify-between items-start">
+              <p class="text-sidebar-deep/70 text-sm font-semibold uppercase tracking-wider">Top Category</p>
+              <span class="material-symbols-outlined text-sidebar-deep bg-white/30 rounded-full p-1">star</span>
+            </div>
+            <p id="kpi-top-category" class="text-sidebar-deep tracking-tight text-2xl font-extrabold leading-tight">—</p>
+            <span class="text-[10px] font-bold text-sidebar-deep/80">by total views</span>
+          </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="grid grid-cols-3 gap-6">
+          <!-- D3 Line Chart -->
+          <div
+            class="col-span-2 flex flex-col gap-4 rounded-xl border border-[#dbe6df] dark:border-white/5 bg-white dark:bg-[#102216] p-6 shadow-sm">
+            <div class="flex justify-between items-start">
+              <div>
+                <h3 class="text-[#111813] dark:text-white text-lg font-bold">Blog Views vs Video Views</h3>
+                <p class="text-sm text-[#61896f] dark:text-primary/60">Weekly content consumption (by created_at)</p>
+              </div>
+              <div class="flex gap-4">
+                <div class="flex items-center gap-2"><span
+                    class="size-3 rounded-full bg-primary inline-block"></span><span
+                    class="text-xs font-bold dark:text-gray-300">Blog</span></div>
+                <div class="flex items-center gap-2"><span
+                    class="size-3 rounded-full bg-[#61896f] dark:bg-primary/40 inline-block"></span><span
+                    class="text-xs font-bold dark:text-gray-300">Video</span></div>
+              </div>
+            </div>
+            <div id="line-chart" class="w-full" style="height:220px;"></div>
+          </div>
+
+          <!-- D3 Donut Chart -->
+          <div
+            class="flex flex-col gap-4 rounded-xl border border-[#dbe6df] dark:border-white/5 bg-white dark:bg-[#102216] p-6 shadow-sm">
+            <h3 class="text-[#111813] dark:text-white text-lg font-bold">Content Split</h3>
+            <div id="donut-chart" class="flex items-center justify-center flex-1" style="height:180px;"></div>
+            <div class="space-y-2" id="donut-legend"></div>
+          </div>
+        </div>
+
+        <!-- Top Lists -->
+        <div class="grid grid-cols-2 gap-8">
+          <!-- Top Articles -->
+          <div
+            class="flex flex-col rounded-xl border border-[#dbe6df] dark:border-white/5 bg-white dark:bg-[#102216] overflow-hidden shadow-sm">
+            <div
+              class="px-6 py-4 border-b border-[#dbe6df] dark:border-white/5 flex justify-between items-center bg-background-light dark:bg-white/5">
+              <h3 class="text-[#111813] dark:text-white font-bold">Top 5 Articles</h3>
+              <a href="/Admin Dashboard/Content Library.html"
+                class="text-primary text-xs font-bold hover:underline">View All</a>
+            </div>
+            <div id="top-articles-list" class="divide-y divide-[#dbe6df] dark:divide-white/5">
+              <div class="px-6 py-4 text-sm text-gray-400 text-center">Loading...</div>
+            </div>
+          </div>
+          <!-- Top Videos -->
+          <div
+            class="flex flex-col rounded-xl border border-[#dbe6df] dark:border-white/5 bg-white dark:bg-[#102216] overflow-hidden shadow-sm">
+            <div
+              class="px-6 py-4 border-b border-[#dbe6df] dark:border-white/5 flex justify-between items-center bg-background-light dark:bg-white/5">
+              <h3 class="text-[#111813] dark:text-white font-bold">Top 5 Videos</h3>
+              <a href="/Admin Dashboard/Content Library.html"
+                class="text-primary text-xs font-bold hover:underline">View All</a>
+            </div>
+            <div id="top-videos-list" class="divide-y divide-[#dbe6df] dark:divide-white/5">
+              <div class="px-6 py-4 text-sm text-gray-400 text-center">Loading...</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Full Content Data Table -->
+        <div class="rounded-xl border border-[#dbe6df] dark:border-white/5 bg-white dark:bg-[#102216] overflow-hidden shadow-sm">
+          <div class="px-6 py-4 border-b border-[#dbe6df] dark:border-white/5 flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
+            <h3 class="text-[#111813] dark:text-white font-bold">All Content — Engagement Table</h3>
+            <div class="flex items-center gap-3">
+              <div class="relative">
+                <span class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-[#61896f] dark:text-primary/60 text-[18px]">search</span>
+                <input id="tableSearch" type="text" placeholder="Filter by title…" class="pl-8 pr-3 py-1.5 rounded-lg bg-background-light dark:bg-white/5 border border-[#dbe6df] dark:border-white/10 text-sm dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/30 w-52" />
+              </div>
+              <span class="text-xs text-[#61896f] dark:text-primary/60 font-medium whitespace-nowrap">Click headers to sort</span>
+            </div>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead class="bg-[#f6f8f6] dark:bg-white/5 text-[#61896f] dark:text-primary/60 text-xs uppercase tracking-wider">
+                <tr>
+                  <th class="px-4 py-3 text-left font-bold cursor-pointer" data-col="title">Title <span class="sort-arrow">↕</span></th>
+                  <th class="px-4 py-3 text-left font-bold cursor-pointer" data-col="type">Type <span class="sort-arrow">↕</span></th>
+                  <th class="px-4 py-3 text-left font-bold cursor-pointer" data-col="category">Category <span class="sort-arrow">↕</span></th>
+                  <th class="px-4 py-3 text-right font-bold cursor-pointer" data-col="views_count">Views <span class="sort-arrow">↕</span></th>
+                  <th class="px-4 py-3 text-right font-bold cursor-pointer" data-col="likes_count">Likes <span class="sort-arrow">↕</span></th>
+                  <th class="px-4 py-3 text-right font-bold cursor-pointer" data-col="shares_count">Shares <span class="sort-arrow">↕</span></th>
+                  <th class="px-4 py-3 text-right font-bold cursor-pointer" data-col="comment_count">Comments <span class="sort-arrow">↕</span></th>
+                  <th class="px-4 py-3 text-right font-bold cursor-pointer" data-col="avg_read_time">Avg Read Time <span class="sort-arrow">↕</span></th>
+                  <th class="px-4 py-3 text-left font-bold cursor-pointer" data-col="created_at">Published <span class="sort-arrow">↕</span></th>
+                </tr>
+              </thead>
+              <tbody id="content-table-body" class="divide-y divide-[#dbe6df] dark:divide-white/5">
+                <tr><td colspan="9" class="px-6 py-8 text-center">
+                  <div class="space-y-3">
+                    <div class="skeleton h-5 w-full rounded"></div>
+                    <div class="skeleton h-5 w-full rounded"></div>
+                    <div class="skeleton h-5 w-4/5 rounded"></div>
+                  </div>
+                </td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <footer class="pt-16 pb-8 border-t border-slate-200 dark:border-white/5 mt-12">
+          <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+            <div
+              class="flex items-center gap-8 text-[11px] font-bold text-slate-400 dark:text-white/40 uppercase tracking-widest">
+              <a class="hover:text-primary transition-colors" href="#">Privacy Policy</a>
+              <a class="hover:text-primary transition-colors" href="#">Terms of Service</a>
+              <a class="hover:text-primary transition-colors" href="#">Documentation</a>
+            </div>
+            <p class="text-[11px] font-bold text-slate-400 dark:text-white/40">© 2024 TIME TASK BD. ALL RIGHTS RESERVED.
+            </p>
+          </div>
+        </footer>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // Theme Toggle
+    const themeToggle = document.getElementById('themeToggle');
+    themeToggle.addEventListener('click', () => {
+      const isDark = document.documentElement.classList.contains('dark');
+      if (isDark) {
+        document.documentElement.classList.remove('dark');
+        document.documentElement.classList.add('light');
+        localStorage.setItem('theme', 'light');
+      } else {
+        document.documentElement.classList.remove('light');
+        document.documentElement.classList.add('dark');
+        localStorage.setItem('theme', 'dark');
+      }
+      // Re-render charts
+      if (window.loadAll) window.loadAll();
+    });
+
+    // Sidebar toggle
+    document.getElementById('sidebarToggle').addEventListener('click', () => {
+      document.getElementById('mainSidebar').classList.toggle('sidebar-collapsed');
+    });
+
+    // Date filter dropdown
+    const dateFilterBtn = document.getElementById('dateFilterBtn');
+    const dateDropdown = document.getElementById('dateDropdown');
+    window._activeDays = 30; // shared with module script
+
+    function syncDateFilterUI() {
+      document.querySelectorAll('.date-opt').forEach(b => {
+        const match = parseInt(b.dataset.days) === window._activeDays;
+        b.classList.toggle('bg-background-light', match);
+        b.classList.toggle('dark:bg-primary/10', match);
+        b.classList.toggle('font-bold', match);
+        b.classList.toggle('text-sidebar-deep', match);
+        b.classList.toggle('dark:text-primary', match);
+        b.classList.toggle('font-medium', !match);
+        b.classList.toggle('dark:text-gray-300', !match);
+      });
+    }
+    syncDateFilterUI(); // set correct active date button on load
+
+    dateFilterBtn.addEventListener('click', () => dateDropdown.classList.toggle('hidden'));
+    document.addEventListener('click', e => { if (!dateFilterBtn.contains(e.target)) dateDropdown.classList.add('hidden'); });
+    document.querySelectorAll('.date-opt').forEach(btn => {
+      btn.addEventListener('click', () => {
+        window._activeDays = parseInt(btn.dataset.days);
+        document.getElementById('dateFilterLabel').textContent = btn.textContent.trim();
+        syncDateFilterUI();
+        dateDropdown.classList.add('hidden');
+        if (window.loadAll) window.loadAll();
+      });
+    });
+  </script>
+
+  <script type="module">
+    const supabaseClient = window.supabaseClient;
+    let tableData = []; // for CSV export + sort
+    let sortCol = 'views_count', sortAsc = false;
+    let searchQuery = ''; // for table search
+
+    // ─── Error Banner ────────────────────────────────────────────────
+    function showError(msg) {
+      const banner = document.getElementById('error-banner');
+      document.getElementById('error-banner-msg').textContent = msg || 'Failed to load analytics data. Please refresh the page.';
+      banner.classList.remove('hidden');
+      banner.classList.add('flex');
+    }
+
+    // ─── Date cutoff helper ──────────────────────────────────────────
+    function getCutoff(days) {
+      if (!days) return null;
+      const d = new Date();
+      d.setDate(d.getDate() - days);
+      return d.toISOString();
+    }
+
+    // ─── LOAD ALL DATA ───────────────────────────────────────────────
+    window.loadAll = async function () {
+      const days = typeof window._activeDays !== 'undefined' ? window._activeDays : 30;
+      const cutoff = getCutoff(days);
+      // 1. Fetch contents (no join — avoids RLS join issues)
+      let contentsQuery = supabaseClient
+        .from('contents')
+        .select('*')
+        .eq('status', 'live');
+      if (cutoff) contentsQuery = contentsQuery.gte('created_at', cutoff);
+      const { data: contents, error } = await contentsQuery;
+      if (error || !contents) {
+        showError('Failed to load content data. Please refresh the page.');
+        return;
+      }
+
+      // 2. Fetch content_analytics separately and build a map by content_id
+      const { data: analyticsRows } = await supabaseClient
+        .from('content_analytics')
+        .select('content_id, likes_count, shares_count, avg_read_time');
+      const analyticsMap = {};
+      (analyticsRows || []).forEach(a => { analyticsMap[a.content_id] = a; });
+
+      // 3. Fetch top-level comment counts per content
+      const { data: comments } = await supabaseClient
+        .from('content_comments')
+        .select('content_id')
+        .is('parent_id', null);
+      const commentMap = {};
+      (comments || []).forEach(c => { commentMap[c.content_id] = (commentMap[c.content_id] || 0) + 1; });
+
+      // 4. Merge into enriched rows
+      tableData = contents.map(c => ({
+        ...c,
+        likes_count: analyticsMap[c.id]?.likes_count || 0,
+        shares_count: analyticsMap[c.id]?.shares_count || 0,
+        avg_read_time: analyticsMap[c.id]?.avg_read_time || 0,
+        comment_count: commentMap[c.id] || 0,
+      }));
+
+      renderKPIs(tableData);
+      renderLineChart(tableData);
+      renderDonut(tableData);
+      renderTopLists(tableData);
+      renderTable(tableData, sortCol, sortAsc);
+    };
+
+    // ─── KPI CARDS ───────────────────────────────────────────────────
+    function renderKPIs(data) {
+      const totalViews = data.reduce((s, c) => s + (c.views_count || 0), 0);
+      const totalLikes = data.reduce((s, c) => s + c.likes_count, 0);
+      const totalComments = data.reduce((s, c) => s + c.comment_count, 0);
+      const engRate = totalViews > 0 ? ((totalLikes + totalComments) / totalViews * 100).toFixed(1) : '0.0';
+      const catMap = {};
+      data.forEach(c => { catMap[c.category] = (catMap[c.category] || 0) + (c.views_count || 0); });
+      const topCat = Object.entries(catMap).sort((a, b) => b[1] - a[1])[0]?.[0] || 'N/A';
+      document.getElementById('kpi-total-views').textContent = totalViews.toLocaleString();
+      document.getElementById('kpi-total-likes').textContent = totalLikes.toLocaleString();
+      document.getElementById('kpi-total-comments').textContent = totalComments.toLocaleString();
+      document.getElementById('kpi-eng-rate').textContent = engRate + '%';
+      document.getElementById('kpi-top-category').textContent = topCat;
+    }
+
+    // ─── D3 LINE CHART (fully dynamic) ───────────────────────────────
+    function renderLineChart(data) {
+      const el = document.getElementById('line-chart');
+      el.innerHTML = '';
+      const W = el.clientWidth || 600, H = 220;
+      const margin = { top: 10, right: 20, bottom: 48, left: 44 };
+      const w = W - margin.left - margin.right;
+      const h = H - margin.top - margin.bottom;
+
+      const isDark = document.documentElement.classList.contains('dark');
+      const gridColor = isDark ? 'rgba(255,255,255,0.05)' : '#dbe6df';
+      const textColor = '#61896f';
+
+      // ── Build dynamic buckets based on selected date range ──
+      const activeDays = typeof window._activeDays !== 'undefined' ? window._activeDays : 30;
+      const now = new Date();
+
+      let bucketCount, bucketDays, labelFn;
+
+      if (!activeDays || activeDays === 0) {
+        // All Time → 6 monthly buckets
+        bucketCount = 6; bucketDays = 30;
+        labelFn = i => {
+          const d = new Date(now);
+          d.setDate(d.getDate() - (bucketCount - 1 - i) * bucketDays);
+          return d.toLocaleString('default', { month: 'short', year: '2-digit' });
+        };
+      } else if (activeDays <= 7) {
+        // 7 days → daily
+        bucketCount = 7; bucketDays = 1;
+        labelFn = i => {
+          const d = new Date(now);
+          d.setDate(d.getDate() - (bucketCount - 1 - i));
+          return d.toLocaleString('default', { weekday: 'short' });
+        };
+      } else if (activeDays <= 30) {
+        // 30 days → 5 weekly buckets
+        bucketCount = 5; bucketDays = 6;
+        labelFn = i => {
+          const weeksAgo = bucketCount - 1 - i;
+          if (weeksAgo === 0) return 'This wk';
+          if (weeksAgo === 1) return 'Last wk';
+          return `${weeksAgo} wks ago`;
+        };
+      } else {
+        // 90 days → 6 fortnightly buckets
+        bucketCount = 6; bucketDays = 15;
+        labelFn = i => {
+          const d = new Date(now);
+          d.setDate(d.getDate() - (bucketCount - 1 - i) * bucketDays);
+          return d.toLocaleString('default', { month: 'short', day: 'numeric' });
+        };
+      }
+
+      // Assign each content item to a bucket index (0 = oldest shown, bucketCount-1 = most recent)
+      function getBucket(dateStr) {
+        const daysAgo = (now - new Date(dateStr)) / 86400000;
+        const raw = bucketCount - 1 - Math.floor(daysAgo / bucketDays);
+        return Math.max(0, Math.min(bucketCount - 1, Math.round(raw)));
+      }
+
+      const idxs = Array.from({ length: bucketCount }, (_, i) => i);
+      const blogData  = idxs.map(i => ({ i, views: data.filter(c => c.type === 'blog'  && getBucket(c.created_at) === i).reduce((s, c) => s + (c.views_count || 0), 0) }));
+      const videoData = idxs.map(i => ({ i, views: data.filter(c => c.type === 'video' && getBucket(c.created_at) === i).reduce((s, c) => s + (c.views_count || 0), 0) }));
+
+      // ── D3 render ──
+      const svg = d3.select(el).append('svg').attr('width', W).attr('height', H);
+      const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
+
+      const x = d3.scaleLinear().domain([0, bucketCount - 1]).range([0, w]);
+      const maxVal = Math.max(
+        d3.max(blogData, d => d.views) || 0,
+        d3.max(videoData, d => d.views) || 0,
+        1
+      );
+      const y = d3.scaleLinear().domain([0, maxVal]).nice().range([h, 0]);
+
+      // Gridlines
+      g.append('g').attr('class', 'grid')
+        .call(d3.axisLeft(y).ticks(4).tickSize(-w).tickFormat(''))
+        .selectAll('line').attr('stroke', gridColor).attr('stroke-dasharray', '4');
+      g.select('.grid .domain').remove();
+
+      // X axis with dynamic labels
+      g.append('g').attr('transform', `translate(0,${h})`)
+        .call(d3.axisBottom(x).ticks(bucketCount - 1).tickFormat(i => labelFn(Math.round(i))))
+        .selectAll('text')
+          .attr('fill', textColor).attr('font-size', 10)
+          .attr('transform', bucketCount > 5 ? 'rotate(-30)' : null)
+          .style('text-anchor', bucketCount > 5 ? 'end' : 'middle');
+
+      // Y axis
+      g.append('g').call(d3.axisLeft(y).ticks(4).tickFormat(d3.format('.2s')))
+        .selectAll('text').attr('fill', textColor).attr('font-size', 11);
+      g.selectAll('.domain').remove();
+
+      const line = d3.line().x(d => x(d.i)).y(d => y(d.views)).curve(d3.curveCatmullRom);
+
+      // Blog line + dots
+      g.append('path').datum(blogData)
+        .attr('fill', 'none').attr('stroke', '#13ec5b').attr('stroke-width', 3)
+        .attr('d', line).attr('stroke-linecap', 'round');
+      g.selectAll('.blog-dot').data(blogData).enter().append('circle')
+        .attr('cx', d => x(d.i)).attr('cy', d => y(d.views)).attr('r', 5).attr('fill', '#13ec5b');
+
+      // Video line + dots
+      const vidColor = isDark ? '#13ec5b66' : '#61896f';
+      g.append('path').datum(videoData)
+        .attr('fill', 'none').attr('stroke', vidColor)
+        .attr('stroke-width', 2.5).attr('stroke-dasharray', '8 4')
+        .attr('d', line).attr('stroke-linecap', 'round');
+      g.selectAll('.vid-dot').data(videoData).enter().append('circle')
+        .attr('cx', d => x(d.i)).attr('cy', d => y(d.views)).attr('r', 4).attr('fill', vidColor);
+    }
+
+
+    // ─── D3 DONUT CHART ─────────────────────────────────────────────
+    function renderDonut(data) {
+      const el = document.getElementById('donut-chart');
+      el.innerHTML = '';
+      const blogs = data.filter(c => c.type === 'blog').length;
+      const videos = data.filter(c => c.type === 'video').length;
+      const total = blogs + videos || 1;
+
+      const isDark = document.documentElement.classList.contains('dark');
+      const pieData = [
+        { label: 'Blog', count: blogs, color: '#13ec5b' },
+        { label: 'Video', count: videos, color: isDark ? '#13ec5b44' : '#61896f' },
+      ];
+
+      const size = 160, r = size / 2, innerR = r * 0.58;
+      const svg = d3.select(el).append('svg').attr('width', size).attr('height', size);
+      const g = svg.append('g').attr('transform', `translate(${r},${r})`);
+      const arc = d3.arc().innerRadius(innerR).outerRadius(r - 4);
+      const pie = d3.pie().value(d => d.count).sort(null);
+
+      g.selectAll('path').data(pie(pieData)).enter().append('path')
+        .attr('fill', d => d.data.color)
+        .attr('d', arc)
+        .attr('stroke', isDark ? '#102216' : 'white').attr('stroke-width', 2);
+
+      // Centre label
+      g.append('text').attr('text-anchor', 'middle').attr('dy', '-0.2em')
+        .attr('font-size', 22).attr('font-weight', '800').attr('fill', isDark ? 'white' : '#111813').text(total);
+      g.append('text').attr('text-anchor', 'middle').attr('dy', '1.4em')
+        .attr('font-size', 10).attr('font-weight', '700').attr('fill', isDark ? '#13ec5b66' : '#61896f').attr('text-transform', 'uppercase').text('TOTAL');
+
+      // Legend
+      const legendEl = document.getElementById('donut-legend');
+      legendEl.innerHTML = pieData.map(d => `
+        <div class="flex justify-between items-center">
+          <div class="flex items-center gap-2">
+            <span class="size-2.5 rounded-full inline-block" style="background:${d.color}"></span>
+            <span class="text-xs font-medium dark:text-gray-300">${d.label}</span>
+          </div>
+          <span class="text-xs font-bold dark:text-white">${Math.round(d.count / total * 100)}% (${d.count})</span>
+        </div>`).join('');
+    }
+
+    // ─── TOP LISTS ───────────────────────────────────────────────────
+    function renderTopLists(data) {
+      const blogs = [...data].filter(c => c.type === 'blog').sort((a, b) => (b.views_count || 0) - (a.views_count || 0)).slice(0, 5);
+      const videos = [...data].filter(c => c.type === 'video').sort((a, b) => (b.views_count || 0) - (a.views_count || 0)).slice(0, 5);
+
+      function renderList(containerId, items, type) {
+        const container = document.getElementById(containerId);
+        if (!items.length) { container.innerHTML = '<div class="px-6 py-4 text-sm text-gray-400 text-center">No data available</div>'; return; }
+        container.innerHTML = items.map((item, i) => `
+          <div class="px-5 py-3.5 flex items-center gap-3 hover:bg-[#f6f8f6] dark:hover:bg-white/5 transition-colors">
+            <div class="w-8 h-8 rounded-lg bg-[#f0f4f2] dark:bg-white/5 flex items-center justify-center font-extrabold text-sm text-[#61896f] dark:text-primary flex-shrink-0">${i + 1}</div>
+            <div class="flex-1 min-w-0">
+              <h4 class="text-sm font-bold truncate text-[#111813] dark:text-white">${item.title}</h4>
+              <div class="flex items-center gap-3 mt-0.5">
+                <span class="text-[11px] text-[#61896f] dark:text-primary/60">👁 ${(item.views_count || 0).toLocaleString()}</span>
+                <span class="text-[11px] text-[#61896f] dark:text-primary/60">👍 ${item.likes_count.toLocaleString()}</span>
+                ${type === 'video' ? `<span class="text-[11px] text-[#61896f] dark:text-primary/60">📢 ${item.shares_count.toLocaleString()}</span>` : ''}
+                <span class="text-[11px] text-[#61896f] dark:text-primary/60">💬 ${item.comment_count.toLocaleString()}</span>
+              </div>
+            </div>
+          </div>`).join('');
+      }
+
+      renderList('top-articles-list', blogs, 'blog');
+      renderList('top-videos-list', videos, 'video');
+    }
+
+    // ─── CONTENT TABLE ───────────────────────────────────────────────
+    function renderTable(data, col, asc) {
+      // Apply search filter
+      const q = searchQuery.trim().toLowerCase();
+      const filtered = q ? data.filter(c => c.title.toLowerCase().includes(q)) : data;
+
+      const sorted = [...filtered].sort((a, b) => {
+        let va = a[col] ?? '', vb = b[col] ?? '';
+        if (typeof va === 'number') return asc ? va - vb : vb - va;
+        return asc ? String(va).localeCompare(String(vb)) : String(vb).localeCompare(String(va));
+      });
+      const tbody = document.getElementById('content-table-body');
+      if (!sorted.length) {
+        tbody.innerHTML = `<tr><td colspan="9" class="px-6 py-6 text-center text-gray-400">${q ? 'No results matching &ldquo;' + q + '&rdquo;.' : 'No content found for this period.'}</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = sorted.map((c) => {
+        const typeBadge = c.type === 'blog'
+          ? `<span class="text-[11px] font-bold bg-primary/10 text-sidebar-deep dark:text-primary px-2 py-0.5 rounded-full">Blog</span>`
+          : `<span class="text-[11px] font-bold bg-[#61896f]/10 text-[#61896f] dark:text-primary/60 px-2 py-0.5 rounded-full">Video</span>`;
+        const date = new Date(c.created_at).toLocaleDateString();
+        const href = c.type === 'blog'
+          ? `/Web Dashboard/Blog_Post_Page.html?id=${c.id}`
+          : `/Web Dashboard/Video_Detail_View_Page.html?id=${c.id}`;
+        const avgRead = c.avg_read_time > 0 ? `${Math.round(c.avg_read_time)}s` : (c.type === 'blog' ? '0s' : '—');
+        return `<tr class="hover:bg-[#f6f8f6] dark:hover:bg-white/5 transition-colors">
+          <td class="px-4 py-3 font-medium max-w-[200px]"><a href="${href}" class="hover:text-primary dark:text-gray-300 dark:hover:text-primary hover:underline truncate block" title="${c.title}">${c.title}</a></td>
+          <td class="px-4 py-3">${typeBadge}</td>
+          <td class="px-4 py-3 text-xs text-[#61896f] dark:text-primary/60">${c.category}</td>
+          <td class="px-4 py-3 text-right font-bold dark:text-gray-300">${(c.views_count || 0).toLocaleString()}</td>
+          <td class="px-4 py-3 text-right font-bold text-primary">${c.likes_count.toLocaleString()}</td>
+          <td class="px-4 py-3 text-right font-bold dark:text-gray-300">${c.shares_count.toLocaleString()}</td>
+          <td class="px-4 py-3 text-right font-bold dark:text-gray-300">${c.comment_count.toLocaleString()}</td>
+          <td class="px-4 py-3 text-right text-xs text-[#61896f] dark:text-primary/60 font-medium">${avgRead}</td>
+          <td class="px-4 py-3 text-[11px] text-[#61896f] dark:text-primary/60">${date}</td>
+        </tr>`;
+      }).join('');
+    }
+
+    // Table search
+    document.getElementById('tableSearch').addEventListener('input', e => {
+      searchQuery = e.target.value;
+      renderTable(tableData, sortCol, sortAsc);
+    });
+
+    // Table sorting
+    document.querySelectorAll('th[data-col]').forEach(th => {
+      th.addEventListener('click', () => {
+        const col = th.dataset.col;
+        if (sortCol === col) sortAsc = !sortAsc; else { sortCol = col; sortAsc = false; }
+        renderTable(tableData, sortCol, sortAsc);
+      });
+    });
+
+    // ─── CSV EXPORT ──────────────────────────────────────────────────
+    document.getElementById('exportBtn').addEventListener('click', () => {
+      if (!tableData.length) return;
+      const headers = ['Title', 'Type', 'Category', 'Views', 'Likes', 'Shares', 'Comments', 'Avg Read Time (s)', 'Published'];
+      const rows = tableData.map(c => [
+        `"${c.title.replace(/"/g, '""')}"`,
+        c.type, c.category,
+        c.views_count || 0, c.likes_count, c.shares_count, c.comment_count,
+        c.avg_read_time > 0 ? Math.round(c.avg_read_time) : 0,
+        new Date(c.created_at).toLocaleDateString()
+      ]);
+      const csv = [headers, ...rows].map(r => r.join(',')).join('\n');
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `content-analytics-${new Date().toISOString().split('T')[0]}.csv`;
+      a.click();
+    });
+
+    // Boot
+    window.loadAll();
+  </script>
+</body>
+
+</html>

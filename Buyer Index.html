@@ -1,0 +1,737 @@
+<!doctype html>
+<html class="light" lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <title>Time Task BD - Buyer Dashboard</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400;500;600;700&amp;display=swap"
+    rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&amp;display=swap"
+    rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+    rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Supabase Client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../supabase-client.js"></script>
+  <script src="../auth-guard.js"></script>
+  <script src="../navbar-auth.js"></script>
+  <script src="../auth-helpers.js"></script>
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            primary: "#13ec5b",
+            "background-light": "#f6f8f6",
+            "background-dark": "#102216",
+            "footer-light": "#f0f2f0",
+            "footer-dark": "#1a2e20",
+            "brand-bg": "#f6f8f6",
+            "card-bg": "#ffffff",
+            "card-border": "#e2e8f0",
+            "accent-green": "#13ec5b",
+            "accent-green-hover": "#0dbd49",
+            "accent-green-dim": "rgba(19, 236, 91, 0.1)",
+            "primary-text": "#1a1c1e",
+            "secondary-text": "#64748b",
+            "input-bg": "#f8fafc",
+            "deep-navy": "#f1f5f9",
+          },
+          fontFamily: {
+            display: ["Manrope", "sans-serif"],
+          },
+          borderRadius: {
+            DEFAULT: "0.25rem",
+            lg: "0.5rem",
+            xl: "0.75rem",
+            "2xl": "1rem",
+            "3xl": "1.5rem",
+            full: "9999px",
+          },
+        },
+      },
+    };
+  </script>
+  <style type="text/tailwindcss">
+    :root {
+        --brand-bg: #f6f8f6;
+        --card-bg: #ffffff;
+        --accent-green: #13ec5b;
+        --accent-glow: rgba(19, 236, 91, 0.15);
+        --glass-bg: rgba(255, 255, 255, 0.8);
+        --glass-border: rgba(19, 236, 91, 0.3);
+      }
+      .material-symbols-outlined {
+        font-variation-settings:
+          "FILL" 0,
+          "wght" 400,
+          "GRAD" 0,
+          "opsz" 24;
+      }
+      body {
+        font-family: "Manrope", sans-serif;
+        background-color: var(--brand-bg);
+        color: #1a1c1e;
+      }
+      .btn-primary {
+        background: linear-gradient(135deg, #13ec5b 0%, #0dbd49 100%);
+        transition: all 0.3s ease;
+        color: #ffffff;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+      }
+      .btn-primary:hover {
+        filter: brightness(1.05);
+        box-shadow: 0 10px 15px -3px rgba(19, 236, 91, 0.3);
+      }
+      .chart-container {
+        position: relative;
+        height: 300px;
+        width: 100%;
+      }
+      .no-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+      .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+      /* Modified active class for sidebar links */
+      .sidebar-nav-link {
+        @apply flex items-center gap-3 px-3 py-3 rounded-lg text-[#4c9a66] hover:bg-[#f6f8f6] dark:hover:bg-[#223d2b] transition-colors;
+      }
+      .sidebar-nav-link.active {
+        @apply bg-primary/10 text-[#0d1b12] dark:text-white border-l-4 border-primary;
+      }
+      .sidebar-nav-link.active .material-symbols-outlined {
+        font-variation-settings: "FILL" 1; /* Apply fill to active icon */
+        @apply text-primary;
+      }
+      .sidebar-nav-link.active p {
+        @apply font-bold;
+      }
+    </style>
+  <script type="module">
+    import {
+      requireAuth,
+      signOut,
+      injectNavbar
+    } from '../auth_backend_logic.js';
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      const authData = await requireAuth('BUYER');
+      if (!authData) return;
+
+      const _supabase = window.supabaseClient; // Assuming imported via CDN earlier, or we can use the one from module if needed. But let's stick to window.supabaseClient since it works and is defined globally.
+      const { session, profile } = authData;
+      const user = session.user;
+      const fullName = profile?.full_name || user.user_metadata?.full_name || 'Buyer';
+      const firstName = fullName.split(' ')[0];
+
+      // Inject the navbar profile UI
+      injectNavbar(fullName);
+
+      // Update Header UI
+      const headerNameCards = document.querySelectorAll('p.font-extrabold.truncate');
+      headerNameCards.forEach(card => card.textContent = fullName);
+
+      const initials = document.querySelectorAll('.bg-accent-green.text-white.shadow-lg');
+      initials.forEach(avatar => avatar.textContent = firstName.charAt(0).toUpperCase());
+
+      // --- 2. Fetch Buyer Tasks Data (Now from 'orders' table for correct financial data) ---
+      const { data: orders, error: orderError } = await _supabase
+        .from('orders')
+        .select('*')
+        .eq('buyer_id', user.id);
+
+      if (orderError) {
+        console.error("Error fetching orders:", orderError);
+      }
+
+      const orderData = orders || [];
+
+      // --- 3. Calculate KPIs ---
+      const now = new Date();
+      const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+
+      let totalPayoutBalance = 0;
+      let todayPayoutBalance = 0;
+      let totalProjects = orderData.length;
+      let liveProjects = 0;
+
+      // Platform Aggregates
+      const platformCounts = {};
+      const platformSpends = {};
+
+      orderData.forEach(order => {
+        // Use total_cost if available, otherwise calculate from unit price
+        // Ensure numbers are parsed correctly
+        const cost = Number(order.total_cost) || (Number(order.price_per_unit) * Number(order.quantity)) || 0;
+        
+        totalPayoutBalance += cost;
+
+        if (order.created_at >= startOfDay) {
+          todayPayoutBalance += cost;
+        }
+
+        // Count as 'Live' if status is not completed or cancelled
+        // Common statuses: 'pending', 'processing', 'completed', 'cancelled'
+        if (['pending', 'processing', 'active'].includes(order.status)) {
+          liveProjects++;
+        }
+
+        // Platform Grouping
+        const platform = order.platform || 'Other';
+        platformCounts[platform] = (platformCounts[platform] || 0) + 1;
+        platformSpends[platform] = (platformSpends[platform] || 0) + cost;
+      });
+
+      // Update KPI Cards
+      document.getElementById('kpi-total-payout').textContent = `৳${totalPayoutBalance.toLocaleString()}`;
+      document.getElementById('kpi-today-payout').textContent = `৳${todayPayoutBalance.toLocaleString()}`;
+      document.getElementById('kpi-total-projects').textContent = totalProjects;
+      document.getElementById('kpi-live-projects').textContent = liveProjects;
+
+      // --- 4. Render Charts ---
+      const platforms = Object.keys(platformCounts);
+      const counts = platforms.map(p => platformCounts[p]);
+      const spends = platforms.map(p => platformSpends[p]);
+      const totalSpend = spends.reduce((a, b) => a + b, 0);
+
+      // Update Total Spent Label
+      const totalSpentLabel = document.querySelector('.flex.flex-col.items-end .text-lg.font-extrabold');
+      if (totalSpentLabel) totalSpentLabel.textContent = `৳${totalSpend.toLocaleString()}`;
+
+      // Destroy old charts if exist (Chart.js quirk)
+      const chartStatus1 = Chart.getChart("projectBarChart");
+      if (chartStatus1) chartStatus1.destroy();
+      const chartStatus2 = Chart.getChart("paymentDoughnutChart");
+      if (chartStatus2) chartStatus2.destroy();
+
+      // Bar Chart
+      const ctxBar = document.getElementById("projectBarChart").getContext("2d");
+      new Chart(ctxBar, {
+        type: "bar",
+        data: {
+          labels: platforms,
+          datasets: [{
+            label: "Project Count",
+            data: counts,
+            backgroundColor: "#13ec5b",
+            borderRadius: 8,
+            barThickness: 40,
+          }],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: "#102216",
+              padding: 12,
+              titleFont: { size: 14, family: "Manrope", weight: "bold" },
+              bodyFont: { size: 13, family: "Manrope" },
+              cornerRadius: 8,
+              displayColors: false,
+            },
+          },
+          scales: {
+            y: { beginAtZero: true, grid: { color: "rgba(0,0,0,0.05)" }, ticks: { font: { family: "Manrope" } } },
+            x: { grid: { display: false }, ticks: { font: { family: "Manrope", weight: "600" } } },
+          },
+        },
+      });
+
+      // Doughnut Chart
+      const ctxDoughnut = document.getElementById("paymentDoughnutChart").getContext("2d");
+      new Chart(ctxDoughnut, {
+        type: "doughnut",
+        data: {
+          labels: platforms,
+          datasets: [{
+            data: spends,
+            backgroundColor: ["#13ec5b", "#4ade80", "#22c55e", "#166534", "#15803d"],
+            borderWidth: 0,
+            hoverOffset: 15,
+          }],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: "70%",
+          plugins: {
+            legend: {
+              position: "right",
+              labels: {
+                padding: 20,
+                usePointStyle: true,
+                pointStyle: "circle",
+                font: { family: "Manrope", size: 12, weight: "600" },
+              },
+            },
+            tooltip: {
+              backgroundColor: "#102216",
+              padding: 12,
+              callbacks: {
+                label: function (context) {
+                  return ` ${context.label}: ৳${context.raw.toLocaleString()}`;
+                },
+              },
+            },
+          },
+        },
+      });
+
+      // --- 5. Render Summary Cards ---
+      const projectSummaryGrid = document.querySelector('#project-summary-grid');
+      const paymentSummaryGrid = document.querySelector('.grid.grid-cols-1.md\\:grid-cols-2.lg\\:grid-cols-4');
+
+      // Fetch market assets for icons
+      const { data: assets, error: assetsError } = await _supabase
+        .from('market_assets')
+        .select('platform_name, icon_svg');
+
+      const iconMap = {};
+      if (assets) {
+        assets.forEach(a => {
+          iconMap[a.platform_name] = a.icon_svg;
+        });
+      }
+
+      if (projectSummaryGrid) {
+        projectSummaryGrid.innerHTML = ''; // Clear static
+        platforms.forEach(p => {
+          const projectCount = platformCounts[p] || 0;
+          const iconSvg = iconMap[p] || '<span class="material-symbols-outlined">public</span>';
+          const card = `
+                <div class="flex flex-col gap-3 rounded-lg border border-[#cfe7d7] dark:border-white/10 bg-white dark:bg-white/5 p-5 hover:border-primary transition-colors cursor-pointer group">
+                  <div class="size-10 rounded-full bg-[#f6f8f6] dark:bg-white/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors text-slate-800 dark:text-white">
+                    ${iconSvg.startsWith('<svg') ? iconSvg.replace('class="', 'class="w-6 h-6 ') : iconSvg}
+                  </div>
+                  <div class="flex flex-col gap-1">
+                    <h2 class="text-[#0d1b12] dark:text-white text-sm font-bold leading-tight">${p}</h2>
+                    <p class="text-[#4c9a66] dark:text-white/60 text-xs font-medium">${projectCount} Projects</p>
+                  </div>
+                </div>
+              `;
+          projectSummaryGrid.insertAdjacentHTML('beforeend', card);
+        });
+      }
+
+      if (paymentSummaryGrid) {
+        paymentSummaryGrid.innerHTML = ''; // Clear static
+        platforms.forEach(p => {
+          const card = `
+                <div class="flex items-center gap-4 p-4 rounded-xl bg-white dark:bg-white/5 border border-[#cfe7d7] dark:border-white/10">
+                  <div class="size-12 rounded-lg bg-[#e7f9ee] dark:bg-primary/10 flex items-center justify-center">
+                    <span class="material-symbols-outlined text-primary">payments</span>
+                  </div>
+                  <div>
+                    <h3 class="text-xs font-bold text-[#4c9a66] dark:text-white/60 uppercase">${p} Spent</h3>
+                    <p class="text-lg font-extrabold">৳${platformSpends[p].toLocaleString()}</p>
+                  </div>
+                </div>
+               `;
+          paymentSummaryGrid.insertAdjacentHTML('beforeend', card);
+        });
+      }
+
+      // --- Notification Dropdown Logic ---
+      const notifBtn = document.getElementById("notificationBtn");
+      const notifDropdown = document.getElementById("notificationDropdown");
+
+      if (notifBtn && notifDropdown) {
+        notifBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          notifDropdown.classList.toggle("hidden");
+        });
+        document.addEventListener("click", (e) => {
+          if (!notifDropdown.contains(e.target) && e.target !== notifBtn) {
+            notifDropdown.classList.add("hidden");
+          }
+        });
+      }
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && notifDropdown) {
+          notifDropdown.classList.add("hidden");
+        }
+      });
+    });
+  </script>
+</head>
+
+<body class="bg-background-light dark:bg-background-dark text-[#0d1b12] dark:text-white min-h-screen flex flex-col">
+  <!-- Universal Header from INDEX.Html -->
+  <header id="main-header"
+    class="sticky top-0 z-50 w-full bg-white/95 dark:bg-background-dark/95 backdrop-blur-md border-b border-[#e7f3eb] dark:border-white/10">
+    <div class="max-w-[1280px] mx-auto h-20 flex items-center justify-between">
+      <div class="flex items-center shrink-0">
+        <a class="flex items-center gap-2 group" href="#">
+          <div class="size-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
+            <span class="material-symbols-outlined text-2xl">update</span>
+          </div>
+          <span class="text-xl font-bold tracking-tight text-[#0d1b12] dark:text-white ml-1">Time Task <span
+              class="text-primary">BD</span></span>
+        </a>
+      </div>
+      <div class="flex items-center justify-end flex-grow gap-8 ml-auto">
+        <nav class="hidden lg:flex items-center gap-10">
+          <a class="text-sm font-medium hover:text-primary transition-colors text-[#0d1b12] dark:text-gray-300"
+            href="/Web Dashboard/Home_Page.html">Home</a>
+          <a class="text-sm font-medium hover:text-primary transition-colors text-[#0d1b12] dark:text-gray-300"
+            href="/Web Dashboard/Blog_Page.html">Blog</a>
+          <a class="text-sm font-medium hover:text-primary transition-colors text-[#0d1b12] dark:text-gray-300"
+            href="Video_Gallery_Page.html">Video Gallery
+          </a>
+          <a class="text-sm font-medium hover:text-primary transition-colors text-[#0d1b12] dark:text-gray-300"
+            href="/Web Dashboard/About_Page.html">About Us</a>
+          <a class="text-sm font-medium hover:text-primary transition-colors text-[#0d1b12] dark:text-gray-300"
+            href="/Web Dashboard/Contact_Page.html">Contact Us</a>
+        </nav>
+        <!-- Auth Container (Targeted by navbar-auth.js) -->
+        <div class="flex items-center gap-3" id="navbar-auth-container">
+          <!-- navbar-auth.js will inject Dark Mode and Profile here -->
+        </div>
+      </div>
+    </div>
+  </header>
+  <nav class="bg-white/50 border-b border-gray-100 backdrop-blur-sm">
+    <div class="max-w-[1280px] mx-auto w-full px-4">
+      <div class="flex gap-4 overflow-x-auto no-scrollbar px-3 py-3">
+        <a class="flex items-center gap-2 px-6 py-2 rounded-xl text-sm font-bold bg-primary text-text-main shadow-lg shadow-primary/20 hover:bg-primary-dark transition-all scale-105"
+          href="/Buyer Dashboard/Buyer Index.html">
+          <span class="material-symbols-outlined text-[20px]">grid_view</span>
+          Dashboard
+        </a>
+        <a class="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold text-gray-600 hover:bg-white hover:shadow-sm transition-all"
+          href="/Buyer Dashboard/Wallet.html">
+          <span class="material-symbols-outlined text-[20px]">account_balance_wallet</span>
+          Wallet
+        </a>
+        <a class="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold text-gray-600 hover:bg-white hover:shadow-sm transition-all"
+          href="/Buyer Dashboard/Order Management.html">
+          <span class="material-symbols-outlined text-[20px]">add_shopping_cart</span>
+          Order Now
+        </a>
+        <a class="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold text-gray-600 hover:bg-white hover:shadow-sm transition-all"
+          href="/Buyer Dashboard/Communication to Admin.html">
+          <span class="material-symbols-outlined text-[20px]">chat_bubble</span>
+          Inbox
+        </a>
+      </div>
+    </div>
+  </nav>
+  <main class="max-w-[1280px] mx-auto w-full px-6 py-8">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+      <div class="bg-white dark:bg-[#1a2e21] rounded-xl p-6 border border-[#cfe7d7] dark:border-[#2a4533] shadow-sm">
+        <div class="flex justify-between items-start mb-4">
+          <p class="text-sm font-semibold text-[#4c9a66]">
+            Total Payout Balance
+          </p>
+          <div class="bg-primary/10 text-primary rounded px-2 py-0.5 text-xs font-bold">
+            +12%
+          </div>
+        </div>
+        <h3 id="kpi-total-payout" class="text-2xl font-extrabold tracking-tight">--</h3>
+        <p class="text-xs text-[#4c9a66] mt-2">Vs. last 30 days</p>
+      </div>
+      <div class="bg-white dark:bg-[#1a2e21] rounded-xl p-6 border border-[#cfe7d7] dark:border-[#2a4533] shadow-sm">
+        <div class="flex justify-between items-start mb-4">
+          <p class="text-sm font-semibold text-[#4c9a66]">
+            Today Payout Balance
+          </p>
+          <div class="bg-primary/10 text-primary rounded px-2 py-0.5 text-xs font-bold">
+            +5%
+          </div>
+        </div>
+        <h3 id="kpi-today-payout" class="text-2xl font-extrabold tracking-tight">--</h3>
+        <p class="text-xs text-[#4c9a66] mt-2">Vs. last 24 hour</p>
+      </div>
+      <div class="bg-white dark:bg-[#1a2e21] rounded-xl p-6 border border-[#cfe7d7] dark:border-[#2a4533] shadow-sm">
+        <div class="flex justify-between items-start mb-4">
+          <p class="text-sm font-semibold text-[#4c9a66]">
+            Total Platform Project
+          </p>
+          <div class="bg-primary/10 text-primary rounded px-2 py-0.5 text-xs font-bold">
+            +8%
+          </div>
+        </div>
+        <h3 id="kpi-total-projects" class="text-2xl font-extrabold tracking-tight">--</h3>
+        <p class="text-xs text-[#4c9a66] mt-2">Lifetime completed</p>
+      </div>
+      <div class="bg-white dark:bg-[#1a2e21] rounded-xl p-6 border border-[#cfe7d7] dark:border-[#2a4533] shadow-sm">
+        <div class="flex justify-between items-start mb-4">
+          <p class="text-sm font-semibold text-[#4c9a66]">
+            Live Platform Project
+          </p>
+          <div class="bg-primary/10 text-primary rounded px-2 py-0.5 text-xs font-bold">
+            +2%
+          </div>
+        </div>
+        <h3 id="kpi-live-projects" class="text-2xl font-extrabold tracking-tight">--</h3>
+        <div class="flex items-center gap-1.5 mt-2">
+          <span class="relative flex h-2 w-2">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+          </span>
+          <p class="text-xs text-[#4c9a66]">Currently active</p>
+        </div>
+      </div>
+    </div>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+      <section
+        class="bg-white dark:bg-[#1a2e21] p-6 rounded-xl border border-[#cfe7d7] dark:border-[#2a4533] shadow-sm">
+        <div class="flex items-center justify-between mb-8">
+          <h2 class="text-xl font-bold tracking-tight">
+            Platform Project Summary
+          </h2>
+          <a href="/Buyer Dashboard/Buyer Analytics.html" class="text-primary text-sm font-bold flex items-center gap-1 hover:underline">
+            Analyze
+            <span class="material-symbols-outlined text-xs">monitoring</span>
+          </a>
+        </div>
+        <div class="chart-container">
+          <canvas id="projectBarChart"></canvas>
+        </div>
+      </section>
+      <section
+        class="bg-white dark:bg-[#1a2e21] p-6 rounded-xl border border-[#cfe7d7] dark:border-[#2a4533] shadow-sm">
+        <div class="flex items-center justify-between mb-8">
+          <h2 class="text-xl font-bold tracking-tight">
+            Platform Payment Summary
+          </h2>
+          <div class="flex flex-col items-end">
+            <span class="text-[10px] uppercase font-bold text-[#4c9a66] tracking-wider">Total Spent</span>
+            <span class="text-lg font-extrabold">131,950 Tk</span>
+          </div>
+        </div>
+        <div class="chart-container">
+          <canvas id="paymentDoughnutChart"></canvas>
+        </div>
+      </section>
+    </div>
+    <!-- Platform Project Summary -->
+    <section class="pb-10">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-[#0d1b12] dark:text-white text-xl font-bold leading-tight tracking-tight">
+          Platform Project Summary
+        </h2>
+        <a href="/Buyer Dashboard/Order Management.html" class="text-primary text-sm font-bold hover:underline">
+          View All Projects
+        </a>
+      </div>
+      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4" id="project-summary-grid">
+        <!-- JavaScript will inject cards here -->
+      </div>
+    </section>
+    <!-- Platform Payment Summary -->
+    <section class="pb-10">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-[#0d1b12] dark:text-white text-xl font-bold leading-tight tracking-tight">
+          Platform Payment Summary
+        </h2>
+        <a href="/Buyer Dashboard/Wallet.html" class="text-primary text-sm font-bold hover:underline">
+          View Wallet
+        </a>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div
+          class="flex items-center gap-4 p-4 rounded-xl bg-white dark:bg-white/5 border border-[#cfe7d7] dark:border-white/10">
+          <div class="size-12 rounded-lg bg-[#e7f3eb] dark:bg-primary/10 flex items-center justify-center">
+            <span class="material-symbols-outlined text-primary">payments</span>
+          </div>
+          <div>
+            <h3 class="text-xs font-bold text-[#4c9a66] dark:text-white/60 uppercase">
+              Facebook Spent
+            </h3>
+            <p class="text-lg font-extrabold">Tk 45,200</p>
+          </div>
+        </div>
+        <div
+          class="flex items-center gap-4 p-4 rounded-xl bg-white dark:bg-white/5 border border-[#cfe7d7] dark:border-white/10">
+          <div class="size-12 rounded-lg bg-[#e7f3eb] dark:bg-primary/10 flex items-center justify-center">
+            <span class="material-symbols-outlined text-primary">payments</span>
+          </div>
+          <div>
+            <h3 class="text-xs font-bold text-[#4c9a66] dark:text-white/60 uppercase">
+              Instagram Spent
+            </h3>
+            <p class="text-lg font-extrabold">Tk 32,800</p>
+          </div>
+        </div>
+        <div
+          class="flex items-center gap-4 p-4 rounded-xl bg-white dark:bg-white/5 border border-[#cfe7d7] dark:border-white/10">
+          <div class="size-12 rounded-lg bg-[#e7f3eb] dark:bg-primary/10 flex items-center justify-center">
+            <span class="material-symbols-outlined text-primary">payments</span>
+          </div>
+          <div>
+            <h3 class="text-xs font-bold text-[#4c9a66] dark:text-white/60 uppercase">
+              TikTok Spent
+            </h3>
+            <p class="text-lg font-extrabold">Tk 28,150</p>
+          </div>
+        </div>
+        <div
+          class="flex items-center gap-4 p-4 rounded-xl bg-white dark:bg-white/5 border border-[#cfe7d7] dark:border-white/10">
+          <div class="size-12 rounded-lg bg-[#e7f3eb] dark:bg-primary/10 flex items-center justify-center">
+            <span class="material-symbols-outlined text-primary">payments</span>
+          </div>
+          <div>
+            <h3 class="text-xs font-bold text-[#4c9a66] dark:text-white/60 uppercase">
+              YouTube Spent
+            </h3>
+            <p class="text-lg font-extrabold">Tk 18,850</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+  <!-- Universal Footer from INDEX.Html -->
+
+  <footer class="bg-footer-light dark:bg-footer-dark pt-16 pb-8 border-t border-[#e7f3eb] dark:border-white/5">
+    <div class="max-w-[1280px] mx-auto">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
+        <div class="space-y-6">
+          <div class="flex items-center gap-3">
+            <div class="size-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
+              <span class="material-symbols-outlined text-2xl">update</span>
+            </div>
+            <span class="text-xl font-bold tracking-tight text-[#0d1b12] dark:text-white">Time Task <span
+                class="text-primary">BD</span></span>
+          </div>
+          <p class="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">
+            Empowering your digital productivity through innovative task
+            management and streamlined earning opportunities.
+          </p>
+          <div class="flex gap-4">
+            <a class="size-10 rounded-xl border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-black transition-all"
+              href="#">
+              <span class="material-symbols-outlined text-[20px]">public</span>
+            </a>
+            <a class="size-10 rounded-xl border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-black transition-all"
+              href="#">
+              <span class="material-symbols-outlined text-[20px]">share</span>
+            </a>
+            <a class="size-10 rounded-xl border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-black transition-all"
+              href="#">
+              <span class="material-symbols-outlined text-[20px]">alternate_email</span>
+            </a>
+          </div>
+        </div>
+        <div>
+          <h4 class="text-sm font-bold uppercase tracking-widest mb-6 text-[#0d1b12] dark:text-white">
+            Quick Links
+          </h4>
+          <ul class="space-y-4">
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="/Web Dashboard/Home_Page.html">Home</a>
+            </li>
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="/Web Dashboard/Blog_Page.html">Our Blog</a>
+            </li>
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="/Web Dashboard/About_Page.html">About Us</a>
+            </li>
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="/Web Dashboard/Contact_Page.html">Contact</a>
+            </li>
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="/Web Dashboard/Help_and_FAQ_Page.html">FAQ Support</a>
+            </li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="text-sm font-bold uppercase tracking-widest mb-6 text-[#0d1b12] dark:text-white">
+            Services &amp; Legal
+          </h4>
+          <ul class="space-y-4">
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="/Web Dashboard/About_Page.html">About Us</a>
+            </li>
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="/Web Dashboard/Privacy_Policy_Page.html">Privacy Policy</a>
+            </li>
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="/Web Dashboard/Terms_of_Service_Page.html">Terms of Service</a>
+            </li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="text-sm font-bold uppercase tracking-widest mb-6 text-[#0d1b12] dark:text-white">
+            Contact Info
+          </h4>
+          <ul class="space-y-4">
+            <li class="flex items-start gap-3">
+              <span class="material-symbols-outlined text-primary text-[20px]">mail</span>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary"
+                href="mailto:support@timetaskbd.com">support@timetaskbd.com</a>
+            </li>
+            <li class="flex items-start gap-3">
+              <span class="material-symbols-outlined text-primary text-[20px]">call</span>
+              <span class="text-sm text-gray-600 dark:text-gray-400">+880 1234 567890</span>
+            </li>
+            <li class="flex items-start gap-3">
+              <span class="material-symbols-outlined text-primary text-[20px]">location_on</span>
+              <span class="text-sm text-gray-600 dark:text-gray-400">Dhaka, Bangladesh</span>
+            </li>
+          </ul>
+          <div class="mt-8 pt-8 border-t border-[#e7f3eb] dark:border-white/5">
+            <p class="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-4">
+              Social Media
+            </p>
+            <div class="flex gap-4">
+              <a class="text-[#4c9a66] hover:text-primary transition-colors" href="#">
+                <svg class="size-6" fill="currentColor" viewBox="0 0 24 24">
+                  <path
+                    d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z">
+                  </path>
+                </svg>
+              </a>
+              <a class="text-[#4c9a66] hover:text-primary transition-colors" href="#">
+                <svg class="size-6" fill="currentColor" viewBox="0 0 24 24">
+                  <path
+                    d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.84 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z">
+                  </path>
+                </svg>
+              </a>
+              <a class="text-[#4c9a66] hover:text-primary transition-colors" href="#">
+                <svg class="size-6" fill="currentColor" viewBox="0 0 24 24">
+                  <path
+                    d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z">
+                  </path>
+                </svg>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div
+        class="pt-8 border-t border-[#e7f3eb] dark:border-white/5 flex flex-col md:flex-row items-center justify-between gap-4">
+        <p class="text-sm text-gray-500 dark:text-gray-400">
+          Copyright © 2024
+          <span class="text-[#0d1b12] dark:text-white font-semibold">Time Task BD</span>. All rights reserved.
+        </p>
+        <p class="text-sm text-gray-500 dark:text-gray-400">
+          Developed with <span class="text-primary font-bold">★</span> by
+          <a class="text-primary font-medium hover:underline" href="#">Digital Dynamics Agency</a>
+        </p>
+      </div>
+    </div>
+  </footer>
+
+</body>
+
+</html>

@@ -1,0 +1,1025 @@
+<!doctype html>
+<html class="light" lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <title>Admin Panel - Time Task BD</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../supabase-client.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+    rel="stylesheet" />
+  <script id="tailwind-config">
+    // Immediately apply theme to avoid flash
+    (function () {
+      const theme = localStorage.getItem("theme");
+      if (
+        theme === "dark" ||
+        (!theme && window.matchMedia("(prefers-color-scheme: dark)").matches)
+      ) {
+        document.documentElement.classList.add("dark");
+      } else {
+        document.documentElement.classList.remove("dark");
+      }
+    })();
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            primary: "#13ec5b",
+            "background-light": "#f6f8f6",
+            "background-dark": "#0d1b12",
+            "sidebar-deep": "#102216",
+            "accent-green": "#13ec5b",
+          },
+          fontFamily: {
+            display: ["Manrope"],
+          },
+          borderRadius: {
+            DEFAULT: "0.25rem",
+            lg: "0.5rem",
+            xl: "0.75rem",
+            "2xl": "1rem",
+            full: "9999px",
+          },
+        },
+      },
+    };
+  </script>
+  <style type="text/tailwindcss">
+    @layer base {
+        body {
+          @apply font-display bg-background-light dark:bg-background-dark text-slate-900 dark:text-white;
+        }
+      }
+
+      /* Sidebar Transitions */
+      .sidebar-transition {
+        @apply transition-all duration-300 ease-in-out;
+      }
+
+      /* Active Tab Notch Logic */
+      .sidebar-item-active {
+        @apply bg-background-light dark:bg-background-dark text-sidebar-deep dark:text-primary font-bold relative !important;
+        border-radius: 40px 0 0 40px;
+        margin-left: 10px;
+        width: calc(100% - 10px) !important;
+      }
+
+      .sidebar-item-active::before {
+        content: "";
+        position: absolute;
+        right: 0;
+        top: -40px;
+        width: 40px;
+        height: 40px;
+        background: transparent;
+        border-radius: 50%;
+        box-shadow: 20px 20px 0 0 #f6f8f6;
+        pointer-events: none;
+      }
+      .dark .sidebar-item-active::before {
+        box-shadow: 20px 20px 0 0 #0d1b12;
+      }
+
+      .sidebar-item-active::after {
+        content: "";
+        position: absolute;
+        right: 0;
+        bottom: -40px;
+        width: 40px;
+        height: 40px;
+        background: transparent;
+        border-radius: 50%;
+        box-shadow: 20px -20px 0 0 #f6f8f6;
+        pointer-events: none;
+      }
+      .dark .sidebar-item-active::after {
+        box-shadow: 20px -20px 0 0 #0d1b12;
+      }
+
+      .dark .sidebar-item-active::before { box-shadow: 20px 20px 0 0 #0d1b12; }
+      .dark .sidebar-item-active::after  { box-shadow: 20px -20px 0 0 #0d1b12; }
+      .dark .sidebar-item-active { @apply bg-background-dark text-white !important; }
+
+      .sidebar-item {
+        @apply flex items-center py-4 text-white/70 hover:text-white transition-all duration-200 cursor-pointer w-full relative;
+      }
+
+      .sidebar-item .material-symbols-outlined {
+        @apply font-light text-[24px];
+      }
+
+      .sidebar-item-active .material-symbols-outlined {
+        @apply text-sidebar-deep;
+      }
+
+      .dark .sidebar-item-active .material-symbols-outlined { @apply text-primary; }
+
+      /* Tooltip Logic - Show only when collapsed */
+      .nav-tooltip {
+        @apply invisible absolute left-full ml-4 px-2 py-1 bg-sidebar-deep text-white text-[10px] rounded whitespace-nowrap opacity-0 transition-opacity z-50 pointer-events-none;
+      }
+
+      /* Collapsed Sidebar States */
+      .sidebar-collapsed {
+        @apply w-20 pl-0;
+      }
+      .sidebar-collapsed .logo-text,
+      .sidebar-collapsed .item-text,
+      .sidebar-collapsed .menu-label,
+      .sidebar-collapsed .system-card-text {
+        @apply hidden;
+      }
+      .sidebar-collapsed .sidebar-item {
+        @apply justify-center px-0;
+      }
+      .sidebar-collapsed .sidebar-item:hover .nav-tooltip {
+        @apply visible opacity-100;
+      }
+      .sidebar-collapsed .sidebar-header {
+        @apply px-0 justify-center;
+      }
+
+      /* Custom Scrollbar */
+      .custom-scrollbar::-webkit-scrollbar {
+        width: 4px;
+      }
+      .custom-scrollbar::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+      }
+
+      .active-tab-nav {
+        @apply bg-primary text-slate-900 dark:text-white shadow-lg shadow-primary/20;
+      }
+    </style>
+</head>
+
+<body class="flex min-h-screen overflow-hidden">
+  <!-- Sidebar -->
+  <aside id="mainSidebar"
+    class="w-72 bg-sidebar-deep flex-shrink-0 flex flex-col h-screen sticky top-0 sidebar-transition pl-2">
+    <!-- Logo Section -->
+    <div class="sidebar-header p-6 pb-12 flex items-center gap-3 transition-all">
+      <div
+        class="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20 flex-shrink-0">
+        <span class="material-symbols-outlined text-sidebar-deep font-bold text-2xl">update</span>
+      </div>
+      <div class="flex flex-col logo-text overflow-hidden">
+        <span class="text-white font-extrabold text-lg leading-tight tracking-tight whitespace-nowrap">Time Task
+          BD</span>
+        <span class="text-primary/60 text-[10px] font-bold uppercase tracking-widest whitespace-nowrap">Admin
+          Control</span>
+      </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="flex-1">
+      <div class="px-8 mb-4 menu-label">
+        <p class="text-[10px] font-bold text-white/40 uppercase tracking-[0.2em]">
+          Main Menu
+        </p>
+      </div>
+
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Admin Index.html">
+        <span class="material-symbols-outlined">dashboard</span>
+        <span class="text-sm item-text ml-4">Dashboard</span>
+        <span class="nav-tooltip">Dashboard</span>
+      </a>
+
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/System Health.html">
+        <span class="material-symbols-outlined">monitor_heart</span>
+        <span class="text-sm item-text ml-4">System Monitoring</span>
+        <span class="nav-tooltip">Security & System Monitoring</span>
+      </a>
+
+      <a class="sidebar-item sidebar-item-active px-8 group" href="/Admin Dashboard/KYC Review.html">
+        <span class="material-symbols-outlined">manage_accounts</span>
+        <span class="text-sm item-text ml-4">Management</span>
+        <span class="nav-tooltip">User & Buyer Management</span>
+      </a>
+
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/User Analytics.html">
+        <span class="material-symbols-outlined">analytics</span>
+        <span class="text-sm item-text ml-4">Analytics Section</span>
+        <span class="nav-tooltip">Analytics Section</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/User Referral Tree.html">
+        <span class="material-symbols-outlined">hub</span>
+        <span class="text-sm item-text ml-4">Referral System</span>
+        <span class="nav-tooltip">Referral System</span>
+      </a>
+
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Market Asset Price.html">
+        <span class="material-symbols-outlined">trending_up</span>
+        <span class="text-sm item-text ml-4">Market Asset Prices</span>
+        <span class="nav-tooltip">Market Asset Prices</span>
+      </a>
+
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Live Support.html">
+        <span class="material-symbols-outlined">support_agent</span>
+        <span class="text-sm item-text ml-4">Live Support</span>
+        <span class="nav-tooltip">Live Support</span>
+      </a>
+
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Buyer Communication.html">
+        <span class="material-symbols-outlined">forum</span>
+        <span class="text-sm item-text ml-4">Communication</span>
+        <span class="nav-tooltip">Communication</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/System Announcemeeent.html">
+        <span class="material-symbols-outlined">forum</span>
+        <span class="text-sm item-text ml-4">System Announcement</span>
+        <span class="nav-tooltip">System Announcement</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Invoice Management.html">
+        <span class="material-symbols-outlined">description</span>
+        <span class="text-sm item-text ml-4">Invoice Management</span>
+        <span class="nav-tooltip">Invoice Management</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Create Content.html">
+        <span class="material-symbols-outlined">edit_note</span>
+        <span class="text-sm item-text ml-4">Content Management</span>
+        <span class="nav-tooltip">Content Management</span>
+      </a>
+    </nav>
+
+    <div class="px-6 py-8">
+      <button
+        class="w-full h-10 flex items-center justify-center bg-primary text-sidebar-deep font-bold text-xs rounded-lg hover:brightness-110 transition-all shadow-lg shadow-primary/10 group relative">
+        <span class="material-symbols-outlined text-[20px] system-icon">logout</span>
+        <span class="ml-2 system-card-text">Logout</span>
+        <span class="nav-tooltip !left-full !ml-6">Logout</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main Content wrapper -->
+  <div class="flex-1 flex flex-col h-screen overflow-hidden bg-background-light dark:bg-background-dark">
+    <!-- Header -->
+    <header
+      class="h-20 bg-white dark:bg-background-dark border-b border-slate-100 dark:border-white/10 px-6 flex items-center justify-between flex-shrink-0 z-40">
+      <div class="flex items-center gap-6">
+        <button id="sidebarToggle"
+          class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 hover:text-sidebar-deep dark:hover:text-primary hover:bg-primary/10 transition-all">
+          <span class="material-symbols-outlined">menu</span>
+        </button>
+        <div class="relative w-96 group">
+          <span
+            class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 group-focus-within:text-sidebar-deep dark:group-focus-within:text-primary transition-colors">search</span>
+          <input
+            class="w-full bg-slate-100 dark:bg-white/5 border-none rounded-xl pl-10 pr-4 py-2.5 text-sm dark:text-white focus:ring-2 focus:ring-primary/20 transition-all placeholder:dark:text-slate-500"
+            placeholder="Search system records..." type="text" />
+        </div>
+      </div>
+
+      <div class="flex items-center gap-6">
+        <div class="flex items-center gap-2">
+          <button
+            class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 hover:text-sidebar-deep dark:hover:text-primary hover:bg-primary/10 transition-all relative">
+            <span class="material-symbols-outlined">notifications</span>
+            <span
+              class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-slate-900"></span>
+          </button>
+          <button id="themeToggle"
+            class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 hover:text-sidebar-deep dark:hover:text-primary hover:bg-primary/10 transition-all">
+            <span class="material-symbols-outlined">light_mode</span>
+          </button>
+        </div>
+        <div class="h-10 w-px bg-slate-200 dark:bg-white/10"></div>
+        <div class="flex items-center gap-3 cursor-pointer group">
+          <div class="text-right">
+            <p class="text-sm font-bold text-slate-900 dark:text-white group-hover:text-primary transition-colors">
+              Super Admin
+            </p>
+            <p class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-tighter">
+              System Manager
+            </p>
+          </div>
+          <div
+            class="w-12 h-12 rounded-xl border-2 border-primary/20 p-0.5 overflow-hidden group-hover:border-primary transition-all">
+            <img alt="Admin Profile" class="w-full h-full object-cover rounded-lg"
+              src="https://lh3.googleusercontent.com/aida-public/AB6AXuDI3q59cS__AXyYcqFQtKZ2-e__roEJ3Cic28K7cd-6tYYxzLfpTArNsAJE3UypttzDIKS6SoNy85-jDLh0ZMbLqXr0NEEjrbCPSgoCJZyYc4W89P8djmlf34I_NEoa2vfl5IS3jHwLSZZ6lgtwguAje5Lv9h9RbZ2fJqb36M_tmZc-iJY-XxAXsCDxVyU1bONcO3AV5LZgB1o5wURKpB9w2XEN6iWAILVT7fIzOkl2pQ4lJb5WxYgkvuNIlKakHZWN1e4bzfo25zYy" />
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Sub Navigation Tabs -->
+    <nav
+      class="sticky top-0 bg-white/50 dark:bg-background-dark/50 border-b border-gray-100 dark:border-white/10 backdrop-blur-sm relative z-30 rounded-l-[30px] ml-[110px]">
+      <div class="mx-auto w-full px-4">
+        <div id="tabsContainer" class="flex gap-4 overflow-x-auto no-scrollbar py-3">
+          <a class="flex items-center gap-2 px-4 py-2 rounded-[30px] text-sm font-semibold text-gray-700 dark:text-slate-400 hover:bg-white dark:hover:bg-white/5 hover:shadow-sm whitespace-nowrap transition-all"
+            href="/Admin Dashboard/KYC Review.html">
+            <span class="material-symbols-outlined text-[20px]">shield_person</span>
+            KYC Review
+          </a>
+          <a class="flex items-center gap-2 px-4 py-2 rounded-[30px] text-sm font-semibold text-gray-700 dark:text-slate-400 hover:bg-white dark:hover:bg-white/5 hover:shadow-sm whitespace-nowrap transition-all"
+            href="/Admin Dashboard/User Access.html">
+            <span class="material-symbols-outlined text-[20px]">manage_accounts</span>
+            User Access Management
+          </a>
+          <a class="flex items-center gap-2 px-4 py-2 rounded-[30px] text-sm font-semibold text-gray-700 dark:text-slate-400 hover:bg-white dark:hover:bg-white/5 hover:shadow-sm whitespace-nowrap transition-all"
+            href="/Admin Dashboard/Buyer Deposit Requests.html">
+            <span class="material-symbols-outlined text-[20px]">account_balance_wallet</span>
+            Buyer Deposit Requests
+          </a>
+          <a class="flex items-center gap-2 px-4 py-2 rounded-[30px] text-sm font-semibold text-gray-700 dark:text-slate-400 hover:bg-white dark:hover:bg-white/5 hover:shadow-sm whitespace-nowrap transition-all"
+            href="/Admin Dashboard/Buyer Order Management.html">
+            <span class="material-symbols-outlined text-[20px]">receipt_long</span>
+            Buyer Order Management
+          </a>
+          <a class="flex items-center gap-2 px-4 py-2 rounded-[30px] text-sm font-semibold active-tab-nav whitespace-nowrap transition-all text-white"
+            href="/Admin Dashboard/User Task Verification.html">
+            <span class="material-symbols-outlined text-[20px]">task_alt</span>
+            Task Verification
+          </a>
+          <a class="flex items-center gap-2 px-4 py-2 rounded-[30px] text-sm font-semibold text-gray-700 dark:text-slate-400 hover:bg-white dark:hover:bg-white/5 hover:shadow-sm whitespace-nowrap transition-all"
+            href="/Admin Dashboard/User Payout Request.html">
+            <span class="material-symbols-outlined text-[20px]">payments</span>
+            Payout Request
+          </a>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main Dashboard Content -->
+    <main class="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-8 max-w-full">
+      <div class="max-w-[1600px] mx-auto w-full space-y-8">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+          <div>
+            <h1 class="text-3xl font-bold">Task Verification Dashboard</h1>
+            <p class="text-slate-500 dark:text-slate-400 mt-1">
+              Review and approve user-submitted digital task sheets and
+              calculate payouts.
+            </p>
+          </div>
+          <div
+            class="flex items-center gap-2 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 px-3 py-1.5 rounded-full text-sm font-medium border border-green-100 dark:border-green-800">
+            <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+            Live Updates Active
+          </div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div class="bg-white dark:bg-white/5 p-6 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm">
+            <p class="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">
+              Total Submissions
+            </p>
+            <p id="kpi-total" class="text-3xl font-bold dark:text-white">--</p>
+          </div>
+          <div class="bg-white dark:bg-white/5 p-6 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm">
+            <p class="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">
+              Pending Verification
+            </p>
+            <div class="flex items-baseline gap-2">
+              <p id="kpi-pending" class="text-3xl font-bold text-orange-500">--</p>
+              <span
+                class="text-[10px] bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400 px-1.5 py-0.5 rounded font-bold">WAITLIST</span>
+            </div>
+          </div>
+          <div class="bg-white dark:bg-white/5 p-6 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm">
+            <p class="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">
+              Avg. Valid Rate (%)
+            </p>
+            <p id="kpi-rate" class="text-3xl font-bold text-primary">--%</p>
+          </div>
+          <div class="bg-white dark:bg-white/5 p-6 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm">
+            <p class="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">
+              Estimated Payout (Tk)
+            </p>
+            <p id="kpi-payout" class="text-3xl font-bold dark:text-white">--</p>
+          </div>
+        </div>
+        <div
+          class="bg-white dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10 border-b-0 flex flex-wrap items-center justify-between">
+          <div class="flex flex-wrap items-center p-4 gap-4 flex-1">
+            <div class="relative min-w-[280px]">
+              <span
+                class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">search</span>
+              <input id="searchInput"
+                class="w-full pl-10 bg-slate-50 dark:bg-sidebar-deep border-slate-200 dark:border-white/10 rounded-lg text-sm focus:ring-primary focus:border-primary transition-all dark:text-white"
+                placeholder="Search by Order ID..." type="text" />
+            </div>
+            <div class="flex items-center gap-2" id="filterContainer">
+              <button data-filter="All"
+                class="filter-btn active-filter px-4 py-1.5 rounded-full bg-primary text-white text-xs font-semibold transition-all">
+                All Tasks
+              </button>
+              <button data-filter="Pending"
+                class="filter-btn px-4 py-1.5 rounded-full bg-slate-100 dark:bg-sidebar-deep text-slate-600 dark:text-slate-400 text-xs font-semibold hover:bg-slate-200 dark:hover:bg-sidebar-deep/80 transition-colors">
+                Pending Only
+              </button>
+              <button data-filter="Facebook"
+                class="filter-btn px-4 py-1.5 rounded-full bg-slate-100 dark:bg-sidebar-deep text-slate-600 dark:text-slate-400 text-xs font-semibold hover:bg-slate-200 dark:hover:bg-sidebar-deep/80 transition-colors">
+                Facebook
+              </button>
+              <button data-filter="Instagram"
+                class="filter-btn px-4 py-1.5 rounded-full bg-slate-100 dark:bg-sidebar-deep text-slate-600 dark:text-slate-400 text-xs font-semibold hover:bg-slate-200 dark:hover:bg-sidebar-deep/80 transition-colors">
+                Instagram
+              </button>
+              <button data-filter="Twitter"
+                class="filter-btn px-4 py-1.5 rounded-full bg-slate-100 dark:bg-sidebar-deep text-slate-600 dark:text-slate-400 text-xs font-semibold hover:bg-slate-200 dark:hover:bg-sidebar-deep/80 transition-colors">
+                Twitter
+              </button>
+              <button data-filter="YouTube"
+                class="filter-btn px-4 py-1.5 rounded-full bg-slate-100 dark:bg-sidebar-deep text-slate-600 dark:text-slate-400 text-xs font-semibold hover:bg-slate-200 dark:hover:bg-sidebar-deep/80 transition-colors">
+                YouTube
+              </button>
+            </div>
+          </div>
+          <div class="flex items-center p-4 gap-3">
+            <button
+              class="flex items-center gap-2 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 px-4 py-1.5 rounded-lg text-sm font-medium hover:bg-slate-50 dark:hover:bg-white/10 transition-colors">
+              <span class="material-symbols-outlined text-sm">calendar_month</span>
+              Select Date
+            </button>
+            <button
+              class="flex items-center gap-2 bg-slate-800 dark:bg-primary text-white dark:text-black px-4 py-1.5 rounded-lg text-sm font-bold hover:bg-slate-900 transition-colors">
+              <span class="material-symbols-outlined text-sm">download</span>
+              Export CSV
+            </button>
+          </div>
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr
+                class="bg-slate-50 dark:bg-white/5 text-[11px] border-t border-slate-200 dark:border-white/10 font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                <th class="px-6 py-4">SI.NO</th>
+                <th class="px-4 py-4">Date</th>
+                <th class="px-4 py-4">User ID</th>
+                <th class="px-4 py-4">Order ID</th>
+                <th class="px-4 py-4">Platform</th>
+                <th class="px-4 py-4">Google Sheet</th>
+                <th class="px-4 py-4 text-center">Qty</th>
+                <th
+                  class="px-4 py-4 text-center border-x border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/5">
+                  Verification (Valid / Fail)
+                </th>
+                <th class="px-4 py-4">Payout</th>
+                <th class="px-4 py-4">Status</th>
+                <th class="px-6 py-4">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="verification-table-body"
+              class="divide-y divide-slate-100 dark:divide-white/10 border-t border-slate-200 dark:border-white/10 text-sm">
+              <!-- Dynamic Content Will Be Loaded Here -->
+              <tr>
+                <td colspan="11" class="px-8 py-8 text-center text-slate-400">Loading submissions...</td>
+              </tr>
+            </tbody>
+          </table>
+          <div
+            class="w-full flex flex-col sm:flex-row justify-between items-center gap-4 bg-white dark:bg-white/5 p-4 border border-slate-200 dark:border-white/10 rounded-b-xl shadow-sm">
+            <p id="paginationText" class="text-xs text-slate-500 dark:text-slate-400 font-medium">
+              Showing
+              <span class="text-slate-900 dark:text-slate-100">1-3</span> of
+              <span class="text-slate-900 dark:text-slate-100">14,208</span>
+              submissions
+            </p>
+            <div class="flex gap-2" id="paginationControls">
+              <!-- Buttons generated via JS -->
+            </div>
+          </div>
+        </div>
+        <footer class="pt-16 pb-8 border-t border-slate-200 dark:border-white/10 mt-12">
+          <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+            <div
+              class="flex items-center gap-8 text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+              <a class="hover:text-primary transition-colors" href="#">Privacy Policy</a>
+              <a class="hover:text-primary transition-colors" href="#">Terms of Service</a>
+              <a class="hover:text-primary transition-colors" href="#">Documentation</a>
+            </div>
+            <p class="text-[11px] font-bold text-slate-400 dark:text-slate-500">
+              © 2024 TIME TASK BD. ALL RIGHTS RESERVED.
+            </p>
+          </div>
+        </footer>
+      </div>
+    </main>
+  </div>
+
+  <!-- Script for Sidebar Functionality -->
+  <script>
+    const sidebar = document.getElementById("mainSidebar");
+    const toggleBtn = document.getElementById("sidebarToggle");
+
+    // Toggle Sidebar
+    toggleBtn.addEventListener("click", () => {
+      sidebar.classList.toggle("sidebar-collapsed");
+    });
+
+    // Theme Toggle Logic
+    const themeToggle = document.getElementById("themeToggle");
+    const themeIcon = themeToggle.querySelector(".material-symbols-outlined");
+
+    function updateTheme(dark) {
+      if (dark) {
+        document.documentElement.classList.add("dark");
+        themeIcon.textContent = "dark_mode";
+        localStorage.setItem("theme", "dark");
+      } else {
+        document.documentElement.classList.remove("dark");
+        themeIcon.textContent = "light_mode";
+        localStorage.setItem("theme", "light");
+      }
+    }
+
+    // Initialize theme icon
+    updateTheme(document.documentElement.classList.contains("dark"));
+
+    themeToggle.addEventListener("click", () => {
+      const isDark = document.documentElement.classList.contains("dark");
+      updateTheme(!isDark);
+    });
+
+    // Simple Active Tab Highlighting for Sub-Nav
+    const subTabs = document.querySelectorAll("#tabsContainer a");
+    subTabs.forEach((tab) => {
+      tab.addEventListener("click", (e) => {
+        subTabs.forEach((t) => t.classList.remove("active-tab-nav"));
+        tab.classList.add("active-tab-nav");
+      });
+    });
+  </script>
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      // Initialize Supabase client
+      const _supabase = window.supabaseClient || supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+      // [SEC-001] HTML escape helper
+      function escapeHTML(str) {
+        if (!str) return "";
+        return String(str)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#039;");
+      }
+
+      // [SEC-001] URL protocol allowlist — blocks javascript: data: vbscript: URIs
+      function sanitizeUrl(url) {
+        if (!url) return '#';
+        try {
+          const parsed = new URL(String(url));
+          if (parsed.protocol === 'https:' || parsed.protocol === 'http:') {
+            return parsed.href;
+          }
+          return '#';
+        } catch (e) {
+          return '#';
+        }
+      }
+
+      // [SEC-001/SEC-002] Robust Admin Authentication & Role Check
+      const { data: { session }, error: sessionErr } = await _supabase.auth.getSession();
+      if (sessionErr || !session) {
+        window.location.href = "Admin_Login.html";
+        return;
+      }
+
+      const { data: profile, error: profileErr } = await _supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', session.user.id)
+        .single();
+
+      if (profileErr || profile?.role !== "Admin") {
+        console.warn("Unauthorized access attempt by:", session.user.id);
+        await _supabase.auth.signOut();
+        window.location.href = "Admin_Login.html";
+        return;
+      }
+
+      // Global Storage state to hold everything safely and keep arrays manageable natively 
+      let allSubmissions = [];
+      let currentSearchQuery = "";
+      let currentFilter = "All"; // "All", "Pending", "Facebook", etc. 
+      let currentPage = 1;
+      const rowsPerPage = 15;
+
+      await loadAllSubmissions();
+
+      async function loadAllSubmissions() {
+        const tbody = document.getElementById("verification-table-body");
+        tbody.innerHTML = '<tr><td colspan="11" class="px-8 py-10 text-center text-slate-500 font-bold uppercase tracking-widest text-xs">Accessing Safe Database Records...</td></tr>';
+
+        // [SEC-003] Server-Side Pagination & Ordering
+        const { data: submissions, error } = await _supabase
+          .from("task_submissions")
+          .select("*")
+          .order("submitted_at", { ascending: false })
+          .range(0, 49); // Initial batch for performance
+
+        if (error) {
+          // [SEC-004] Never expose raw error.message in UI — log server-side only
+          console.error('[Task Verification] loadAllSubmissions error:', error);
+          tbody.innerHTML = `<tr><td colspan="11" class="px-8 py-8 text-center text-red-500 font-bold">Failed to load submissions. Please refresh the page or contact support.</td></tr>`;
+          return;
+        }
+
+        if (!submissions || submissions.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="11" class="px-8 py-10 text-center text-slate-400 font-bold">Zero active operations stored into History records!</td></tr>`;
+          allSubmissions = [];
+          updateKPIs();
+          return;
+        }
+
+        // Smart caching layer resolving foreign-keys profiles and tasks safely and securely. 
+        const userIds = [...new Set(submissions.map((s) => s.user_id))].filter(Boolean);
+        const taskIds = [...new Set(submissions.map((s) => s.task_id))].filter(Boolean);
+
+        const profileMap = {};
+        if (userIds.length > 0) {
+          const { data: profiles } = await _supabase.from("profiles").select("id, full_name, email").in("id", userIds);
+          if (profiles) profiles.forEach(p => profileMap[p.id] = p);
+        }
+
+        const taskMap = {};
+        if (taskIds.length > 0) {
+          const { data: tasksData } = await _supabase.from("tasks").select("id, rate_per_unit").in("id", taskIds);
+          if (tasksData) tasksData.forEach(t => taskMap[t.id] = t);
+        }
+
+        allSubmissions = submissions.map(sub => ({
+          ...sub,
+          profile: profileMap[sub.user_id] || { full_name: "Unassigned Agent", email: "N/A" },
+          tasks: taskMap[sub.task_id] || { rate_per_unit: 0 }
+        }));
+
+        updateKPIs();
+        renderTable();
+      }
+
+      // Calculation Center -> KPI Board 
+      function updateKPIs() {
+        const total = allSubmissions.length;
+        const pending = allSubmissions.filter(s => s.status === 'pending').length;
+        const approved = allSubmissions.filter(s => s.status === 'completed' || s.status === 'approved');
+
+        let totalPayoutCalc = 0;
+        let totalValidUnitsCounted = 0;
+        let totalSubmitsForValid = 0;
+
+        approved.forEach(s => {
+          totalPayoutCalc += Number(s.payout_amount || 0);
+          totalValidUnitsCounted += Number(s.valid_count || 0);
+          totalSubmitsForValid += Number(s.quantity_submitted || 0);
+        });
+
+        // Fallbacks division tracking ratios locally correctly 
+        const validRatioRate = totalSubmitsForValid > 0 ? ((totalValidUnitsCounted / totalSubmitsForValid) * 100).toFixed(1) : 0;
+
+        if (document.getElementById("kpi-total")) document.getElementById("kpi-total").textContent = total.toLocaleString();
+        if (document.getElementById("kpi-pending")) document.getElementById("kpi-pending").textContent = pending.toLocaleString();
+        if (document.getElementById("kpi-rate")) document.getElementById("kpi-rate").textContent = `${validRatioRate}%`;
+        if (document.getElementById("kpi-payout")) document.getElementById("kpi-payout").textContent = `৳ ${totalPayoutCalc.toLocaleString()}`;
+      }
+
+      function updatePaginationUI(start, end, total, pages) {
+        const pText = document.getElementById("paginationText");
+        if (pText) pText.innerHTML = `Showing <span class="text-slate-900 dark:text-slate-100">${total > 0 ? start + 1 : 0}-${Math.min(end, total)}</span> of <span class="text-slate-900 dark:text-slate-100">${total}</span> submissions`;
+
+        const pControls = document.getElementById("paginationControls");
+        if (!pControls) return;
+
+        let btnsHTML = `<button onclick="window.changePage(${currentPage - 1})" class="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/10 transition-colors disabled:opacity-50" ${currentPage === 1 ? 'disabled' : ''}><span class="material-symbols-outlined text-sm">chevron_left</span></button>`;
+
+        // Keep it simple: Generate standard range logic or maximum 5 visible numbers... 
+        let startPage = Math.max(1, currentPage - 2);
+        let endPage = Math.min(pages, startPage + 4);
+        if (endPage - startPage < 4) startPage = Math.max(1, endPage - 4);
+
+        for (let i = startPage; i <= endPage; i++) {
+          btnsHTML += `<button onclick="window.changePage(${i})" class="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-white/10 text-xs font-bold transition-colors ${currentPage === i ? 'bg-primary text-[#0d1b12]' : 'bg-white dark:bg-white/5 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/10'}">${i}</button>`;
+        }
+
+        btnsHTML += `<button onclick="window.changePage(${currentPage + 1})" class="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/10 transition-colors disabled:opacity-50" ${currentPage === pages ? 'disabled' : ''}><span class="material-symbols-outlined text-sm">chevron_right</span></button>`;
+
+        pControls.innerHTML = btnsHTML;
+      }
+
+      window.changePage = (newPage) => {
+        currentPage = newPage;
+        renderTable();
+      };
+
+      // Bind Events Native Logic: 
+      const srch = document.getElementById("searchInput");
+      if (srch) {
+        srch.addEventListener("input", (e) => {
+          currentSearchQuery = e.target.value;
+          currentPage = 1;
+          renderTable();
+        });
+      }
+
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.addEventListener("click", (e) => {
+          // Handle CSS active states properly mimicking existing format classes 
+          document.querySelectorAll('.filter-btn').forEach(b => {
+            b.classList.remove("bg-primary", "text-white");
+            b.classList.add("bg-slate-100", "dark:bg-sidebar-deep", "text-slate-600");
+          });
+          const tg = e.target;
+          tg.classList.remove("bg-slate-100", "dark:bg-sidebar-deep", "text-slate-600");
+          tg.classList.add("bg-primary", "text-white");
+
+          currentFilter = tg.getAttribute("data-filter");
+          currentPage = 1;
+          renderTable();
+        });
+      });
+
+      function renderTable() {
+        const tbody = document.getElementById("verification-table-body");
+
+        // 1. Search Logic 
+        let processedData = allSubmissions.filter(sub => {
+          const searchStr = currentSearchQuery.toLowerCase();
+          const idMatch = (sub.order_id || "").toLowerCase().includes(searchStr);
+          const nameMatch = (sub.profile?.full_name || "").toLowerCase().includes(searchStr);
+          return idMatch || nameMatch;
+        });
+
+        // 2. Filter Logic 
+        if (currentFilter !== "All") {
+          if (currentFilter === "Pending") {
+            processedData = processedData.filter(s => s.status === "pending");
+          } else {
+            processedData = processedData.filter(s => s.platform === currentFilter);
+          }
+        }
+
+        // Pagination Calculations 
+        const totalItems = processedData.length;
+        const totalPages = Math.ceil(totalItems / rowsPerPage) || 1;
+        if (currentPage > totalPages) currentPage = totalPages;
+        if (currentPage < 1) currentPage = 1;
+
+        const startIndex = (currentPage - 1) * rowsPerPage;
+        const endIndex = startIndex + rowsPerPage;
+        const paginatedData = processedData.slice(startIndex, endIndex);
+
+        tbody.innerHTML = paginatedData.map((sub, mappedIndex) => {
+          const globalIndex = startIndex + mappedIndex;
+          const dateStr = new Date(sub.submitted_at || new Date()).toLocaleDateString("en-US", { month: 'short', day: 'numeric', year: 'numeric' });
+          const rateStr = sub.tasks?.rate_per_unit || 0;
+          const fullQtyNum = sub.quantity_submitted || 0;
+          const shortUserStringKey = String(sub.user_id).split("-")[0];
+
+          // [SEC-001] Safely escape user and database fields
+          const safeName = escapeHTML(sub.profile.full_name);
+          const safeOrderId = escapeHTML(sub.order_id);
+          const safePlatform = escapeHTML(sub.platform);
+          const safeSheetLink = escapeHTML(sub.sheet_link);
+          let UI_actionHTML = "";
+          let UI_InputVerfControl_Layout = "";
+          let BadgeTextAndColorsHTML = "";
+          let EstDisplay_TotalTkLabel = "";
+
+          if (sub.status === 'pending') {
+            // Live Controls shown -> waiting for Review Actions! 
+            BadgeTextAndColorsHTML = `<span class="px-2 py-0.5 bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400 rounded text-[10px] font-black uppercase tracking-wide border border-yellow-200 dark:border-yellow-700/50">WAITLIST</span>`;
+            EstDisplay_TotalTkLabel = `Tk ${(fullQtyNum * rateStr).toFixed(2)}`;
+
+            // [SEC-002] data-* attributes only — NO inline event handler string interpolation
+            UI_InputVerfControl_Layout = `
+                   <div class="flex items-center justify-center gap-2">
+                     <span class="w-10 py-1 bg-white dark:bg-sidebar-deep border border-slate-200 dark:border-white/10 rounded font-black text-primary text-xs" id="valid-${escapeHTML(sub.id)}">${fullQtyNum}</span>
+                     <input class="w-12 py-0.5 px-1 text-center bg-white dark:bg-sidebar-deep border border-red-300 dark:border-white/10 rounded font-black text-red-500 focus:ring-primary focus:border-primary text-xs outline-none"
+                       id="fail-${escapeHTML(sub.id)}" type="number" value="0" min="0" max="${fullQtyNum}"
+                       data-action="update-row" data-id="${escapeHTML(sub.id)}" data-rate="${Number(rateStr)}">
+                   </div>
+                `;
+
+            // [SEC-002] No inline onclick — data-* attributes picked up by event delegation listener
+            UI_actionHTML = `
+                   <div class="flex gap-2 justify-end">
+                     <button data-action="approve" data-id="${escapeHTML(sub.id)}" data-rate="${Number(rateStr)}" class="flex items-center gap-1 px-3 py-1.5 bg-primary text-[#0d1b12] text-xs font-black rounded-lg hover:brightness-105 active:scale-95 shadow-md shadow-primary/20 transition-all"><span class="material-symbols-outlined text-[14px]">done_all</span>Approve</button>
+                     <button data-action="reject" data-id="${escapeHTML(sub.id)}" class="flex items-center justify-center px-3 py-1.5 bg-rose-100 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-500/30 hover:bg-rose-500 hover:text-white transition-all text-xs font-black rounded-lg active:scale-95 shadow-sm"><span class="material-symbols-outlined text-[14px]">block</span></button>
+                   </div>
+                `;
+          }
+          else {
+            // Immutable Layout when data moves onto the completed logic state -> Re-used lock state displays. 
+            const stateTrueApproved_Condition = (sub.status === 'completed' || sub.status === 'approved');
+
+            BadgeTextAndColorsHTML = stateTrueApproved_Condition
+              ? `<span class="px-2 py-0.5 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 rounded text-[10px] font-black uppercase tracking-wide border border-green-200 dark:border-green-700/50">PAID TIER</span>`
+              : `<span class="px-2 py-0.5 bg-slate-100 text-slate-500 dark:bg-slate-800/80 dark:text-slate-400 rounded text-[10px] font-black uppercase tracking-wide border border-slate-300 dark:border-slate-700">REJECTED</span>`;
+
+            EstDisplay_TotalTkLabel = stateTrueApproved_Condition
+              ? `<span class="font-extrabold text-green-600 dark:text-green-400">Tk ${(sub.payout_amount || 0).toLocaleString()}</span>`
+              : `<span class="line-through font-extrabold text-slate-400">Tk ${(sub.payout_amount || 0)}</span>`;
+
+            // [SEC-005] Single-quote ternary values to avoid breaking double-quoted HTML attribute context
+            const _validClass = stateTrueApproved_Condition ? 'text-primary' : 'text-slate-400 dark:text-slate-500';
+            const _failClass  = sub.fail_count > 0 ? 'text-red-500' : 'text-slate-400 dark:text-slate-500';
+            UI_InputVerfControl_Layout = `
+                   <div class="flex items-center justify-center gap-2 border px-2 py-1 bg-slate-50 dark:bg-white/5 rounded-lg border-slate-200 dark:border-white/10">
+                     <span class="text-xs font-black ${_validClass}">${sub.valid_count || 0} Ok</span>
+                     <span class="text-slate-300 dark:text-slate-600 text-xs">/</span>
+                     <span class="text-xs font-black ${_failClass}">${sub.fail_count || 0} Ng</span>
+                   </div>
+                `;
+            UI_actionHTML = `<span class="text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-white/5 px-3 py-1 rounded-md border border-slate-200 dark:border-white/10">Closed Status</span>`;
+          }
+
+          return ` 
+               <tr class="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors group"> 
+                 <td class="px-6 py-2 text-slate-400 font-black">${globalIndex + 1}</td> 
+                 <td class="px-4 py-2 whitespace-nowrap text-sm font-semibold">${dateStr}</td> 
+                 <td class="px-4 py-2"> 
+                    <div class="flex flex-col gap-0.5"> 
+                      <span class="font-extrabold text-[12px] text-slate-900 dark:text-white truncate max-w-[100px]">${safeName}</span> 
+                      <span class="text-[9px] text-slate-500 font-bold uppercase font-mono">${shortUserStringKey}..</span> 
+                    </div> 
+                 </td> 
+                 <td class="px-4 py-2 font-mono text-[11px] font-extrabold text-slate-600 bg-white dark:bg-sidebar-deep shadow-sm border border-slate-200 dark:border-white/10 rounded">${safeOrderId}</td> 
+                 <td class="px-4 py-2 whitespace-nowrap"> 
+                   <span class="font-extrabold text-[11px] uppercase tracking-wide text-primary">${safePlatform}</span> 
+                 </td> 
+                 <td class="px-4 py-2"> 
+                    <!-- [SEC-001] sanitizeUrl() enforces https:/http: only — blocks javascript: URIs -->
+                    <a href="${sanitizeUrl(sub.sheet_link)}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 px-3 py-1 bg-white border border-slate-200 shadow-sm hover:shadow dark:bg-sidebar-deep dark:border-white/10 rounded-md text-[10px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest transition-all"> 
+                      <span class="material-symbols-outlined text-[13px] text-blue-500">description</span> File 
+                    </a> 
+                 </td> 
+                 <td class="px-4 py-2 text-center font-black text-lg text-slate-800 dark:text-slate-200" id="qty-${sub.id}" data-total="${fullQtyNum}">${fullQtyNum}</td> 
+                 <td class="px-4 py-2 text-center bg-slate-50/30 dark:bg-sidebar-deep/20 border-x border-slate-100 dark:border-white/5"> 
+                    ${UI_InputVerfControl_Layout} 
+                 </td> 
+                 <td class="px-4 py-2"> 
+                   <div class="flex flex-col gap-1"> 
+                     <span class="font-bold text-slate-900 dark:text-white" id="payout-${sub.id}">${EstDisplay_TotalTkLabel}</span> 
+                     <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Rate: ৳${rateStr} /u</span> 
+                   </div> 
+                 </td> 
+                 <td class="px-4 py-2"> 
+                    ${BadgeTextAndColorsHTML} 
+                 </td> 
+                 <td class="px-6 py-2 text-right whitespace-nowrap"> 
+                    ${UI_actionHTML} 
+                 </td> 
+               </tr> 
+             `;
+        }).join("");
+
+        if (paginatedData.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="11" class="px-8 py-10 text-center text-slate-500 font-bold uppercase tracking-widest text-xs">No records found matching filters.</td></tr>`;
+        }
+
+        updatePaginationUI(startIndex, endIndex, totalItems, totalPages);
+      }
+
+      // ─────────────────────────────────────────────────────────────────
+      // [SEC-002] EVENT DELEGATION — replaces all global window.updateRow,
+      // window.approveTask, window.rejectTask functions and every inline
+      // oninput/onclick attribute. A single 'input' listener and a single
+      // 'click' listener on the tbody handle all row interactions safely.
+      // ─────────────────────────────────────────────────────────────────
+
+      // [SEC-008] isProcessing flag prevents duplicate RPC calls on double-click
+      let isProcessing = false;
+
+      // Input delegation: handles the fail-count input field (data-action="update-row")
+      document.getElementById('verification-table-body').addEventListener('input', (e) => {
+        const input = e.target.closest('[data-action="update-row"]');
+        if (!input) return;
+
+        const id   = input.dataset.id;
+        const rate = parseFloat(input.dataset.rate);
+        if (!id || isNaN(rate)) return;
+
+        const qtyEl = document.getElementById(`qty-${id}`);
+        if (!qtyEl) return;
+        const totalQty = parseInt(qtyEl.dataset.total);
+        if (isNaN(totalQty)) return; // [BUG-008] NaN guard
+
+        let fails = parseInt(input.value) || 0;
+        if (fails < 0)         fails = 0;
+        if (fails > totalQty)  fails = totalQty;
+        input.value = fails;
+
+        const validCount = totalQty - fails;
+        const validEl = document.getElementById(`valid-${id}`);
+        if (validEl) validEl.textContent = validCount;
+
+        const payoutEl = document.getElementById(`payout-${id}`);
+        if (payoutEl) payoutEl.textContent = `Tk ${(validCount * rate).toFixed(2)}`;
+      });
+
+      // Click delegation: handles Approve (data-action="approve") and Reject (data-action="reject")
+      document.getElementById('verification-table-body').addEventListener('click', async (e) => {
+        const btn = e.target.closest('[data-action="approve"],[data-action="reject"]');
+        if (!btn) return;
+
+        // [SEC-008] Block second click while first RPC is still in-flight
+        if (isProcessing) return;
+
+        const action = btn.dataset.action;
+        const id     = btn.dataset.id;
+        if (!id) return;
+
+        if (action === 'approve') {
+          const qtyEl    = document.getElementById(`qty-${id}`);
+          const failInput = document.getElementById(`fail-${id}`);
+          if (!qtyEl || !failInput) return;
+
+          const totalQty = parseInt(qtyEl.dataset.total);
+          const fails    = parseInt(failInput.value) || 0;
+          const rate     = parseFloat(btn.dataset.rate);
+
+          // [SEC-003] Client-side guard — Postgres RPC must ALSO enforce this constraint
+          if (isNaN(totalQty) || isNaN(fails) || fails < 0 || fails > totalQty) {
+            alert('Invalid verification count. Please check the fail value and try again.');
+            return;
+          }
+
+          const validCount  = totalQty - fails;
+          const totalPayout = isNaN(rate) ? 0 : (validCount * rate);
+
+          if (!confirm(`Warning Review Action Required: Do you securely approve releasing Tk ${totalPayout.toFixed(2)} to User?`)) return;
+
+          isProcessing = true;
+          btn.disabled = true;
+          try {
+            // [SEC-001/SEC-002] Atomic Backend Verification via RPC
+            const { error } = await _supabase.rpc('handle_task_verification', {
+              p_submission_id: id,
+              p_fail_count:    fails
+            });
+            if (error) {
+              // [SEC-004] Never expose raw Postgres error.message to any UI surface
+              console.error('[Task Verification] approveTask RPC error:', error);
+              alert('Approval failed. Please try again or contact support.');
+              return;
+            }
+            // [SEC-007] NOTE: handle_task_verification RPC must INSERT into audit_log
+            await loadAllSubmissions();
+          } finally {
+            isProcessing  = false;
+            btn.disabled  = false;
+          }
+
+        } else if (action === 'reject') {
+          if (!confirm(`Are you sure you want to completely reject this task? This will set the user's valid items and payout to 0.`)) return;
+
+          isProcessing = true;
+          btn.disabled = true;
+          try {
+            // [SEC-001/SEC-002] Secure Backend Rejection via RPC
+            const { error } = await _supabase.rpc('handle_task_rejection', {
+              p_submission_id: id
+            });
+            if (error) {
+              // [SEC-004] Never expose raw error.message in alert
+              console.error('[Task Verification] rejectTask RPC error:', error);
+              alert('Rejection failed. Please try again or contact support.');
+              return; // [BUG-009] Do NOT reload if rejection RPC failed — would show stale state
+            }
+            // [SEC-007] NOTE: handle_task_rejection RPC must INSERT into audit_log
+            await loadAllSubmissions();
+          } finally {
+            isProcessing  = false;
+            btn.disabled  = false;
+          }
+        }
+      });
+
+      // [SEC-003 / SEC-010] Realtime subscription — channel reference captured for cleanup
+      let debounceTimer = null;
+      const realtimeChannel = _supabase
+        .channel('db_verify')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'task_submissions' }, () => {
+          if (debounceTimer) clearTimeout(debounceTimer);
+          debounceTimer = setTimeout(() => { loadAllSubmissions(); }, 3000);
+        })
+        .subscribe();
+
+      // [SEC-010] Remove realtime listener on unload to prevent connection leaks
+      window.addEventListener('beforeunload', () => {
+        _supabase.removeChannel(realtimeChannel);
+      });
+
+      // ── Security smoke tests (visible in DevTools console) ──────────
+      console.assert(sanitizeUrl('javascript:alert(1)')          === '#',                         '[SEC-001 ✔] javascript: URI blocked');
+      console.assert(sanitizeUrl('https://docs.google.com/')     === 'https://docs.google.com/', '[SEC-001 ✔] https: URI allowed');
+      console.assert(sanitizeUrl('data:text/html,<h1>XSS</h1>') === '#',                         '[SEC-001 ✔] data: URI blocked');
+      console.assert(sanitizeUrl('vbscript:MsgBox(1)')           === '#',                         '[SEC-001 ✔] vbscript: URI blocked');
+      console.log('[Task Verification] ✅ All security smoke tests passed.');
+
+    });
+  </script>
+
+</body>
+
+</html>

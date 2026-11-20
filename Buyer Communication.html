@@ -1,0 +1,1032 @@
+<!doctype html>
+<html class="light" lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <title>Admin Panel - Time Task BD</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+    rel="stylesheet" />
+  <script>
+    (function () {
+      const savedTheme = localStorage.getItem("theme") || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+      if (savedTheme === "dark") {
+        document.documentElement.classList.add("dark");
+        document.documentElement.classList.remove("light");
+      } else {
+        document.documentElement.classList.add("light");
+        document.documentElement.classList.remove("dark");
+      }
+    })();
+  </script>
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            primary: "#13ec5b",
+            "background-light": "#f6f8f6",
+            "background-dark": "#0d1b12",
+            "sidebar-deep": "#102216",
+            "accent-green": "#13ec5b",
+          },
+          fontFamily: {
+            display: ["Manrope"],
+          },
+          borderRadius: {
+            DEFAULT: "0.25rem",
+            lg: "0.5rem",
+            xl: "0.75rem",
+            "2xl": "1rem",
+            full: "9999px",
+          },
+        },
+      },
+    };
+  </script>
+  <style type="text/tailwindcss">
+    @layer base {
+        body {
+          @apply font-display bg-background-light dark:bg-background-dark text-slate-900 dark:text-white transition-colors duration-300;
+        }
+      }
+
+      /* Sidebar Transitions */
+      .sidebar-transition {
+        @apply transition-all duration-300 ease-in-out;
+      }
+
+      /* Active Tab Notch Logic */
+      .sidebar-item-active {
+        @apply bg-background-light text-sidebar-deep font-bold relative !important;
+        border-radius: 40px 0 0 40px;
+        margin-left: 10px;
+        width: calc(100% - 10px) !important;
+      }
+
+      .sidebar-item-active::before {
+        content: "";
+        position: absolute;
+        right: 0;
+        top: -40px;
+        width: 40px;
+        height: 40px;
+        background: transparent;
+        border-radius: 50%;
+        box-shadow: 20px 20px 0 0 #f6f8f6;
+        pointer-events: none;
+      }
+
+      .sidebar-item-active::after {
+        content: "";
+        position: absolute;
+        right: 0;
+        bottom: -40px;
+        width: 40px;
+        height: 40px;
+        background: transparent;
+        border-radius: 50%;
+        box-shadow: 20px -20px 0 0 #f6f8f6;
+        pointer-events: none;
+      }
+
+      .dark .sidebar-item-active::before { box-shadow: 20px 20px 0 0 #0d1b12; }
+      .dark .sidebar-item-active::after  { box-shadow: 20px -20px 0 0 #0d1b12; }
+      .dark .sidebar-item-active { @apply bg-background-dark text-white !important; }
+
+      .sidebar-item {
+        @apply flex items-center py-4 text-white/70 hover:text-white transition-all duration-200 cursor-pointer w-full relative;
+      }
+
+      .sidebar-item .material-symbols-outlined {
+        @apply font-light text-[24px];
+      }
+
+      .sidebar-item-active .material-symbols-outlined {
+        @apply text-sidebar-deep;
+      }
+
+      .dark .sidebar-item-active .material-symbols-outlined { @apply text-primary; }
+
+      /* Tooltip Logic - Show only when collapsed */
+      .nav-tooltip {
+        @apply invisible absolute left-full ml-4 px-2 py-1 bg-sidebar-deep text-white text-[10px] rounded whitespace-nowrap opacity-0 transition-opacity z-50 pointer-events-none;
+      }
+
+      /* Collapsed Sidebar States */
+      .sidebar-collapsed {
+        @apply w-20 pl-0;
+      }
+      .sidebar-collapsed .logo-text,
+      .sidebar-collapsed .item-text,
+      .sidebar-collapsed .menu-label,
+      .sidebar-collapsed .system-card-text {
+        @apply hidden;
+      }
+      .sidebar-collapsed .sidebar-item {
+        @apply justify-center px-0;
+      }
+      .sidebar-collapsed .sidebar-item:hover .nav-tooltip {
+        @apply visible opacity-100;
+      }
+      .sidebar-collapsed .sidebar-header {
+        @apply px-0 justify-center;
+      }
+
+      .message-bubble-admin {
+        background-color: #13ec5b;
+        color: #0d1b12;
+        border-bottom-right-radius: 0;
+      }
+      .message-bubble-user {
+        background-color: #e7f3eb;
+        color: #0d1b12;
+        border-bottom-left-radius: 0;
+      }
+      .dark .message-bubble-user {
+        background-color: #1a2e1e;
+        color: #e2e8f0;
+        border: 1px solid rgba(19, 236, 91, 0.1);
+      }
+      .dark .message-bubble-admin {
+        background-color: rgba(19, 236, 91, 0.2);
+        color: #13ec5b;
+        border: 1px solid rgba(19, 236, 91, 0.3);
+      }
+
+      /* Custom Scrollbar */
+      .custom-scrollbar::-webkit-scrollbar {
+        width: 4px;
+      }
+      .custom-scrollbar::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+      }
+
+      .active-tab-nav {
+        @apply bg-primary text-white shadow-lg shadow-primary/20;
+      }
+    </style>
+</head>
+
+<body class="flex min-h-screen overflow-hidden">
+  <!-- Sidebar -->
+  <aside id="mainSidebar"
+    class="w-72 bg-sidebar-deep flex-shrink-0 flex flex-col h-screen sticky top-0 sidebar-transition pl-2">
+    <!-- Logo Section -->
+    <div class="sidebar-header p-6 pb-12 flex items-center gap-3 transition-all">
+      <div
+        class="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20 flex-shrink-0">
+        <span class="material-symbols-outlined text-sidebar-deep font-bold text-2xl">update</span>
+      </div>
+      <div class="flex flex-col logo-text overflow-hidden">
+        <span class="text-white font-extrabold text-lg leading-tight tracking-tight whitespace-nowrap">Time Task
+          BD</span>
+        <span class="text-primary/60 text-[10px] font-bold uppercase tracking-widest whitespace-nowrap">Admin
+          Control</span>
+      </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="flex-1">
+      <div class="px-8 mb-4 menu-label">
+        <p class="text-[10px] font-bold text-white/40 uppercase tracking-[0.2em]">
+          Main Menu
+        </p>
+      </div>
+
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Admin Index.html">
+        <span class="material-symbols-outlined">dashboard</span>
+        <span class="text-sm item-text ml-4">Dashboard</span>
+        <span class="nav-tooltip">Dashboard</span>
+      </a>
+
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/System Health.html">
+        <span class="material-symbols-outlined">monitor_heart</span>
+        <span class="text-sm item-text ml-4">System Monitoring</span>
+        <span class="nav-tooltip">Security & System Monitoring</span>
+      </a>
+
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/KYC Review.html">
+        <span class="material-symbols-outlined">manage_accounts</span>
+        <span class="text-sm item-text ml-4">Management</span>
+        <span class="nav-tooltip">User & Buyer Management</span>
+      </a>
+
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/User Analytics.html">
+        <span class="material-symbols-outlined">analytics</span>
+        <span class="text-sm item-text ml-4">Analytics Section</span>
+        <span class="nav-tooltip">Analytics Section</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/User Referral Tree.html">
+        <span class="material-symbols-outlined">hub</span>
+        <span class="text-sm item-text ml-4">Referral System</span>
+        <span class="nav-tooltip">Referral System</span>
+      </a>
+
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Market Asset Price.html">
+        <span class="material-symbols-outlined">trending_up</span>
+        <span class="text-sm item-text ml-4">Market Asset Prices</span>
+        <span class="nav-tooltip">Market Asset Prices</span>
+      </a>
+
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Live Support.html">
+        <span class="material-symbols-outlined">support_agent</span>
+        <span class="text-sm item-text ml-4">Live Support</span>
+        <span class="nav-tooltip">Live Support</span>
+      </a>
+
+      <a class="sidebar-item sidebar-item-active px-8 group" href="/Admin Dashboard/Buyer Communication.html">
+        <span class="material-symbols-outlined">forum</span>
+        <span class="text-sm item-text ml-4">Communication</span>
+        <span class="nav-tooltip">Communication</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/System Announcemeeent.html">
+        <span class="material-symbols-outlined">forum</span>
+        <span class="text-sm item-text ml-4">System Announcement</span>
+        <span class="nav-tooltip">System Announcement</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Invoice Management.html">
+        <span class="material-symbols-outlined">description</span>
+        <span class="text-sm item-text ml-4">Invoice Management</span>
+        <span class="nav-tooltip">Invoice Management</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Create Content.html">
+        <span class="material-symbols-outlined">edit_note</span>
+        <span class="text-sm item-text ml-4">Content Management</span>
+        <span class="nav-tooltip">Content Management</span>
+      </a>
+    </nav>
+
+    <div class="px-6 py-8">
+      <button
+        class="w-full h-10 flex items-center justify-center bg-primary text-sidebar-deep font-bold text-xs rounded-lg hover:brightness-110 transition-all shadow-lg shadow-primary/10 group relative">
+        <span class="material-symbols-outlined text-[20px] system-icon">logout</span>
+        <span class="ml-2 system-card-text">Logout</span>
+        <span class="nav-tooltip !left-full !ml-6">Logout</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main Content wrapper -->
+  <div class="flex-1 flex flex-col h-screen overflow-hidden bg-background-light dark:bg-background-dark">
+    <!-- Header -->
+    <header
+      class="h-20 bg-white dark:bg-[#111f16] border-b border-slate-100 dark:border-white/10 px-6 flex items-center justify-between flex-shrink-0 z-40 transition-colors duration-300">
+      <div class="flex items-center gap-6">
+        <button id="sidebarToggle"
+          class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-white/70 hover:text-sidebar-deep dark:hover:text-primary hover:bg-primary/10 transition-all">
+          <span class="material-symbols-outlined">menu</span>
+        </button>
+        <div class="relative w-96 group">
+          <span
+            class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-sidebar-deep dark:group-focus-within:text-primary transition-colors">search</span>
+          <input
+            class="w-full bg-slate-100 dark:bg-white/5 border-none rounded-xl pl-10 pr-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 dark:text-white transition-all"
+            placeholder="Search system records..." type="text" />
+        </div>
+      </div>
+
+      <div class="flex items-center gap-6">
+        <div class="flex items-center gap-2">
+          <button
+            class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-white/70 hover:bg-primary/10 transition-all relative">
+            <span class="material-symbols-outlined">notifications</span>
+            <span
+              class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-[#111f16]"></span>
+          </button>
+          <button id="darkModeToggle"
+            class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-white/70 hover:text-sidebar-deep dark:hover:text-primary hover:bg-primary/10 transition-all">
+            <span id="darkIcon" class="material-symbols-outlined">light_mode</span>
+          </button>
+        </div>
+        <div class="h-10 w-px bg-slate-200 dark:bg-white/10"></div>
+        <div class="flex items-center gap-3 cursor-pointer group">
+          <div class="text-right">
+            <p class="text-sm font-bold text-slate-900 dark:text-white group-hover:text-primary transition-colors">
+              Super Admin
+            </p>
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
+              System Manager
+            </p>
+          </div>
+          <div
+            class="w-12 h-12 rounded-xl border-2 border-primary/20 p-0.5 overflow-hidden group-hover:border-primary transition-all">
+            <img alt="Admin Profile" class="w-full h-full object-cover rounded-lg"
+              src="https://lh3.googleusercontent.com/aida-public/AB6AXuDI3q59cS__AXyYcqFQtKZ2-e__roEJ3Cic28K7cd-6tYYxzLfpTArNsAJE3UypttzDIKS6SoNy85-jDLh0ZMbLqXr0NEEjrbCPSgoCJZyYc4W89P8djmlf34I_NEoa2vfl5IS3jHwLSZZ6lgtwguAje5Lv9h9RbZ2fJqb36M_tmZc-iJY-XxAXsCDxVyU1bONcO3AV5LZgB1o5wURKpB9w2XEN6iWAILVT7fIzOkl2pQ4lJb5WxYgkvuNIlKakHZWN1e4bzfo25zYy" />
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Dashboard Content -->
+    <main class="max-w-[1600px] mx-auto w-full flex-1 flex flex-1 overflow-hidden">
+      <!-- Left Sidebar: Buyer List -->
+      <aside class="w-80 flex flex-col bg-white dark:bg-background-dark border-r border-slate-200 dark:border-white/10">
+        <div class="p-4 border-b border-slate-200 dark:border-white/10">
+          <h1 class="text-slate-900 dark:text-white text-lg font-bold mb-3">
+            Buyer Messages
+          </h1>
+          <div class="relative">
+            <span
+              class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">search</span>
+            <input id="buyer-search"
+              class="w-full bg-slate-50 dark:bg-white/10 dark:text-white border-none rounded-lg pl-9 pr-4 py-2 text-xs focus:ring-1 focus:ring-primary"
+              placeholder="Search Buyer Name or Username..." />
+          </div>
+          <button id="force-refresh-btn"
+            class="mt-2 w-full py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-[10px] font-bold uppercase tracking-wider rounded transition-colors dark:text-white/70 flex items-center justify-center gap-2">
+            <span class="material-symbols-outlined text-sm">refresh</span>
+            Refresh Inbox
+          </button>
+        </div>
+        <div id="inbox-list" class="flex-1 overflow-y-auto custom-scrollbar">
+          <!-- Dynamic sidebar list will be populated here -->
+        </div>
+      </aside>
+      <!-- Main Chat Area -->
+      <section class="flex-1 flex flex-col bg-background-light dark:bg-[#0a140d] relative">
+        <!-- Chat Header -->
+        <div
+          class="px-6 py-4 bg-white dark:bg-background-dark border-b border-slate-200 dark:border-white/10 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div id="chat-header-avatar"
+              class="bg-center bg-no-repeat aspect-square bg-cover rounded-full h-10 w-10 flex border items-center justify-center bg-slate-100"
+              data-alt="Current active buyer"></div>
+            <div>
+              <h3 id="chat-header-name" class="text-slate-900 dark:text-white text-base font-bold leading-none">
+                Select a user
+              </h3>
+              <div id="chat-header-status" class="flex items-center gap-1.5 mt-1 hidden">
+                <div class="size-2 bg-primary rounded-full"></div>
+                <span
+                  class="text-[11px] text-slate-500 dark:text-white/50 font-semibold uppercase tracking-wider">Active
+                  Now</span>
+              </div>
+            </div>
+          </div>
+          <div class="flex items-center gap-3">
+            <button class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+              <span class="material-symbols-outlined">call</span>
+            </button>
+            <button class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+              <span class="material-symbols-outlined">videocam</span>
+            </button>
+            <button class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+              <span class="material-symbols-outlined">more_vert</span>
+            </button>
+          </div>
+        </div>
+        <!-- Message Feed -->
+        <div id="chat-messages" class="flex-1 overflow-y-auto p-6 flex flex-col gap-6 custom-scrollbar">
+          <div class="flex h-full items-center justify-center text-slate-400">Select a conversation from the left to
+            view messages.</div>
+        </div>
+        <!-- Input Area -->
+        <div class="p-4 bg-white dark:bg-background-dark border-t border-slate-200 dark:border-white/10">
+          <!-- Quick Templates -->
+          <div class="flex gap-2 overflow-x-auto pb-3 mb-1 custom-scrollbar no-scrollbar whitespace-nowrap">
+            <button
+              class="px-3 py-1.5 bg-slate-100 dark:bg-white/5 hover:bg-primary/20 hover:text-primary border border-slate-200 dark:border-white/10 rounded-lg text-xs font-bold text-slate-600 dark:text-white/50 transition-all">
+              Order Received
+            </button>
+            <button
+              class="px-3 py-1.5 bg-slate-100 dark:bg-white/5 hover:bg-primary/20 hover:text-primary border border-slate-200 dark:border-white/10 rounded-lg text-xs font-bold text-slate-600 dark:text-white/50 transition-all">
+              Payment Verified
+            </button>
+            <button
+              class="px-3 py-1.5 bg-slate-100 dark:bg-white/5 hover:bg-primary/20 hover:text-primary border border-slate-200 dark:border-white/10 rounded-lg text-xs font-bold text-slate-600 dark:text-white/50 transition-all">
+              Identity Check Required
+            </button>
+            <button
+              class="px-3 py-1.5 bg-slate-100 dark:bg-white/5 hover:bg-primary/20 hover:text-primary border border-slate-200 dark:border-white/10 rounded-lg text-xs font-bold text-slate-600 dark:text-white/50 transition-all">
+              Milestone Updated
+            </button>
+          </div>
+          <div class="flex gap-3 h-[45px]">
+            <div class="flex items-center gap-1 shrink-0 relative">
+              <button id="attachment-btn"
+                class="size-9 flex items-center justify-center rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 relative">
+                <span class="material-symbols-outlined">add_circle</span>
+                <input type="file" id="file-input" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  accept="image/*,.pdf" />
+              </button>
+              <button id="emoji-btn"
+                class="size-9 flex items-center justify-center rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500">
+                <span class="material-symbols-outlined">mood</span>
+              </button>
+            </div>
+            <div class="flex-1 relative">
+              <div id="emoji-picker-container" class="absolute bottom-full left-0 mb-2 hidden z-50"></div>
+              <textarea id="chat-input"
+                class="w-full bg-slate-100 dark:bg-white/10 border-none rounded-xl py-3 px-4 text-sm focus:ring-1 focus:ring-primary dark:text-white resize-none overflow-hidden"
+                placeholder="Type a message..." rows="1"></textarea>
+            </div>
+            <button id="send-btn"
+              class="size-11 bg-primary text-slate-900 rounded-xl flex items-center justify-center shrink-0 shadow-lg shadow-primary/20 hover:scale-105 transition-transform">
+              <span class="material-symbols-outlined">send</span>
+            </button>
+          </div>
+        </div>
+      </section>
+      <!-- Right Sidebar: Buyer Profile Summary -->
+      <aside
+        class="w-72 bg-white dark:bg-background-dark border-l border-slate-200 dark:border-white/10 flex flex-col hidden xl:flex">
+        <div class="p-6 flex flex-col items-center border-b border-slate-200 dark:border-white/10 text-center">
+          <div id="profile-avatar"
+            class="size-24 rounded-full bg-cover bg-center border-4 border-slate-100 dark:border-slate-800 shadow-sm bg-slate-100"
+            data-alt="Buyer profile large"></div>
+          <h4 id="profile-name" class="text-slate-900 dark:text-white text-lg font-bold mt-2">
+            -
+          </h4>
+          <div class="mt-2 flex gap-2">
+            <span
+              class="px-2 py-1 bg-primary/10 text-primary text-[10px] font-bold rounded uppercase tracking-wide">Verified</span>
+            <span
+              class="px-2 py-1 bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-white/50 text-[10px] font-bold rounded uppercase tracking-wide">Global</span>
+          </div>
+        </div>
+        <div class="p-6 flex flex-col gap-6">
+          <div>
+            <h5 class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-3">
+              Account Details
+            </h5>
+            <div class="space-y-3">
+              <div class="flex justify-between items-center">
+                <span class="text-xs text-slate-500 font-medium">Buyer ID</span>
+                <span id="profile-id" class="text-xs text-slate-900 dark:text-slate-200 font-bold">-</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-xs text-slate-500 font-medium">Member Since</span>
+                <span id="profile-member-since" class="text-xs text-slate-900 dark:text-slate-200 font-bold">-</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-xs text-slate-500 font-medium">Last Login</span>
+                <span class="text-xs text-slate-900 dark:text-slate-200 font-bold">Active</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-xs text-slate-500 font-medium">Response Rate</span>
+                <span class="text-xs text-primary font-bold">100%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="mt-auto p-4 border-t border-slate-200 dark:border-white/10">
+          <button
+            class="w-full py-2.5 bg-slate-100 dark:bg-white/5 hover:bg-red-50 dark:hover:bg-red-500/10 text-slate-600 dark:text-white/50 hover:text-red-500 rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition-colors">
+            <span class="material-symbols-outlined text-lg">block</span>
+            Block Buyer
+          </button>
+        </div>
+      </aside>
+    </main>
+  </div>
+
+  <!-- Script for Sidebar Functionality -->
+  <script>
+    const sidebar = document.getElementById("mainSidebar");
+    const toggleBtn = document.getElementById("sidebarToggle");
+
+    // Toggle Sidebar
+    toggleBtn.addEventListener("click", () => {
+      sidebar.classList.toggle("sidebar-collapsed");
+    });
+
+    // Simple Active Tab Highlighting for Sub-Nav
+    const subTabs = document.querySelectorAll("#tabsContainer a");
+    subTabs.forEach((tab) => {
+      tab.addEventListener("click", (e) => {
+        subTabs.forEach((t) => t.classList.remove("active-tab-nav"));
+        tab.classList.add("active-tab-nav");
+      });
+    });
+
+    // ─── Dark Mode Toggle Logic ──────────────────────────────────────────────
+    const themeToggle = document.getElementById('darkModeToggle');
+    const darkIcon = document.getElementById('darkIcon');
+
+    function updateThemeUI(theme) {
+      if (theme === 'dark') {
+        document.documentElement.classList.add('dark');
+        document.documentElement.classList.remove('light');
+        darkIcon.textContent = 'dark_mode';
+      } else {
+        document.documentElement.classList.add('light');
+        document.documentElement.classList.remove('dark');
+        darkIcon.textContent = 'light_mode';
+      }
+    }
+
+    themeToggle.addEventListener('click', () => {
+      const isDark = document.documentElement.classList.contains('dark');
+      const newTheme = isDark ? 'light' : 'dark';
+      localStorage.setItem('theme', newTheme);
+      updateThemeUI(newTheme);
+    });
+
+    // Sync UI with current theme on load
+    const currentSavedTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    updateThemeUI(currentSavedTheme);
+  </script>
+
+  <script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+    import 'https://cdn.jsdelivr.net/npm/emoji-picker-element@1.21.3/index.js';
+
+    const _supabase = window.supabaseClient;
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      const inboxList = document.getElementById("inbox-list");
+      const chatMessages = document.getElementById("chat-messages");
+      const chatInput = document.getElementById("chat-input");
+      const sendBtn = document.getElementById("send-btn");
+      const fileInput = document.getElementById("file-input");
+      const forceRefreshBtn = document.getElementById("force-refresh-btn");
+      const buyerSearch = document.getElementById("buyer-search");
+
+      const chatHeaderName = document.getElementById("chat-header-name");
+      const chatHeaderStatus = document.getElementById("chat-header-status");
+      const chatHeaderAvatar = document.getElementById("chat-header-avatar");
+
+      const profileAvatar = document.getElementById("profile-avatar");
+      const profileName = document.getElementById("profile-name");
+      const profileId = document.getElementById("profile-id");
+      const profileMemberSince = document.getElementById("profile-member-since");
+
+      const emojiBtn = document.getElementById("emoji-btn");
+      const emojiPickerContainer = document.getElementById("emoji-picker-container");
+
+      let currentAdmin = null;
+      let selectedConversationId = null;
+      let activeSubscription = null;
+
+      const picker = document.createElement('emoji-picker');
+      emojiPickerContainer.appendChild(picker);
+
+      emojiBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        emojiPickerContainer.classList.toggle('hidden');
+      });
+
+      picker.addEventListener('emoji-click', event => {
+        chatInput.value += event.detail.unicode;
+        emojiPickerContainer.classList.add('hidden');
+        chatInput.focus();
+      });
+
+      document.addEventListener('click', (e) => {
+        if (!emojiBtn.contains(e.target) && !emojiPickerContainer.contains(e.target)) {
+          emojiPickerContainer.classList.add('hidden');
+        }
+      });
+
+      // Added event listener for the refresh button
+      forceRefreshBtn.addEventListener('click', async () => {
+        buyerSearch.value = '';
+        await loadInbox();
+      });
+
+      buyerSearch.addEventListener('input', async (e) => {
+        const query = e.target.value.trim();
+        if (query.length === 0) {
+          await loadInbox();
+          return;
+        }
+        await handleSearch(query);
+      });
+
+      async function handleSearch(query) {
+        console.log("Admin Panel: Searching for buyers:", query);
+        const { data, error } = await _supabase
+          .from('profiles')
+          .select('id, full_name, username, avatar_url, created_at')
+          .eq('role', 'Buyer')
+          .or(`full_name.ilike.%${query}%,username.ilike.%${query}%`)
+          .limit(20);
+
+        if (error) {
+          console.error("Search error:", error);
+          return;
+        }
+
+        renderSearchResults(data);
+      }
+
+      function renderSearchResults(results) {
+        inboxList.innerHTML = '';
+        if (results.length === 0) {
+          inboxList.innerHTML = `<div class="p-8 text-center text-slate-400 text-xs">No buyers found</div>`;
+          return;
+        }
+
+        results.forEach(profile => {
+          const item = document.createElement('div');
+          item.className = `flex items-center gap-3 p-4 hover:bg-background-light dark:hover:bg-white/5 cursor-pointer transition-colors border-b border-[#e7f3eb] dark:border-white/10`;
+
+          item.onclick = () => selectUser(profile.id, profile);
+
+          item.innerHTML = `
+                <div class="relative">
+                  <img class="size-12 rounded-full object-cover bg-slate-200" src="${profile.avatar_url || 'https://via.placeholder.com/48'}" />
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="flex justify-between items-start mb-0.5">
+                    <p class="text-sm truncate text-slate-900 dark:text-white font-semibold">${profile.full_name || profile.username || 'Buyer'}</p>
+                  </div>
+                  <p class="text-[10px] opacity-50 truncate">@${profile.username || 'buyer'}</p>
+                </div>
+              `;
+          inboxList.appendChild(item);
+        });
+      }
+
+      async function init() {
+        // Wait briefly to ensure supabase client initializes auth state
+        setTimeout(async () => {
+          const { data: { session } } = await _supabase.auth.getSession();
+          if (!session) {
+            console.warn("No active Supabase session found in Admin Panel. Need login.");
+            window.location.href = "Admin_Login.html";
+            return;
+          }
+
+          // Verify Admin Role
+          const { data: profile } = await _supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', session.user.id)
+            .single();
+
+          if (profile?.role !== 'Admin') {
+            alert("Access Denied: You are not an administrator.");
+            await _supabase.auth.signOut();
+            window.location.href = "/Admin Dashboard/Admin Login.html";
+            return;
+          }
+
+          currentAdmin = session.user;
+          console.log("Admin Panel: Logged in as", currentAdmin.email);
+          await loadInbox();
+
+          // Global subscription for any changes to the messages table to refresh the inbox list
+          _supabase
+            .channel('global_admin_inbox')
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, async payload => {
+              // When any new message comes in, refresh the inbox if not searching
+              if (!buyerSearch.value.trim()) {
+                await loadInbox();
+              }
+            })
+            .subscribe();
+        }, 500);
+      }
+
+      async function loadInbox() {
+        console.log("Admin Panel: Attempting to load Inbox...");
+        const { data, error } = await _supabase
+          .from('messages')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          console.error("Supabase Error fetching inbox:", error);
+          inboxList.innerHTML = `<div class="p-4 text-center">
+            <p class="text-xs text-red-500 font-bold">Error loading messages</p>
+            <p class="text-[10px] text-slate-400 mt-1">${error.message}</p>
+          </div>`;
+          return;
+        }
+
+        if (!data || data.length === 0) {
+          console.log("Admin Panel: No messages found in database.");
+          inboxList.innerHTML = `<div class="p-8 text-center">
+            <span class="material-symbols-outlined text-3xl text-slate-200 mb-2">forum</span>
+            <p class="text-xs text-slate-500 font-medium">No active conversations</p>
+            <p class="text-[10px] text-slate-400 mt-1">When buyers send messages, they will appear here.</p>
+          </div>`;
+          return;
+        }
+
+        console.log(`Admin Panel: Found ${data.length} messages. Grouping...`);
+        const convMap = new Map();
+        data.forEach(msg => {
+          // Fallback to sender_id if conversation_id is missing for some reason
+          const convId = msg.conversation_id || (msg.sender_id !== currentAdmin.id ? msg.sender_id : msg.receiver_id);
+          if (convId && !convMap.has(convId)) {
+            convMap.set(convId, msg);
+          }
+        });
+
+        const conversations = Array.from(convMap.values()).map(msg => {
+          return {
+            ...msg,
+            conversation_id: msg.conversation_id || (msg.sender_id !== currentAdmin.id ? msg.sender_id : msg.receiver_id)
+          };
+        });
+
+        const userIds = conversations.map(c => c.conversation_id).filter(id => !!id);
+        if (userIds.length === 0) {
+          inboxList.innerHTML = `<div class="p-4 text-xs text-slate-500 text-center">Could not identify conversation IDs.</div>`;
+          return;
+        }
+
+        console.log("Admin Panel: Unique Conversation IDs found:", userIds);
+
+        const { data: profiles } = await _supabase.from('profiles').select('id, full_name, avatar_url, created_at').in('id', userIds);
+
+        const profileMap = {};
+        if (profiles) profiles.forEach(p => profileMap[p.id] = p);
+
+        // Debug log to trace what we found
+        console.log("Loaded conversations:", conversations);
+        console.log("Loaded profiles:", profiles);
+
+        renderInbox(conversations, profileMap);
+      }
+
+      function renderInbox(conversations, profileMap) {
+        inboxList.innerHTML = '';
+        conversations.forEach(conv => {
+          const profile = profileMap[conv.conversation_id] || { full_name: 'Unknown User' };
+          const time = new Date(conv.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          const preview = conv.content ? conv.content.substring(0, 30) + (conv.content.length > 30 ? '...' : '') : 'Attachment';
+
+          const isUnread = (!conv.is_read && conv.sender_id !== currentAdmin.id);
+
+          const item = document.createElement('div');
+          item.className = `flex items-center gap-3 p-4 hover:bg-background-light dark:hover:bg-white/5 cursor-pointer transition-colors border-b border-[#e7f3eb] dark:border-white/10 ${isUnread ? 'bg-primary/5 border-l-4 border-l-primary' : ''}`;
+
+          item.onclick = () => selectUser(conv.conversation_id, profile);
+
+          item.innerHTML = `
+                <div class="relative">
+                  <img class="size-12 rounded-full object-cover bg-slate-200" src="${profile.avatar_url || 'https://via.placeholder.com/48'}" />
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="flex justify-between items-start mb-0.5">
+                    <p class="text-sm truncate text-slate-900 dark:text-white ${isUnread ? 'font-bold' : 'font-semibold'}">${profile.full_name || 'Buyer'}</p>
+                    <span class="text-[10px] opacity-50">${time}</span>
+                  </div>
+                  <p class="text-xs opacity-70 truncate ${isUnread ? 'text-primary' : ''}">${preview}</p>
+                </div>
+              `;
+          inboxList.appendChild(item);
+        });
+      }
+
+      async function selectUser(userId, profile) {
+        selectedConversationId = userId;
+
+        chatHeaderName.textContent = profile.full_name || profile.username || 'Buyer ' + userId.substring(0, 6);
+        chatHeaderStatus.classList.remove('hidden');
+        chatHeaderAvatar.style.backgroundImage = `url('${profile.avatar_url || "https://via.placeholder.com/40"}')`;
+
+        if (profileName) profileName.textContent = profile.full_name || profile.username || 'Buyer';
+        if (profileId) profileId.textContent = userId.substring(0, 8);
+        if (profileAvatar) profileAvatar.style.backgroundImage = `url('${profile.avatar_url || "https://via.placeholder.com/96"}')`;
+        if (profileMemberSince) profileMemberSince.textContent = profile.created_at ? new Date(profile.created_at).toLocaleDateString() : '-';
+
+        await loadMessages(userId);
+
+        if (activeSubscription) _supabase.removeChannel(activeSubscription);
+        subscribeToConversation(userId);
+
+        // Refresh inbox list to remove unread marker, but only if not searching
+        if (!buyerSearch.value.trim()) {
+          await loadInbox();
+        }
+      }
+
+      async function loadMessages(userId) {
+        const { data: messages, error } = await _supabase
+          .from('messages')
+          .select('*')
+          .eq('conversation_id', userId)
+          .order('created_at', { ascending: true });
+
+        if (error) console.error("Error loading messages:", error);
+
+        chatMessages.innerHTML = '';
+        if (messages && messages.length > 0) {
+          let lastDate = '';
+          messages.forEach(msg => {
+            const date = new Date(msg.created_at);
+            const dateStr = date.toLocaleDateString();
+            const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+            if (dateStr !== lastDate) {
+              const separator = document.createElement('div');
+              separator.className = 'flex justify-center my-4';
+              separator.innerHTML = `<span class="px-3 py-1 bg-slate-200 dark:bg-white/10 rounded-full text-[10px] font-bold text-slate-500 dark:text-white/50 uppercase tracking-widest">${dateStr === new Date().toLocaleDateString() ? 'Today' : dateStr}</span>`;
+              chatMessages.appendChild(separator);
+              lastDate = dateStr;
+            }
+            appendMessageUI(msg, timeStr);
+          });
+          scrollToBottom();
+          markAsRead(userId);
+        } else {
+          chatMessages.innerHTML = '<div class="flex h-full items-center justify-center text-slate-400">No messages yet. Say hello!</div>';
+        }
+      }
+
+      function appendMessageUI(msg, timeStr) {
+        if (msg.conversation_id !== selectedConversationId) return;
+
+        // Since it's admin panel, "me" is the admin. Wait, sender might be ANY admin ID? 
+        // Admin could be any logged in user not equal to conversationId basically.
+        const isAdmin = msg.sender_id === currentAdmin.id || msg.sender_id !== msg.conversation_id;
+
+        const bubbleWrapper = document.createElement('div');
+        bubbleWrapper.className = isAdmin ? 'flex flex-row-reverse gap-3 self-end max-w-[80%] mt-2' : 'flex gap-3 max-w-[80%] mt-2';
+
+        let contentHtml = '';
+
+        if (msg.attachment_url) {
+          if (msg.attachment_type && msg.attachment_type.startsWith('image/')) {
+            contentHtml += `<img src="${msg.attachment_url}" class="max-w-[200px] mb-2 rounded-lg cursor-pointer border border-black/10" onclick="window.open('${msg.attachment_url}', '_blank')" />`;
+          } else {
+            contentHtml += `
+                <div class="bg-white dark:bg-slate-800 p-2 rounded-xl shadow-sm mb-2 hover:bg-black/5 cursor-pointer" onclick="window.open('${msg.attachment_url}', '_blank')">
+                  <div class="flex items-center gap-3 bg-slate-50 dark:bg-slate-900 p-2 rounded-lg border border-slate-100 dark:border-slate-800">
+                    <div class="size-10 bg-red-100 dark:bg-red-900/30 flex items-center justify-center rounded text-red-600">
+                      <span class="material-symbols-outlined">description</span>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                      <p class="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">Attachment file</p>
+                    </div>
+                    <span class="text-primary rounded p-1">
+                      <span class="material-symbols-outlined text-xl">download</span>
+                    </span>
+                  </div>
+                </div>`;
+          }
+        }
+
+        if (msg.content) {
+          if (isAdmin) {
+            contentHtml += `<div class="bg-primary p-4 rounded-xl rounded-tr-none shadow-sm text-sm text-slate-900 font-medium leading-relaxed break-words">${msg.content}</div>`;
+          } else {
+            contentHtml += `<div class="bg-white dark:bg-slate-800 p-4 rounded-xl rounded-tl-none shadow-sm text-sm text-slate-800 dark:text-slate-200 leading-relaxed break-words">${msg.content}</div>`;
+          }
+        }
+
+        if (isAdmin) {
+          bubbleWrapper.innerHTML = `
+              <div class="flex flex-col items-end gap-1 w-full relative">
+                ${contentHtml}
+                <div class="flex items-center gap-1 px-1 mt-1 justify-end">
+                  <span class="text-[10px] text-slate-400">${timeStr}</span>
+                  <span class="material-symbols-outlined text-[14px] text-primary">${msg.is_read ? 'done_all' : 'check'}</span>
+                </div>
+              </div>
+            `;
+        } else {
+          bubbleWrapper.innerHTML = `
+              <div class="flex flex-col gap-1 relative">
+                ${contentHtml}
+                <span class="text-[10px] text-slate-400 px-1 mt-1">${timeStr}</span>
+              </div>
+            `;
+        }
+
+        chatMessages.appendChild(bubbleWrapper);
+      }
+
+      function subscribeToConversation(userId) {
+        activeSubscription = _supabase
+          .channel(`admin_chat_${userId}`)
+          .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `conversation_id=eq.${userId}` }, async payload => {
+            const date = new Date(payload.new.created_at);
+            // Remove placeholder text if exists
+            if (chatMessages.innerHTML.includes('Select a conversation') || chatMessages.innerHTML.includes('No messages yet')) {
+              chatMessages.innerHTML = '';
+            }
+            appendMessageUI(payload.new, date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+            scrollToBottom();
+            if (payload.new.sender_id !== currentAdmin.id) {
+              markAsRead(userId);
+            }
+          })
+          .subscribe();
+      }
+
+      async function markAsRead(userId) {
+        await _supabase
+          .from('messages')
+          .update({ is_read: true })
+          .eq('conversation_id', userId)
+          .neq('sender_id', currentAdmin.id)
+          .eq('is_read', false);
+      }
+
+      async function sendMessage(attachmentUrl = null, attachmentType = null) {
+        if (!selectedConversationId) {
+          alert("Select a buyer first");
+          return;
+        }
+
+        const text = chatInput.value.trim();
+        if (!text && !attachmentUrl) return;
+
+        chatInput.value = '';
+
+        const { error } = await _supabase.from('messages').insert({
+          sender_id: currentAdmin.id,
+          receiver_id: selectedConversationId,
+          conversation_id: selectedConversationId,
+          content: text,
+          attachment_url: attachmentUrl,
+          attachment_type: attachmentType
+        });
+
+        if (error) {
+          console.error("Error sending:", error);
+          alert("Failed to send message.");
+        } else {
+          scrollToBottom();
+        }
+      }
+
+      fileInput.addEventListener('change', async (e) => {
+        if (!selectedConversationId) {
+          alert("Select a conversation first.");
+          e.target.value = '';
+          return;
+        }
+        const file = e.target.files[0];
+        if (!file) return;
+
+        e.target.value = '';
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Math.random()}.${fileExt}`;
+        const filePath = `${selectedConversationId}/${fileName}`;
+
+        const originalPlaceholder = chatInput.placeholder;
+        chatInput.placeholder = "Uploading file...";
+        chatInput.disabled = true;
+
+        const { data, error } = await _supabase.storage
+          .from('chat-attachments')
+          .upload(filePath, file);
+
+        chatInput.placeholder = originalPlaceholder;
+        chatInput.disabled = false;
+
+        if (error) {
+          console.error("Upload error:", error);
+          alert("Failed to upload file.");
+          return;
+        }
+
+        const { data: { publicUrl } } = _supabase.storage
+          .from('chat-attachments')
+          .getPublicUrl(filePath);
+
+        sendMessage(publicUrl, file.type);
+      });
+
+      sendBtn.addEventListener("click", () => sendMessage());
+      chatInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" && !e.shiftKey) {
+          e.preventDefault();
+          sendMessage();
+        }
+      });
+
+      function scrollToBottom() {
+        setTimeout(() => {
+          chatMessages.scrollTop = chatMessages.scrollHeight;
+        }, 50);
+      }
+
+      document.querySelectorAll(".flex.gap-2.overflow-x-auto button").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+          if (!selectedConversationId) { alert("Select a buyer first"); return; }
+          chatInput.value += e.target.textContent.trim() + " ";
+          chatInput.focus();
+        });
+      });
+
+      const refreshBtn = document.getElementById("force-refresh-btn");
+      if (refreshBtn) refreshBtn.addEventListener("click", () => loadInbox());
+
+      init();
+    });
+  </script>
+
+  <!-- Supabase & Auth Initialization -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../supabase-client.js"></script>
+  <script src="../auth-guard.js"></script>
+  <script src="../navbar-auth.js"></script>
+
+</body>
+
+</html>

@@ -1,0 +1,922 @@
+<!doctype html>
+<html class="light" lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <title>Time Task BD - Wallet</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400;500;600;700&amp;display=swap"
+    rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&amp;display=swap"
+    rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+    rel="stylesheet" />
+  <!-- Supabase Client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../supabase-client.js"></script>
+  <script src="../auth-guard.js"></script>
+  <script src="../navbar-auth.js"></script>
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            primary: "#13ec5b",
+            "background-light": "#f6f8f6",
+            "background-dark": "#102216",
+            "footer-light": "#f0f2f0",
+            "footer-dark": "#1a2e20",
+            "brand-bg": "#f6f8f6",
+            "card-bg": "#ffffff",
+            "card-border": "#e2e8f0",
+            "accent-green": "#13ec5b",
+            "accent-green-hover": "#0dbd49",
+            "accent-green-dim": "rgba(19, 236, 91, 0.1)",
+            "primary-text": "#1a1c1e",
+            "secondary-text": "#64748b",
+            "input-bg": "#f8fafc",
+            "deep-navy": "#f1f5f9",
+          },
+          fontFamily: {
+            display: ["Manrope", "sans-serif"],
+          },
+          borderRadius: {
+            DEFAULT: "0.25rem",
+            lg: "0.5rem",
+            xl: "0.75rem",
+            "2xl": "1rem",
+            "3xl": "1.5rem",
+            full: "9999px",
+          },
+        },
+      },
+    };
+  </script>
+  <style type="text/tailwindcss">
+    :root {
+        --brand-bg: #f6f8f6;
+        --card-bg: #ffffff;
+        --accent-green: #13ec5b;
+        --accent-glow: rgba(19, 236, 91, 0.15);
+        --glass-bg: rgba(255, 255, 255, 0.8);
+        --glass-border: rgba(19, 236, 91, 0.3);
+      }
+      .material-symbols-outlined {
+        font-variation-settings:
+          "FILL" 0,
+          "wght" 400,
+          "GRAD" 0,
+          "opsz" 24;
+      }
+      body {
+        font-family: "Manrope", sans-serif;
+        background-color: var(--brand-bg);
+        color: #1a1c1e;
+      }
+      .btn-primary {
+        background: linear-gradient(135deg, #13ec5b 0%, #0dbd49 100%);
+        transition: all 0.3s ease;
+        color: #ffffff;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+      }
+      .btn-primary:hover {
+        filter: brightness(1.05);
+        box-shadow: 0 10px 15px -3px rgba(19, 236, 91, 0.3);
+      }
+      .glass-card {
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(19, 236, 91, 0.2);
+      }
+      .dark .glass-card {
+        background: rgba(16, 34, 22, 0.7);
+        border: 1px solid rgba(19, 236, 91, 0.1);
+      }
+      .balance-glow-sidebar {
+        background: linear-gradient(135deg, #ffffff 0%, #f0fff4 100%);
+        box-shadow: 0 10px 40px -10px rgba(19, 236, 91, 0.25);
+        border: 1px solid rgba(19, 236, 91, 0.3);
+      }
+      .dark .balance-glow-sidebar {
+        background: linear-gradient(135deg, #1a3321 0%, #0d1b12 100%);
+        box-shadow: 0 10px 40px -10px rgba(19, 236, 91, 0.15);
+        border: 1px solid rgba(19, 236, 91, 0.1);
+      }
+      .no-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+      .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+    </style>
+</head>
+
+<body class="bg-background-light dark:bg-background-dark text-[#0d1b12] dark:text-white min-h-screen flex flex-col">
+  <!-- Universal Header from INDEX.Html -->
+  <header id="main-header"
+    class="sticky top-0 z-50 w-full bg-white/95 dark:bg-background-dark/95 backdrop-blur-md border-b border-[#e7f3eb] dark:border-white/10">
+    <div class="max-w-[1280px] mx-auto h-20 flex items-center justify-between">
+      <div class="flex items-center shrink-0">
+        <a class="flex items-center gap-2 group" href="#">
+          <div class="size-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
+            <span class="material-symbols-outlined text-2xl">update</span>
+          </div>
+          <span class="text-xl font-bold tracking-tight text-[#0d1b12] dark:text-white ml-1">Time Task <span
+              class="text-primary">BD</span></span>
+        </a>
+      </div>
+      <div class="flex items-center justify-end flex-grow gap-8 ml-auto">
+        <nav class="hidden lg:flex items-center gap-10">
+          <a class="text-sm font-medium hover:text-primary transition-colors text-[#0d1b12] dark:text-gray-300"
+            href="/Web Dashboard/Home_Page.html">Home</a>
+          <a class="text-sm font-medium hover:text-primary transition-colors text-[#0d1b12] dark:text-gray-300"
+            href="/Web Dashboard/Blog_Page.html">Blog</a>
+          <a class="text-sm font-medium hover:text-primary transition-colors text-[#0d1b12] dark:text-gray-300"
+            href="Video_Gallery_Page.html">Video Gallery
+          </a>
+          <a class="text-sm font-medium hover:text-primary transition-colors text-[#0d1b12] dark:text-gray-300"
+            href="/Web Dashboard/About_Page.html">About Us</a>
+          <a class="text-sm font-medium hover:text-primary transition-colors text-[#0d1b12] dark:text-gray-300"
+            href="/Web Dashboard/Contact_Page.html">Contact Us</a>
+        </nav>
+        <!-- Auth Container (Targeted by navbar-auth.js) -->
+        <div class="flex items-center gap-3" id="navbar-auth-container">
+          <!-- navbar-auth.js will inject Dark Mode and Profile here -->
+        </div>
+      </div>
+    </div>
+  </header>
+  <nav class="bg-white/50 border-b border-gray-100 backdrop-blur-sm">
+    <div class="max-w-[1280px] mx-auto w-full px-4">
+      <div class="flex gap-4 overflow-x-auto no-scrollbar px-3 py-3">
+        <a class="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold text-gray-600 hover:bg-white hover:shadow-sm transition-all"
+          href="/Buyer Dashboard/Buyer Index.html">
+          <span class="material-symbols-outlined text-[20px]">grid_view</span>
+          Dashboard
+        </a>
+        <a class="flex items-center gap-2 px-6 py-2 rounded-xl text-sm font-bold bg-primary text-text-main shadow-lg shadow-primary/20 hover:bg-primary-dark transition-all scale-105"
+          href="/Buyer Dashboard/Wallet.html">
+          <span class="material-symbols-outlined text-[20px]">account_balance_wallet</span>
+          Wallet
+        </a>
+        <a class="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold text-gray-600 hover:bg-white hover:shadow-sm transition-all"
+          href="/Buyer Dashboard/Order Management.html">
+          <span class="material-symbols-outlined text-[20px]">add_shopping_cart</span>
+          Order Now
+        </a>
+        <a class="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold text-gray-600 hover:bg-white hover:shadow-sm transition-all"
+          href="/Buyer Dashboard/Communication to Admin.html">
+          <span class="material-symbols-outlined text-[20px]">chat_bubble</span>
+          Inbox
+        </a>
+      </div>
+    </div>
+  </nav>
+  <!-- Universal Footer from INDEX.Html -->
+  <main class="max-w-[1280px] mx-auto px-6 py-10">
+    <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
+      <div>
+        <h1 class="text-3xl font-extrabold tracking-tight mb-2">My Wallet</h1>
+        <p class="text-gray-500 dark:text-gray-400 text-lg">
+          Manage your balance and add funds securely with instant processing.
+        </p>
+      </div>
+      <div class="md:hidden"></div>
+    </div>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
+      <div class="lg:col-span-2 space-y-8">
+        <div
+          class="bg-white dark:bg-[#1a3321] rounded-2xl shadow-sm border border-[#e7f3eb] dark:border-[#24422c] overflow-hidden">
+          <div class="p-6 border-b border-[#e7f3eb] dark:border-[#24422c] flex items-center justify-between">
+            <div>
+              <h3 class="text-lg font-bold">Add Money to Wallet</h3>
+              <p class="text-sm text-gray-500">
+                Fast and secure deposit via mobile banking
+              </p>
+            </div>
+            <span class="material-symbols-outlined text-primary/40">payments</span>
+          </div>
+          <div class="p-6 space-y-6">
+            <div>
+              <label class="block text-sm font-bold mb-2">1. Enter Amount (BDT)</label>
+              <div class="relative">
+                <span class="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-gray-400">৳</span>
+                <input id="deposit-amount"
+                  class="w-full pl-10 pr-4 h-14 rounded-xl border-[#cfe7d7] dark:border-[#2d5238] bg-background-light dark:bg-[#0d1b12] focus:ring-primary focus:border-primary font-bold text-lg"
+                  placeholder="Enter amount (Min 500 BDT)" type="number" min="500" max="1000000" step="0.01" />
+              </div>
+            </div>
+            <div>
+              <label class="block text-sm font-bold mb-3">2. Select Payment Gateway</label>
+              <div id="payment-gateways" class="grid grid-cols-2 sm:grid-cols-6 gap-3">
+                <!-- Gateways will be injected here by JS -->
+                <div class="col-span-full text-center py-4 text-gray-500">Loading gateways...</div>
+              </div>
+            </div>
+            <div
+              class="bg-background-light dark:bg-[#0d1b12] p-5 rounded-xl border border-dashed border-[#cfe7d7] dark:border-[#2d5238]">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-bold uppercase tracking-wider text-gray-500">Send Money to:</span>
+                <span id="gateway-type-badge"
+                  class="text-[10px] bg-primary/20 text-primary px-2 py-0.5 rounded font-bold">Personal Number</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <p id="admin-number-display" class="text-2xl font-mono font-bold tracking-wider">
+                  Select Gateway
+                </p>
+                <button id="copy-admin-number-btn"
+                  class="flex items-center gap-2 text-sm font-bold bg-primary/10 hover:bg-primary/20 px-3 py-1.5 rounded-lg text-primary transition-colors">
+                  <span class="material-symbols-outlined text-lg">content_copy</span>
+                  Copy
+                </button>
+              </div>
+              <p class="mt-3 text-[11px] text-gray-400 leading-relaxed italic">
+                * Please send money through the gateway app first, then
+                provide the details below.
+              </p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-bold mb-2">Sender Number</label>
+                <input id="sender-number"
+                  class="w-full h-12 rounded-xl border-[#cfe7d7] dark:border-[#2d5238] bg-background-light dark:bg-[#0d1b12] focus:ring-primary focus:border-primary"
+                  placeholder="+88018....." type="text" maxlength="12" />
+              </div>
+              <div>
+                <label class="block text-sm font-bold mb-2">Transaction ID</label>
+                <input id="transaction-id"
+                  class="w-full h-12 rounded-xl border-[#cfe7d7] dark:border-[#2d5238] bg-background-light dark:bg-[#0d1b12] focus:ring-primary focus:border-primary font-mono"
+                  placeholder="e.g. 8N79AS8DA" type="text" maxlength="10" />
+              </div>
+            </div>
+            <button id="confirm-deposit-btn"
+              class="w-full py-4 bg-primary text-[#0d1b12] font-black text-lg rounded-xl hover:opacity-90 shadow-lg shadow-primary/20 transition-all active:scale-[0.98] flex items-center justify-center gap-2">
+              <span class="material-symbols-outlined font-black">verified_user</span>
+              Payment Confirm
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="space-y-6">
+        <div class="balance-glow-sidebar rounded-2xl p-8 relative overflow-hidden group">
+          <div class="absolute -right-12 -top-12 size-40 bg-primary/20 rounded-full blur-3xl opacity-50"></div>
+          <div class="absolute -left-12 -bottom-12 size-40 bg-primary/10 rounded-full blur-3xl opacity-50"></div>
+          <div class="relative">
+            <div class="flex items-center justify-between mb-6">
+              <div class="size-12 bg-primary/20 rounded-2xl flex items-center justify-center text-primary">
+                <span class="material-symbols-outlined text-3xl font-bold">account_balance_wallet</span>
+              </div>
+              <div class="flex flex-col items-end">
+                <span class="text-[10px] uppercase font-bold text-gray-400 tracking-widest">Account Status</span>
+                <span class="flex items-center gap-1 text-[11px] font-extrabold text-primary">
+                  <span class="material-symbols-outlined text-sm fill-1">verified</span>
+                  ACTIVE
+                </span>
+              </div>
+            </div>
+            <div class="space-y-1">
+              <p class="text-xs font-black uppercase tracking-[0.2em] text-gray-500 dark:text-gray-400">
+                Total Available Balance
+              </p>
+              <div class="flex items-baseline gap-2">
+                <span class="text-3xl font-bold text-primary">৳</span>
+                <span class="text-5xl font-black tracking-tight text-[#0d1b12] dark:text-white">4,250.00</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="bg-white dark:bg-[#1a3321] p-6 rounded-2xl border border-[#e7f3eb] dark:border-[#24422c]">
+          <h4 class="font-bold mb-6 flex items-center gap-2">
+            <span class="material-symbols-outlined text-primary">info</span>
+            Instructions
+          </h4>
+          <ul class="text-sm space-y-5 text-gray-600 dark:text-gray-400">
+            <li class="flex gap-4">
+              <span
+                class="flex-none size-6 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xs font-bold">01</span>
+              <p>Enter the exact amount you wish to deposit.</p>
+            </li>
+            <li class="flex gap-4">
+              <span
+                class="flex-none size-6 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xs font-bold">02</span>
+              <p>Select your preferred mobile payment gateway.</p>
+            </li>
+            <li class="flex gap-4">
+              <span
+                class="flex-none size-6 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xs font-bold">03</span>
+              <p>Send money to the provided number from your app.</p>
+            </li>
+            <li class="flex gap-4">
+              <span
+                class="flex-none size-6 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xs font-bold">04</span>
+              <p>
+                Submit Account Number & Transaction ID to confirm request.
+              </p>
+            </li>
+          </ul>
+        </div>
+        <div class="relative h-40 rounded-2xl overflow-hidden group">
+          <img alt="Abstract finance growth chart background"
+            class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+            src="https://lh3.googleusercontent.com/aida-public/AB6AXuAN2JQkYvxfka9T7EfDg9tVLdzdI_d08YMfcrX7xf-5u5GvmPyP6JeJs0volw45wWH1WG7x2iaiLLr4ou_j-v9V3K_2jlJ2X-h33-bn-q3lKCa4XbQM521hXYByFdWErwXyyGBrGw64uUrUCw9B-TH__JnZiRxTVSqNID-1jhR_zhceJ2SM4rlh5t9ih74f0aM2AWbCl5Nf_-zMmlJxz5KzWFasPQNZyT6pKDeLPDeigotgeRSx9DHtjirO3sR3HxHb-JrNgZHtQhkX" />
+          <div class="absolute inset-0 bg-gradient-to-t from-[#0d1b12] to-transparent flex flex-col justify-end p-5">
+            <p class="text-white font-bold text-lg leading-tight">
+              Secure Payments
+            </p>
+            <p class="text-primary text-[10px] font-semibold flex items-center gap-1">
+              <span class="material-symbols-outlined text-[12px]">lock</span>
+              256-bit SSL Encrypted
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="space-y-10">
+      <div>
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-xl font-bold">Transaction History</h3>
+          <button
+            class="text-sm font-bold text-primary flex items-center gap-1 p-2 rounded-lg bg-primary/10 hover:bg-primary/20">
+            View All
+            <span class="material-symbols-outlined text-sm">arrow_forward</span>
+          </button>
+        </div>
+        <div
+          class="bg-white dark:bg-[#1a3321] rounded-2xl border border-[#e7f3eb] dark:border-[#24422c] overflow-hidden shadow-sm">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-background-light dark:bg-[#0d1b12] border-b border-[#e7f3eb] dark:border-[#24422c]">
+                  <th class="px-6 py-4 text-xs font-black uppercase tracking-wider text-gray-500">
+                    Date
+                  </th>
+                  <th class="px-6 py-4 text-xs font-black uppercase tracking-wider text-gray-500">
+                    Amount
+                  </th>
+                  <th class="px-6 py-4 text-xs font-black uppercase tracking-wider text-gray-500">
+                    Gateway
+                  </th>
+                  <th class="px-6 py-4 text-xs font-black uppercase tracking-wider text-gray-500">
+                    Account
+                  </th>
+                  <th class="px-6 py-4 text-xs font-black uppercase tracking-wider text-gray-500">
+                    TrxID
+                  </th>
+                  <th class="px-6 py-4 text-xs font-black uppercase tracking-wider text-gray-500">
+                    Status
+                  </th>
+                </tr>
+              </thead>
+              <tbody id="transaction-history-body" class="divide-y divide-[#e7f3eb] dark:divide-[#24422c]">
+                <tr>
+                  <td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500">Loading transactions...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+  <footer class="bg-footer-light dark:bg-footer-dark pt-16 pb-8 border-t border-[#e7f3eb] dark:border-white/5">
+    <div class="max-w-[1280px] mx-auto">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
+        <div class="space-y-6">
+          <div class="flex items-center gap-3">
+            <div class="size-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
+              <span class="material-symbols-outlined text-2xl">update</span>
+            </div>
+            <span class="text-xl font-bold tracking-tight text-[#0d1b12] dark:text-white">Time Task <span
+                class="text-primary">BD</span></span>
+          </div>
+          <p class="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">
+            Empowering your digital productivity through innovative task
+            management and streamlined earning opportunities.
+          </p>
+          <div class="flex gap-4">
+            <a class="size-10 rounded-xl border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-black transition-all"
+              href="#">
+              <span class="material-symbols-outlined text-[20px]">public</span>
+            </a>
+            <a class="size-10 rounded-xl border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-black transition-all"
+              href="#">
+              <span class="material-symbols-outlined text-[20px]">share</span>
+            </a>
+            <a class="size-10 rounded-xl border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-black transition-all"
+              href="#">
+              <span class="material-symbols-outlined text-[20px]">alternate_email</span>
+            </a>
+          </div>
+        </div>
+        <div>
+          <h4 class="text-sm font-bold uppercase tracking-widest mb-6 text-[#0d1b12] dark:text-white">
+            Quick Links
+          </h4>
+          <ul class="space-y-4">
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="/Web Dashboard/Home_Page.html">Home</a>
+            </li>
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="/Web Dashboard/Blog_Page.html">Our Blog</a>
+            </li>
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="/Web Dashboard/About_Page.html">About Us</a>
+            </li>
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="/Web Dashboard/Contact_Page.html">Contact</a>
+            </li>
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="/Web Dashboard/Help_and_FAQ_Page.html">FAQ Support</a>
+            </li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="text-sm font-bold uppercase tracking-widest mb-6 text-[#0d1b12] dark:text-white">
+            Services &amp; Legal
+          </h4>
+          <ul class="space-y-4">
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="/Web Dashboard/About_Page.html">About Us</a>
+            </li>
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="/Web Dashboard/Privacy_Policy_Page.html">Privacy Policy</a>
+            </li>
+            <li>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                href="/Web Dashboard/Terms_of_Service_Page.html">Terms of Service</a>
+            </li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="text-sm font-bold uppercase tracking-widest mb-6 text-[#0d1b12] dark:text-white">
+            Contact Info
+          </h4>
+          <ul class="space-y-4">
+            <li class="flex items-start gap-3">
+              <span class="material-symbols-outlined text-primary text-[20px]">mail</span>
+              <a class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary"
+                href="mailto:support@timetaskbd.com">support@timetaskbd.com</a>
+            </li>
+            <li class="flex items-start gap-3">
+              <span class="material-symbols-outlined text-primary text-[20px]">call</span>
+              <span class="text-sm text-gray-600 dark:text-gray-400">+880 1234 567890</span>
+            </li>
+            <li class="flex items-start gap-3">
+              <span class="material-symbols-outlined text-primary text-[20px]">location_on</span>
+              <span class="text-sm text-gray-600 dark:text-gray-400">Dhaka, Bangladesh</span>
+            </li>
+          </ul>
+          <div class="mt-8 pt-8 border-t border-[#e7f3eb] dark:border-white/5">
+            <p class="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-4">
+              Social Media
+            </p>
+            <div class="flex gap-4">
+              <a class="text-[#4c9a66] hover:text-primary transition-colors" href="#">
+                <svg class="size-6" fill="currentColor" viewBox="0 0 24 24">
+                  <path
+                    d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z">
+                  </path>
+                </svg>
+              </a>
+              <a class="text-[#4c9a66] hover:text-primary transition-colors" href="#">
+                <svg class="size-6" fill="currentColor" viewBox="0 0 24 24">
+                  <path
+                    d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.84 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z">
+                  </path>
+                </svg>
+              </a>
+              <a class="text-[#4c9a66] hover:text-primary transition-colors" href="#">
+                <svg class="size-6" fill="currentColor" viewBox="0 0 24 24">
+                  <path
+                    d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z">
+                  </path>
+                </svg>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div
+        class="pt-8 border-t border-[#e7f3eb] dark:border-white/5 flex flex-col md:flex-row items-center justify-between gap-4">
+        <p class="text-sm text-gray-500 dark:text-gray-400">
+          Copyright © 2024
+          <span class="text-[#0d1b12] dark:text-white font-semibold">Time Task BD</span>. All rights reserved.
+        </p>
+        <p class="text-sm text-gray-500 dark:text-gray-400">
+          Developed with <span class="text-primary font-bold">★</span> by
+          <a class="text-primary font-medium hover:underline" href="#">Digital Dynamics Agency</a>
+        </p>
+      </div>
+    </div>
+  </footer>
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      // Initialize Supabase
+      const _supabase = window.supabaseClient;
+      let currentUser = null;
+      let selectedGateway = null;
+      let adminGateways = [];
+
+      // Check Auth
+      const { data: { session } } = await _supabase.auth.getSession();
+      if (!session) {
+        window.location.href = "/Web Dashboard/Login_Page.html";
+        return;
+      }
+      currentUser = session.user;
+
+      // Initial Loads
+      loadBalance();
+      loadAdminGateways();
+      loadTransactionHistory();
+
+      // --- 1. Load User Balance ---
+      async function loadBalance() {
+        const { data: profile } = await _supabase
+          .from('profiles')
+          .select('balance')
+          .eq('id', currentUser.id)
+          .single();
+
+        if (profile) {
+          const balanceEl = document.querySelector('.text-5xl.font-black');
+          if (balanceEl) {
+            balanceEl.textContent = (profile.balance || 0).toLocaleString('en-US', { minimumFractionDigits: 2 });
+          }
+        }
+      }
+
+      // --- 2. Load Admin Gateways ---
+      async function loadAdminGateways() {
+        const { data, error } = await _supabase
+          .from('admin_gateways')
+          .select('*')
+          .eq('is_active', true);
+
+        if (error) {
+          console.error("Error loading gateways:", error);
+          document.getElementById("payment-gateways").innerHTML = `<div class="col-span-full text-red-500 text-center">Failed to load gateways.</div>`;
+          return;
+        }
+        adminGateways = data;
+        renderGateways(data);
+      }
+
+      function renderGateways(gateways) {
+        const container = document.getElementById("payment-gateways");
+        container.innerHTML = "";
+        const logos = {
+          "Bkash": "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEimCOQgZJBvc6UiuEsuTvbecFMItg6JYJ8XIPG27mNMsYeI8bvAPyeue-Bl_yQVg2MDxv8V5XWcoLQ76NUwUat21zXVon5lFbC_OZkNsJvwrDe1e3xGqGP3dH-2cWIw1CvWOHfP9G3hHyJ6YO99ZdF1RCof8l8RBGWz0CR903JnTAKIqBqYULVRCC3mfsU/s1600/Bkash.png",
+          "Nagad": "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj59Cd3bbTJ6gBg5Ryw4uyF4j5RkOSZNPoiNPHcXKZ6AUXVQXA6IBhcDyjhXKMgQgUGIQ_i1FLebAdU9s7bzNYof8Ao5RHaw-SUu7VMNw3oxIyn6czS0F1EonpigS_M8RxuMcJpBAqToClurO1S6BQfXmbF58UnYLWjB2ta5PGajPVOrI1AzoNLk1tAWo8/s1600/Nagad.png",
+          "Rocket": "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEh0qDcIRA8QQ7EE4lUABcmM9FZaMMpxprzBnmb7VBt71V5Z4Fcb_oKTH9lH5OxzYuBo01kfX0eyTNgyVwg6ze8utXuTVB-aTGZoZ3CC0F-JjO0L9Jys8M2EGYSRO55CrOBdKuas1yrv1QveH9xqvRLoScWTEqK8GknRK4UdoT8dWJE-btOPIyaLUGAb7kk/s1600/Rocket.png",
+          "Upay": "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhzCOwJJ3xLNmGGCXEhuH6GjILufxPxrhOHTDT8oOjTVEZUq2Zc_Lz3VZilC6gmFG7LrkWI4fyexZBHcgeyA3-wVjFYj3BZ7kI_795Cozt5rW7qclBv0_T2K0nXfUS1JXth_02vI3RYRYroE29UP4QJ4uXn9kMkM3Ee3SrEF30laZFh6Cfmjpad0Y-Goaw/s1600/Upay.png",
+          "CellFin": "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgUTCXWwya3rMl4kozAPuf29A6KjdqlZouXLRiXqhAzAh_FZ3KIoW37dqc2UTtB5Bsnthm6qMoLBFdWTqse-QHAe-JfiplF6bpf4D1zNzSxy4rhW9PWONnQo-qI8zxO_SEc7ypur3dn-19AdDxCSn5_RbhtZVGmXvYcjQmkCOnO4OAKb2i1ZqNNuPrlXl4/s1600/CellFin.png",
+          "Binance": "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgdT_Iz7sSapceBc3Sgshj6Gm7OkdXYkx7dwXHAwXk9N-a6zwgcElkCLteQ1vYfywPAy7dRg73CHY6wr9Rlkocq1Jx79ze34rImQF2ClB6-JblHJ71YjLiZd3YsJfKShvHF31fK0agmzAWYA1hazsR91pAaskVOXU-owKQscEUkGAx4dWtI6U2kMju6xvE/s1600/Binance.png"
+        };
+
+        gateways.forEach(gw => {
+          const div = document.createElement("div");
+          div.className = "gateway-card cursor-pointer group p-4 rounded-xl border-2 border-[#e7f3eb] dark:border-[#2d5238] hover:border-primary/50 flex flex-col items-center justify-center gap-2 transition-all relative";
+          div.onclick = () => selectGateway(gw.id, div);
+          div.innerHTML = `
+            <img alt="${gw.gateway_name} logo" class="w-12 h-12 object-contain" src="${logos[gw.gateway_name] || 'https://via.placeholder.com/50'}" />
+            <span class="text-xs font-bold text-gray-500 group-hover:text-primary">${gw.gateway_name}</span>
+            <div class="check-icon absolute top-1 right-1 bg-primary text-[#0d1b12] rounded-full size-4 flex items-center justify-center hidden">
+              <span class="material-symbols-outlined text-[10px] font-black leading-none">check</span>
+            </div>
+          `;
+          container.appendChild(div);
+        });
+      }
+
+      function selectGateway(id, element) {
+        document.querySelectorAll(".gateway-card").forEach(el => {
+          el.classList.remove("border-primary", "bg-primary/5");
+          el.classList.add("border-[#e7f3eb]", "dark:border-[#2d5238]");
+          el.querySelector(".check-icon").classList.add("hidden");
+        });
+        element.classList.remove("border-[#e7f3eb]", "dark:border-[#2d5238]");
+        element.classList.add("border-primary", "bg-primary/5");
+        element.querySelector(".check-icon").classList.remove("hidden");
+        selectedGateway = adminGateways.find(g => g.id === id);
+        document.getElementById("admin-number-display").textContent = selectedGateway.account_number;
+        document.getElementById("gateway-type-badge").textContent = `${selectedGateway.account_type} Number`;
+      }
+
+      document.getElementById("copy-admin-number-btn").addEventListener("click", () => {
+        const number = document.getElementById("admin-number-display").textContent.trim();
+        if (number === "Select Gateway") return;
+        navigator.clipboard.writeText(number).then(() => {
+          const btn = document.getElementById("copy-admin-number-btn");
+          const originalHTML = btn.innerHTML;
+          btn.innerHTML = `<span class="material-symbols-outlined text-lg">check</span> Copied`;
+          setTimeout(() => btn.innerHTML = originalHTML, 2000);
+        });
+      });
+
+      // --- 4. Confirm Deposit Logic (UPDATED WITH AUTO-VERIFY) ---
+      const MIN_DEPOSIT_AMOUNT = 500;
+      const MAX_DEPOSIT_AMOUNT = 1000000;
+
+      function parseAndValidateAmount(rawValue) {
+        const cleaned = String(rawValue || "").trim();
+        if (!cleaned) return { valid: false, message: "Please enter a deposit amount." };
+
+        const parsed = Number(cleaned);
+        if (!Number.isFinite(parsed)) {
+          return { valid: false, message: "Please enter a valid numeric amount." };
+        }
+        if (parsed < MIN_DEPOSIT_AMOUNT) {
+          return { valid: false, message: `Minimum deposit amount is ${MIN_DEPOSIT_AMOUNT} BDT.` };
+        }
+        if (parsed > MAX_DEPOSIT_AMOUNT) {
+          return { valid: false, message: `Maximum deposit amount is ${MAX_DEPOSIT_AMOUNT.toLocaleString()} BDT.` };
+        }
+
+        // Keep at most 2 decimals to match common money precision.
+        const rounded = Math.round(parsed * 100) / 100;
+        if (Math.abs(parsed - rounded) > Number.EPSILON) {
+          return { valid: false, message: "Amount can have up to 2 decimal places only." };
+        }
+
+        return { valid: true, amount: rounded };
+      }
+
+      document.getElementById("confirm-deposit-btn").addEventListener("click", async () => {
+        const amountStr = document.getElementById("deposit-amount").value;
+        const senderNumber = document.getElementById("sender-number").value.trim();
+        const transactionId = document.getElementById("transaction-id").value.trim();
+        const amountValidation = parseAndValidateAmount(amountStr);
+
+        if (!amountValidation.valid) { alert(amountValidation.message); return; }
+        if (!selectedGateway) { alert("Please select a payment gateway."); return; }
+        if (!senderNumber || !transactionId) { alert("Please enter sender number and Transaction ID."); return; }
+        const amount = amountValidation.amount;
+
+        const btn = document.getElementById("confirm-deposit-btn");
+        btn.disabled = true;
+        btn.innerHTML = `<span class="animate-spin material-symbols-outlined">progress_activity</span> Verifying...`;
+
+        try {
+          // ১. চেক করা: এই TrxID-টি কি SMS ডাটাবেসে (received_payments) আছে?
+          const { data: smsRecord, error: smsError } = await _supabase
+            .from('received_payments')
+            .select('*')
+            .eq('transaction_id', transactionId)
+            .eq('status', 'unused')
+            .single();
+
+          // ২. যদি SMS রেকর্ড পাওয়া যায় এবং অ্যামাউন্ট মিলে যায় (অটো ভেরিফিকেশন)
+          if (smsRecord && parseFloat(smsRecord.amount) >= amount) {
+
+            // ক) SMS রেকর্ডকে 'used' মার্ক করা
+            await _supabase.from('received_payments').update({ status: 'used' }).eq('id', smsRecord.id);
+
+            // খ) ডিপোজিট রিকোয়েস্ট 'approved' হিসেবে সাবমিট করা
+            const { data: depData, error: depErr } = await _supabase.from('deposits').insert([{
+              user_id: currentUser.id,
+              amount: amount,
+              gateway: selectedGateway.gateway_name,
+              sender_number: senderNumber,
+              transaction_id: transactionId,
+              status: 'approved'
+            }]).select().single();
+
+            if (depErr) throw depErr;
+
+            // গ) ইউজারের ব্যালেন্স আপডেট করা (RPC Function Call)
+            const { error: rpcError } = await _supabase.rpc('approve_deposit', {
+              p_deposit_id: depData.id,
+              p_user_id: currentUser.id,
+              p_amount: amount
+            });
+
+            if (rpcError) throw rpcError;
+
+            alert("Success! Your payment was verified automatically and balance added.");
+
+          } else {
+            // ৩. যদি SMS না পাওয়া যায় (ম্যানুয়াল ভেরিফিকেশন মোড)
+            const { error: pendingError } = await _supabase.from('deposits').insert([{
+              user_id: currentUser.id,
+              amount: amount,
+              gateway: selectedGateway.gateway_name,
+              sender_number: senderNumber,
+              transaction_id: transactionId,
+              status: 'pending'
+            }]);
+
+            if (pendingError) {
+              if (pendingError.code === '23505') throw new Error("This Transaction ID is already submitted.");
+              throw pendingError;
+            }
+
+            alert("Request Received! SMS data not found yet. Admin will verify manually shortly.");
+          }
+
+          // ইনপুট ক্লিয়ার এবং ডাটা রিফ্রেশ
+          document.getElementById("deposit-amount").value = "";
+          document.getElementById("sender-number").value = "";
+          document.getElementById("transaction-id").value = "";
+          loadBalance();
+          loadTransactionHistory();
+
+        } catch (err) {
+          alert("Error: " + err.message);
+        } finally {
+          btn.disabled = false;
+          btn.innerHTML = `<span class="material-symbols-outlined font-black">verified_user</span> Payment Confirm`;
+        }
+      });
+
+      // --- 5. Transaction History ---
+      async function loadTransactionHistory() {
+        const tbody = document.getElementById("transaction-history-body");
+        const { data, error } = await _supabase
+          .from('deposits')
+          .select('*')
+          .eq('user_id', currentUser.id)
+          .order('created_at', { ascending: false })
+          .limit(10);
+
+        if (error) {
+          tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-4 text-center text-red-500">Error loading history</td></tr>`;
+          return;
+        }
+        if (data.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-4 text-center text-gray-500">No transactions found</td></tr>`;
+          return;
+        }
+
+        tbody.innerHTML = data.map(trx => {
+          const date = new Date(trx.created_at).toLocaleDateString("en-US", { month: 'short', day: 'numeric', year: 'numeric' });
+          let statusBadge = '';
+          if (trx.status === 'approved') {
+            statusBadge = `<span class="px-3 py-1 bg-primary/20 text-[#0d1b12] dark:text-primary text-[10px] font-black uppercase rounded-full">Completed</span>`;
+          } else if (trx.status === 'pending') {
+            statusBadge = `<span class="px-3 py-1 bg-yellow-500/20 text-yellow-600 text-[10px] font-black uppercase rounded-full">Pending</span>`;
+          } else {
+            statusBadge = `<span class="px-3 py-1 bg-red-500/20 text-red-600 text-[10px] font-black uppercase rounded-full">Rejected</span>`;
+          }
+
+          return `
+            <tr class="hover:bg-background-light/50 dark:hover:bg-white/5 transition-colors">
+              <td class="px-6 py-4 text-sm font-medium">${date}</td>
+              <td class="px-6 py-4 text-sm font-bold">৳ ${trx.amount.toLocaleString()}</td>
+              <td class="px-6 py-4 text-sm">${trx.gateway}</td>
+              <td class="px-6 py-4 text-sm font-mono text-gray-500">${trx.sender_number}</td>
+              <td class="px-6 py-4 text-sm font-mono text-gray-500">${trx.transaction_id}</td>
+              <td class="px-6 py-4">${statusBadge}</td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      // --- Charts & Notification Logic (Keeping your original) ---
+      // Chart Logic (Existing) - Kept inside DOMContentLoaded
+      // Project Summary Bar Chart
+      const ctxBar = document
+        .getElementById("projectBarChart")
+        .getContext("2d");
+      new Chart(ctxBar, {
+        type: "bar",
+        data: {
+          labels: ["Facebook", "Instagram", "TikTok", "Twitter (X)"],
+          datasets: [
+            {
+              label: "Project Count",
+              data: [42, 28, 35, 19],
+              backgroundColor: "#13ec5b",
+              borderRadius: 8,
+              barThickness: 40,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: false,
+            },
+            tooltip: {
+              backgroundColor: "#102216",
+              padding: 12,
+              titleFont: { size: 14, family: "Manrope", weight: "bold" },
+              bodyFont: { size: 13, family: "Manrope" },
+              cornerRadius: 8,
+              displayColors: false,
+            },
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              grid: { color: "rgba(0,0,0,0.05)" },
+              ticks: { font: { family: "Manrope" } },
+            },
+            x: {
+              grid: { display: false },
+              ticks: { font: { family: "Manrope", weight: "600" } },
+            },
+          },
+        },
+      });
+
+      // Payment Summary Doughnut Chart
+      const ctxDoughnut = document
+        .getElementById("paymentDoughnutChart")
+        .getContext("2d");
+      new Chart(ctxDoughnut, {
+        type: "doughnut",
+        data: {
+          labels: ["Facebook", "Instagram", "TikTok", "Twitter (X)"],
+          datasets: [
+            {
+              data: [52300, 34150, 45550, 18500],
+              backgroundColor: [
+                "#13ec5b", // Primary Green
+                "#4ade80", // Lighter Green
+                "#22c55e", // Success Green
+                "#166534", // Deep Green
+              ],
+              borderWidth: 0,
+              hoverOffset: 15,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: "70%",
+          plugins: {
+            legend: {
+              position: "right",
+              labels: {
+                padding: 20,
+                usePointStyle: true,
+                pointStyle: "circle",
+                font: { family: "Manrope", size: 12, weight: "600" },
+              },
+            },
+            tooltip: {
+              backgroundColor: "#102216",
+              padding: 12,
+              callbacks: {
+                label: function (context) {
+                  return ` ${context.label
+                    }: ${context.raw.toLocaleString()} Tk`;
+                },
+              },
+            },
+          },
+        },
+      });
+
+      // --- Notification Dropdown Logic ---
+      const notifBtn = document.getElementById("notificationBtn");
+      const notifDropdown = document.getElementById("notificationDropdown");
+
+      if (notifBtn && notifDropdown) {
+        // ১. বাটনে ক্লিক করলে ড্রপডাউন দেখা যাবে বা লুকিয়ে যাবে (Toggle)
+        notifBtn.addEventListener("click", (e) => {
+          e.stopPropagation(); // বাটনে ক্লিক করলে যেন নিচের ডকুমেন্ট ক্লিক লজিক কাজ না করে
+          notifDropdown.classList.toggle("hidden");
+        });
+
+        // ২. ড্রপডাউন এর বাইরে স্ক্রিনের কোথাও ক্লিক করলে ড্রপডাউন বন্ধ হয়ে যাবে
+        document.addEventListener("click", (e) => {
+          // যদি ক্লিক ড্রপডাউনের ভেতরে না হয় এবং ক্লিকটি বাটনের ওপরেও না হয়
+          if (!notifDropdown.contains(e.target) && e.target !== notifBtn) {
+            notifDropdown.classList.add("hidden");
+          }
+        });
+      }
+
+      // ৩. কিবোর্ডের Escape বাটন চাপলে ড্রপডাউন বন্ধ হবে
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && notifDropdown) {
+          notifDropdown.classList.add("hidden");
+          // আপনার যদি মডাল ফাংশন থাকে তবে সেটিও এখানে কল করতে পারেন
+          if (typeof closeModal === "function") {
+            closeModal();
+          }
+        }
+      });
+
+    });
+  </script>
+</body>
+
+</html>

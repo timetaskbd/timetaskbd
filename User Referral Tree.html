@@ -1,0 +1,1130 @@
+<!doctype html>
+<html class="light" lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <title>Referral Tree — Time Task BD Admin</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../supabase-client.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+    rel="stylesheet" />
+  <script>
+    (function() {
+      const savedTheme = localStorage.getItem("theme") || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+      if (savedTheme === "dark") {
+        document.documentElement.classList.add("dark");
+        document.documentElement.classList.remove("light");
+      } else {
+        document.documentElement.classList.add("light");
+        document.documentElement.classList.remove("dark");
+      }
+    })();
+  </script>
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            primary: "#13ec5b",
+            "background-light": "#f6f8f6",
+            "background-dark": "#0d1b12",
+            "sidebar-deep": "#102216",
+            "accent-green": "#13ec5b",
+          },
+          fontFamily: { display: ["Manrope"] },
+          borderRadius: {
+            DEFAULT: "0.25rem", lg: "0.5rem", xl: "0.75rem", "2xl": "1rem", full: "9999px",
+          },
+        },
+      },
+    };
+  </script>
+  <style type="text/tailwindcss">
+    @layer base {
+        body { @apply font-display bg-background-light dark:bg-background-dark text-slate-900 dark:text-white; }
+      }
+      .sidebar-transition { @apply transition-all duration-300 ease-in-out; }
+      .sidebar-item-active {
+        @apply bg-background-light text-sidebar-deep font-bold relative !important;
+        border-radius: 40px 0 0 40px; margin-left: 10px; width: calc(100% - 10px) !important;
+      }
+      .sidebar-item-active::before {
+        content: ""; position: absolute; right: 0; top: -40px; width: 40px; height: 40px;
+        background: transparent; border-radius: 50%; box-shadow: 20px 20px 0 0 #f6f8f6; pointer-events: none;
+      }
+      .sidebar-item-active::after {
+        content: ""; position: absolute; right: 0; bottom: -40px; width: 40px; height: 40px;
+        background: transparent; border-radius: 50%; box-shadow: 20px -20px 0 0 #f6f8f6; pointer-events: none;
+      }
+      .dark .sidebar-item-active::before { box-shadow: 20px 20px 0 0 #0d1b12; }
+      .dark .sidebar-item-active::after  { box-shadow: 20px -20px 0 0 #0d1b12; }
+      .dark .sidebar-item-active { @apply bg-background-dark text-white !important; }
+      .sidebar-item {
+        @apply flex items-center py-4 text-white/70 hover:text-white transition-all duration-200 cursor-pointer w-full relative;
+      }
+      .sidebar-item .material-symbols-outlined { @apply font-light text-[24px]; }
+      .sidebar-item-active .material-symbols-outlined { @apply text-sidebar-deep; }
+      .dark .sidebar-item-active .material-symbols-outlined { @apply text-primary; }
+      .nav-tooltip {
+        @apply invisible absolute left-full ml-4 px-2 py-1 bg-sidebar-deep text-white text-[10px] rounded whitespace-nowrap opacity-0 transition-opacity z-50 pointer-events-none;
+      }
+      .sidebar-collapsed { @apply w-20 pl-0; }
+      .sidebar-collapsed .logo-text, .sidebar-collapsed .item-text,
+      .sidebar-collapsed .menu-label, .sidebar-collapsed .system-card-text { @apply hidden; }
+      .sidebar-collapsed .sidebar-item { @apply justify-center px-0; }
+      .sidebar-collapsed .sidebar-item:hover .nav-tooltip { @apply visible opacity-100; }
+      .sidebar-collapsed .sidebar-header { @apply px-0 justify-center; }
+      .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+      .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+      .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+      .active-tab-nav { @apply bg-primary text-white shadow-lg shadow-primary/20; }
+      /* ── CSS Theme Variables ── */
+      :root {
+        --card-bg: #ffffff;
+        --card-bg2: #f8fafc;
+        --card-border: #e2e8f0;
+        --card-text: #0f172a;
+        --card-subtext: #64748b;
+        --card-inner-bg: #f8fafc;
+      }
+      .dark {
+        --card-bg: #1a2e1f;
+        --card-bg2: #142019;
+        --card-border: rgba(255,255,255,0.08);
+        --card-text: #ffffff;
+        --card-subtext: #6b9e7a;
+        --card-inner-bg: rgba(0,0,0,0.25);
+      }
+
+      /* Tree canvas */
+      #treeCanvas {
+        cursor: grab;
+        user-select: none;
+        background-image: radial-gradient(#d1d5db 1px, transparent 1px);
+        background-size: 24px 24px;
+        min-height: 600px;
+        position: relative;
+        overflow: hidden;
+      }
+      .dark #treeCanvas { background-image: radial-gradient(#1e3a28 1px, transparent 1px); }
+      #treeCanvas.dragging { cursor: grabbing; }
+      
+      .link { fill: none; stroke: #13ec5b; stroke-width: 1.5px; stroke-opacity: 0.6; }
+
+      /* Node cards embedded in foreignObject */
+      .tree-node {
+        background: var(--card-bg);
+        border-color: var(--card-border);
+        color: var(--card-text);
+        cursor: pointer;
+        border-style: solid;
+        border-width: 1px;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        transition: box-shadow 0.2s, transform 0.2s;
+        font-family: 'Manrope', sans-serif;
+        box-sizing: border-box;
+      }
+      .tree-node:hover { transform: translateY(-2px); box-shadow: 0 0 0 3px rgba(19,236,91,0.25); }
+      .tree-node-root-variant { border-width: 2px; border-color: #3b82f6; box-shadow: 0 4px 20px rgba(59,130,246,0.15); }
+      .tree-node-root-variant:hover { box-shadow: 0 0 0 4px rgba(59,130,246,0.2); }
+      .tree-node-inactive { opacity: 0.55; filter: grayscale(0.7); }
+      
+      .expand-btn {
+        display: flex; align-items: center; justify-content: center; gap: 4px;
+        width: 100%; padding: 4px 0; border-radius: 6px;
+        border: 1px solid rgba(19,236,91,0.3);
+        background: transparent;
+        color: #13ec5b; font-size: 10px; font-weight: 700;
+        cursor: pointer; transition: background 0.15s;
+        font-family: 'Manrope', sans-serif;
+        margin-top: 8px;
+        pointer-events: all;
+      }
+      .expand-btn:hover { background: rgba(19,236,91,0.12); }
+      .expand-btn.open-state { background: rgba(19,236,91,0.10); }
+
+      /* Side panel */
+      #sidePanel {
+        @apply fixed right-0 top-0 h-full w-80 shadow-2xl z-50 flex flex-col;
+        background: var(--card-bg);
+        transform: translateX(100%);
+        transition: transform 0.3s ease;
+      }
+      #sidePanel.open { transform: translateX(0); }
+      #panelOverlay {
+        @apply fixed inset-0 bg-black/30 backdrop-blur-[2px] z-40;
+        display: none;
+      }
+      #panelOverlay.open { display: block; }
+
+      /* KPI card */
+      .kpi-card { background: var(--card-bg); border-color: var(--card-border); border-style: solid; border-width: 1px; @apply rounded-xl p-4 shadow-sm; }
+
+
+      /* Notification that appears on search miss */
+      #notFound { display: none; position: absolute; inset: 0; align-items: center; justify-content: center; flex-direction: column; gap: 12px; }
+    </style>
+</head>
+
+<body class="flex min-h-screen overflow-hidden">
+
+  <!-- ═══════════════════ SIDEBAR ═══════════════════ -->
+  <aside id="mainSidebar"
+    class="w-72 bg-sidebar-deep flex-shrink-0 flex flex-col h-screen sticky top-0 sidebar-transition pl-2">
+    <div class="sidebar-header p-6 pb-12 flex items-center gap-3 transition-all">
+      <div
+        class="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20 flex-shrink-0">
+        <span class="material-symbols-outlined text-sidebar-deep font-bold text-2xl">update</span>
+      </div>
+      <div class="flex flex-col logo-text overflow-hidden">
+        <span class="text-white font-extrabold text-lg leading-tight tracking-tight whitespace-nowrap">Time Task
+          BD</span>
+        <span class="text-primary/60 text-[10px] font-bold uppercase tracking-widest whitespace-nowrap">Admin
+          Control</span>
+      </div>
+    </div>
+    <nav class="flex-1">
+      <div class="px-8 mb-4 menu-label">
+        <p class="text-[10px] font-bold text-white/40 uppercase tracking-[0.2em]">Main Menu</p>
+      </div>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Admin Index.html">
+        <span class="material-symbols-outlined">dashboard</span>
+        <span class="text-sm item-text ml-4">Dashboard</span>
+        <span class="nav-tooltip">Dashboard</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/System Health.html">
+        <span class="material-symbols-outlined">monitor_heart</span>
+        <span class="text-sm item-text ml-4">System Monitoring</span>
+        <span class="nav-tooltip">System Monitoring</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/KYC Review.html">
+        <span class="material-symbols-outlined">manage_accounts</span>
+        <span class="text-sm item-text ml-4">Management</span>
+        <span class="nav-tooltip">User & Buyer Management</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/User Analytics.html">
+        <span class="material-symbols-outlined">analytics</span>
+        <span class="text-sm item-text ml-4">Analytics Section</span>
+        <span class="nav-tooltip">Analytics Section</span>
+      </a>
+      <a class="sidebar-item sidebar-item-active px-8 group" href="/Admin Dashboard/User Referral Tree.html">
+        <span class="material-symbols-outlined">hub</span>
+        <span class="text-sm item-text ml-4">Referral System</span>
+        <span class="nav-tooltip">Referral System</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Market Asset Price.html">
+        <span class="material-symbols-outlined">trending_up</span>
+        <span class="text-sm item-text ml-4">Market Asset Prices</span>
+        <span class="nav-tooltip">Market Asset Prices</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Live Support.html">
+        <span class="material-symbols-outlined">support_agent</span>
+        <span class="text-sm item-text ml-4">Live Support</span>
+        <span class="nav-tooltip">Live Support</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Buyer Communication.html">
+        <span class="material-symbols-outlined">forum</span>
+        <span class="text-sm item-text ml-4">Communication</span>
+        <span class="nav-tooltip">Communication</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/System Announcemeeent.html">
+        <span class="material-symbols-outlined">campaign</span>
+        <span class="text-sm item-text ml-4">System Announcement</span>
+        <span class="nav-tooltip">System Announcement</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Invoice Management.html">
+        <span class="material-symbols-outlined">description</span>
+        <span class="text-sm item-text ml-4">Invoice Management</span>
+        <span class="nav-tooltip">Invoice Management</span>
+      </a>
+      <a class="sidebar-item px-8 group" href="/Admin Dashboard/Create Content.html">
+        <span class="material-symbols-outlined">edit_note</span>
+        <span class="text-sm item-text ml-4">Content Management</span>
+        <span class="nav-tooltip">Content Management</span>
+      </a>
+    </nav>
+    <div class="px-6 py-8">
+      <button
+        class="w-full h-10 flex items-center justify-center bg-primary text-sidebar-deep font-bold text-xs rounded-lg hover:brightness-110 transition-all shadow-lg shadow-primary/10 group relative">
+        <span class="material-symbols-outlined text-[20px] system-icon">logout</span>
+        <span class="ml-2 system-card-text">Logout</span>
+        <span class="nav-tooltip !left-full !ml-6">Logout</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- ═══════════════════ MAIN CONTENT ═══════════════════ -->
+  <div class="flex-1 flex flex-col h-screen overflow-hidden bg-background-light dark:bg-background-dark">
+    <!-- Header -->
+    <header
+      class="h-20 bg-white dark:bg-[#111f16] border-b border-slate-100 dark:border-white/10 px-6 flex items-center justify-between flex-shrink-0 z-40">
+      <div class="flex items-center gap-6">
+        <button id="sidebarToggle"
+          class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-white/70 hover:text-sidebar-deep hover:bg-primary/10 transition-all">
+          <span class="material-symbols-outlined">menu</span>
+        </button>
+        <div class="relative w-96 group">
+          <span
+            class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-sidebar-deep transition-colors">search</span>
+          <input
+            class="w-full bg-slate-100 dark:bg-white/5 dark:text-white border-none rounded-xl pl-10 pr-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 transition-all"
+            placeholder="Search system records..." type="text" />
+        </div>
+      </div>
+      <div class="flex items-center gap-6">
+        <div class="flex items-center gap-2">
+          <button
+            class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-white/70 hover:text-sidebar-deep hover:bg-primary/10 transition-all relative">
+            <span class="material-symbols-outlined">notifications</span>
+            <span
+              class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-[#111f16]"></span>
+          </button>
+          <button id="darkModeToggle"
+            class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-white/70 hover:text-sidebar-deep hover:bg-primary/10 transition-all">
+            <span class="material-symbols-outlined" id="darkIcon">light_mode</span>
+          </button>
+        </div>
+        <div class="h-10 w-px bg-slate-200 dark:bg-white/10"></div>
+        <div class="flex items-center gap-3 cursor-pointer group">
+          <div class="text-right">
+            <p class="text-sm font-bold text-slate-900 dark:text-white group-hover:text-primary transition-colors">Super
+              Admin</p>
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">System Manager</p>
+          </div>
+          <div
+            class="w-12 h-12 rounded-xl border-2 border-primary/20 p-0.5 overflow-hidden group-hover:border-primary transition-all">
+            <img alt="Admin" class="w-full h-full object-cover rounded-lg"
+              src="https://lh3.googleusercontent.com/aida-public/AB6AXuDI3q59cS__AXyYcqFQtKZ2-e__roEJ3Cic28K7cd-6tYYxzLfpTArNsAJE3UypttzDIKS6SoNy85-jDLh0ZMbLqXr0NEEjrbCPSgoCJZyYc4W89P8djmlf34I_NEoa2vfl5IS3jHwLSZZ6lgtwguAje5Lv9h9RbZ2fJqb36M_tmZc-iJY-XxAXsCDxVyU1bONcO3AV5LZgB1o5wURKpB9w2XEN6iWAILVT7fIzOkl2pQ4lJb5WxYgkvuNIlKakHZWN1e4bzfo25zYy" />
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Sub Navigation Tabs -->
+    <nav
+      class="sticky top-0 bg-white/50 dark:bg-[#111f16]/80 border-b border-gray-100 dark:border-white/10 backdrop-blur-sm relative z-30 rounded-l-[30px] ml-80">
+      <div class="mx-auto w-full px-4">
+        <div id="tabsContainer" class="flex gap-4 overflow-x-auto no-scrollbar py-3">
+          <a class="flex items-center gap-2 px-4 py-2 rounded-[30px] text-sm font-semibold active-tab-nav whitespace-nowrap transition-all"
+            href="/Admin Dashboard/User Referral Tree.html">
+            <span class="material-symbols-outlined text-[20px]">account_tree</span> User Referral Tree
+          </a>
+          <a class="flex items-center gap-2 px-4 py-2 rounded-[30px] text-sm font-semibold text-gray-700 dark:text-white/70 hover:bg-white dark:hover:bg-white/10 hover:shadow-sm whitespace-nowrap transition-all"
+            href="/Admin Dashboard/Referral Commission Setting.html">
+            <span class="material-symbols-outlined text-[20px]">settings_suggest</span> Referral Commission Setting
+          </a>
+          <a class="flex items-center gap-2 px-4 py-2 rounded-[30px] text-sm font-semibold text-gray-700 dark:text-white/70 hover:bg-white dark:hover:bg-white/10 hover:shadow-sm whitespace-nowrap transition-all"
+            href="/Admin Dashboard/Referral Fraud Alerts.html">
+            <span class="material-symbols-outlined text-[20px]">warning</span> Referral Fraud Alerts
+          </a>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6 max-w-full">
+      <div class="max-w-[1600px] mx-auto w-full space-y-6">
+        <!-- Page Header -->
+        <div class="flex items-center justify-between gap-4 flex-wrap">
+          <div>
+            <h2 class="text-3xl font-black tracking-tight dark:text-white">User Referral Tree</h2>
+            <p class="text-[#4c9a66] dark:text-primary/70 text-sm mt-1">Visualize and manage multi-level referral
+              networks and commission flows.</p>
+          </div>
+          <!-- Search -->
+          <div class="flex gap-3 flex-wrap">
+            <div class="relative">
+              <span
+                class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-[#4c9a66] pointer-events-none">search</span>
+              <input id="treeSearch" type="text" placeholder="Search by name, ID or email…"
+                class="h-12 pl-12 pr-4 w-72 bg-[#e7f3eb] dark:bg-white/5 dark:text-white border-none rounded-xl focus:ring-2 focus:ring-primary text-sm placeholder:text-[#4c9a66] dark:placeholder:text-white/30" />
+            </div>
+            <button id="loadBtn"
+              class="h-12 px-7 bg-primary text-[#0d1b12] font-bold rounded-xl hover:shadow-lg hover:shadow-primary/20 transition-all flex items-center gap-2">
+              <span class="material-symbols-outlined text-[20px]">hub</span> Load Network
+            </button>
+            <button id="resetBtn"
+              class="h-12 px-5 bg-white dark:bg-white/5 dark:text-white/70 text-slate-500 border border-slate-200 dark:border-white/10 rounded-xl hover:bg-slate-50 dark:hover:bg-white/10 transition-all flex items-center gap-2 text-sm font-semibold">
+              <span class="material-symbols-outlined text-[20px]">restart_alt</span> Reset View
+            </button>
+          </div>
+        </div>
+        <!-- KPI Stats Bar -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div class="kpi-card flex items-center gap-4">
+            <div class="w-11 h-11 bg-primary/10 rounded-xl flex items-center justify-center flex-shrink-0">
+              <span class="material-symbols-outlined text-primary text-[22px]">group</span>
+            </div>
+            <div>
+              <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-white/40">Total Referred
+              </p>
+              <p id="kpiTotal" class="text-2xl font-black text-slate-900 dark:text-white">—</p>
+            </div>
+          </div>
+          <div class="kpi-card flex items-center gap-4">
+            <div class="w-11 h-11 bg-blue-500/10 rounded-xl flex items-center justify-center flex-shrink-0">
+              <span class="material-symbols-outlined text-blue-500 text-[22px]">person_check</span>
+            </div>
+            <div>
+              <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-white/40">Active
+                Referrers</p>
+              <p id="kpiActive" class="text-2xl font-black text-slate-900 dark:text-white">—</p>
+            </div>
+          </div>
+          <div class="kpi-card flex items-center gap-4">
+            <div class="w-11 h-11 bg-amber-500/10 rounded-xl flex items-center justify-center flex-shrink-0">
+              <span class="material-symbols-outlined text-amber-500 text-[22px]">payments</span>
+            </div>
+            <div>
+              <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-white/40">Total
+                Commission</p>
+              <p id="kpiComm" class="text-2xl font-black text-slate-900 dark:text-white">—</p>
+            </div>
+          </div>
+          <div class="kpi-card flex items-center gap-4">
+            <div class="w-11 h-11 bg-purple-500/10 rounded-xl flex items-center justify-center flex-shrink-0">
+              <span class="material-symbols-outlined text-purple-500 text-[22px]">account_tree</span>
+            </div>
+            <div>
+              <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-white/40">Max Depth</p>
+              <p id="kpiDepth" class="text-2xl font-black text-slate-900 dark:text-white">—</p>
+            </div>
+          </div>
+        </div>
+        <!-- Legend + Zoom Controls row -->
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-5">
+            <div class="flex items-center gap-2">
+              <span class="w-3 h-3 rounded-full bg-blue-500 inline-block"></span>
+              <span class="text-xs font-medium text-slate-500 dark:text-white/60">Selected Root</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="w-3 h-3 rounded-full bg-primary inline-block"></span>
+              <span class="text-xs font-medium text-slate-500 dark:text-white/60">Active Member</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="w-3 h-3 rounded-full bg-gray-400 inline-block"></span>
+              <span class="text-xs font-medium text-slate-500 dark:text-white/60">Inactive Member</span>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-xs text-slate-400 dark:text-white/40 font-semibold mr-1">Zoom</span>
+            <button id="zoomIn"
+              class="w-9 h-9 flex items-center justify-center bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg shadow-sm hover:bg-slate-50 dark:hover:bg-white/10 transition-colors dark:text-white">
+              <span class="material-symbols-outlined text-[18px]">add</span>
+            </button>
+            <button id="zoomOut"
+              class="w-9 h-9 flex items-center justify-center bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg shadow-sm hover:bg-slate-50 dark:hover:bg-white/10 transition-colors dark:text-white">
+              <span class="material-symbols-outlined text-[18px]">remove</span>
+            </button>
+            <button id="zoomReset"
+              class="w-9 h-9 flex items-center justify-center bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg shadow-sm hover:bg-slate-50 dark:hover:bg-white/10 transition-colors dark:text-white">
+              <span class="material-symbols-outlined text-[18px]">fit_screen</span>
+            </button>
+          </div>
+        </div>
+        <!-- Tree Canvas (D3 area) -->
+        <div id="treeCanvas" class="rounded-2xl border border-slate-200 dark:border-white/10 relative"
+          style="min-height:600px; width:100%;">
+          <svg id="treeSvg" style="width:100%; height:100%; position:absolute; inset:0;"></svg>
+          <!-- Empty / Not Found state — inside canvas so inset:0 works -->
+          <div id="notFound"
+            style="display:none; position:absolute; inset:0; align-items:center; justify-content:center; flex-direction:column; gap:12px;">
+            <span class="material-symbols-outlined text-slate-300 dark:text-white/20 text-[64px]">manage_search</span>
+            <p class="text-slate-400 dark:text-white/40 font-bold text-sm">No user found. Try a different search.</p>
+          </div>
+        </div>
+        <!-- Footer -->
+        <footer class="pt-8 pb-4 border-t border-slate-200 dark:border-white/10">
+          <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-8 text-[11px] font-bold text-slate-400 uppercase tracking-widest">
+              <a class="hover:text-primary transition-colors" href="#">Privacy Policy</a>
+              <a class="hover:text-primary transition-colors" href="#">Terms of Service</a>
+              <a class="hover:text-primary transition-colors" href="#">Documentation</a>
+            </div>
+            <p class="text-[11px] font-bold text-slate-400">© 2024 TIME TASK BD. ALL RIGHTS RESERVED.</p>
+          </div>
+        </footer>
+      </div>
+    </main>
+  </div><!-- /main content -->
+
+  <!-- ═══════════════════ SIDE PANEL ═══════════════════ -->
+  <div id="panelOverlay"></div>
+  <aside id="sidePanel">
+    <div class="flex items-center justify-between p-5 border-b border-slate-100 dark:border-white/10 flex-shrink-0">
+      <h3 class="font-black text-base dark:text-white">User Detail</h3>
+      <button id="closePanelBtn"
+        class="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-white/60 hover:bg-primary/10 hover:text-primary transition-all">
+        <span class="material-symbols-outlined text-[18px]">close</span>
+      </button>
+    </div>
+    <div id="panelContent" class="flex-1 overflow-y-auto p-5 space-y-5"></div>
+  </aside>
+
+  <!-- ═══════════════════ SCRIPTS ═══════════════════ -->
+  <script>
+    console.log(">>> Referral Tree Script Starting");
+    // ─────────────────────────────────────────────────────
+    // SUPABASE DATA LAYER
+    // ─────────────────────────────────────────────────────
+    const TREE_SUPABASE_URL = 'https://kdoouzlmncekkozjrsdf.supabase.co';
+    const TREE_SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtkb291emxtbmNla2tvempyc2RmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5ODY5MjIsImV4cCI6MjA4NjU2MjkyMn0.7lsbYQ594Ix8LSXLs6RHYfljiO2A5P70XAjPsqWo8bs';
+
+    // Ensure supabase is loaded before getting client
+    let sb = window.supabaseClient;
+
+    async function getSupabase() {
+      if (sb) return sb;
+      if (window.supabaseClient) {
+        sb = window.supabaseClient;
+        return sb;
+      }
+      if (window.supabase) {
+        sb = window.supabase.createClient(TREE_SUPABASE_URL, TREE_SUPABASE_KEY);
+        return sb;
+      }
+      // Poll briefly if it's still loading
+      for (let i = 0; i < 20; i++) {
+        await new Promise(r => setTimeout(r, 100));
+        if (window.supabase) {
+          sb = window.supabase.createClient(TREE_SUPABASE_URL, TREE_SUPABASE_KEY);
+          return sb;
+        }
+      }
+      throw new Error("Supabase SDK failed to load.");
+    }
+
+    // Live users list — populated by loadData()
+    let USERS = [];
+    let byId = {};
+
+    // Format a DB row → shape the rest of the code expects
+    function normaliseRow(r) {
+      const joinedDate = r.created_at
+        ? new Date(r.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+        : '—';
+      return {
+        id: r.id,
+        name: r.full_name || r.username || r.email || r.id.slice(0, 8),
+        username: r.username ? `@${r.username}` : `@${r.id.slice(0, 8)}`,
+        email: r.email || '',
+        avatar: r.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(r.full_name || r.id)}&background=13ec5b&color=0d1b12&size=80`,
+        status: r.status || 'active',
+        joinDate: joinedDate,
+        commission: parseFloat(r.total_commission) || 0,
+        plan: r.verification_status === 'verified' ? 'Verified' : 'Unverified',
+        country: r.country || '—',
+        balance: parseFloat(r.balance) || 0,
+        lastLogin: '—',         // not stored in profiles
+        referredBy: r.referred_by || null,
+      };
+    }
+
+    // Build children map from current USERS array
+    function buildChildMap() {
+      const map = {};
+      USERS.forEach(u => {
+        const p = u.referredBy || '__root__';
+        if (!map[p]) map[p] = [];
+        map[p].push(u.id);
+      });
+      return map;
+    }
+
+    // Show / hide loading skeleton over the canvas
+    function setLoading(on) {
+      let el = document.getElementById('treeLoadingOverlay');
+      if (on) {
+        if (!el) {
+          el = document.createElement('div');
+          el.id = 'treeLoadingOverlay';
+          el.style.cssText = 'position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:var(--card-bg);border-radius:1rem;z-index:10;';
+          el.innerHTML = `
+            <svg width="48" height="48" viewBox="0 0 48 48" fill="none" style="animation:spin 1s linear infinite">
+              <circle cx="24" cy="24" r="20" stroke="rgba(19,236,91,0.15)" stroke-width="4"/>
+              <path d="M44 24a20 20 0 0 0-20-20" stroke="#13ec5b" stroke-width="4" stroke-linecap="round"/>
+            </svg>
+            <p style="font-size:13px;font-weight:700;color:var(--card-subtext)">Loading referral network…</p>
+          `;
+          document.getElementById('treeCanvas').appendChild(el);
+          if (!document.getElementById('spinKeyframes')) {
+            const s = document.createElement('style');
+            s.id = 'spinKeyframes';
+            s.textContent = '@keyframes spin{to{transform:rotate(360deg)}}';
+            document.head.appendChild(s);
+          }
+        }
+        el.style.display = 'flex';
+      } else {
+        if (el) el.style.display = 'none';
+      }
+    }
+
+    // Fetch all profiles from the admin view, normalise, and rebuild state
+    async function loadData() {
+      setLoading(true);
+      try {
+        const client = await getSupabase();
+        const { data, error } = await client
+          .from('admin_referral_tree_view')
+          .select('*')
+          .order('created_at', { ascending: true });
+
+        if (error) throw error;
+
+        USERS = (data || []).map(normaliseRow);
+        byId = {};
+        USERS.forEach(u => { byId[u.id] = u; });
+        childMap = buildChildMap();
+
+        // Pick the first user with no referrer as default root (or first user)
+        const topLevelUsers = USERS.filter(u => !u.referredBy);
+        rootId = topLevelUsers.length ? topLevelUsers[0].id : (USERS[0]?.id || null);
+
+      } catch (err) {
+        console.error('Supabase fetch failed:', err);
+        // Graceful fallback message in the canvas
+        document.getElementById('notFound').style.display = 'flex';
+        document.getElementById('notFound').querySelector('p').textContent =
+          'Failed to load data. Check your Supabase connection.';
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    // ─────────────────────────────────────────────────────
+    // STATE
+    // ─────────────────────────────────────────────────────
+    let rootId = null;          // set by loadData()
+    let selectedId = null;
+    let childMap = {};          // set by loadData()
+
+    // D3 state
+    let d3root = null;
+    let svg, gLink, gNode, zoomBehavior;
+    let currentTransform = d3.zoomIdentity;
+    const margin = { top: 80, right: 120, bottom: 80, left: 120 };
+    const nodeWidthRoot = 260, nodeHeightRoot = 200;
+    const nodeWidthL1 = 220, nodeHeightL1 = 140;
+    const nodeWidthL2 = 180, nodeHeightL2 = 80;
+
+    // ─────────────────────────────────────────────────────
+    // HELPERS
+    // ─────────────────────────────────────────────────────
+    function countSubtree(id) {
+      const kids = childMap[id] || [];
+      return kids.reduce((acc, k) => acc + 1 + countSubtree(k), 0);
+    }
+    function maxDepth(id, d = 0) {
+      const kids = childMap[id] || [];
+      if (!kids.length) return d;
+      return Math.max(...kids.map(k => maxDepth(k, d + 1)));
+    }
+    function allInSubtree(id) {
+      const kids = childMap[id] || [];
+      return [id, ...kids.flatMap(k => allInSubtree(k))];
+    }
+    function fmtMoney(n) {
+      return n >= 1000 ? `$${(n / 1000).toFixed(1)}k` : `$${n.toFixed(0)}`;
+    }
+    function updateKPIs() {
+      const all = allInSubtree(rootId);
+      const referred = all.length - 1;
+      // Count all active-status users in the subtree (Active Members)
+      const activeRef = all.filter(id => byId[id]?.status === 'active').length;
+      const totalComm = all.reduce((s, id) => s + (byId[id]?.commission || 0), 0);
+      const depth = maxDepth(rootId);
+      document.getElementById('kpiTotal').textContent = referred;
+      document.getElementById('kpiActive').textContent = activeRef;
+      document.getElementById('kpiComm').textContent = fmtMoney(totalComm);
+      document.getElementById('kpiDepth').textContent = `${depth} Level${depth !== 1 ? 's' : ''}`;
+    }
+
+    // ─────────────────────────────────────────────────────
+    // NODE CARD BUILDERS — use CSS vars, no Tailwind dark:
+    // ─────────────────────────────────────────────────────
+    function isDark() { return document.documentElement.classList.contains('dark'); }
+    function t(light, dark) { return isDark() ? dark : light; }
+
+    function avatarEl(u, sz) {
+      const border = u.status === 'active' ? '#13ec5b' : '#9ca3af';
+      return `<div style="width:${sz}px;height:${sz}px;border-radius:50%;background-image:url('${u.avatar}');background-size:cover;background-position:center;border:2px solid ${border};flex-shrink:0"></div>`;
+    }
+    function statusDot(u) {
+      const c = u.status === 'active' ? '#13ec5b' : '#9ca3af';
+      return `<span style="width:8px;height:8px;border-radius:50%;background:${c};flex-shrink:0;display:inline-block"></span>`;
+    }
+    function buildNodeHtml(d) {
+      const u = d.data;
+      const r = d.depth === 0;
+      const l1 = d.depth === 1;
+      const hasKids = d._children || (d.children && d.children.length > 0);
+      const isExpanded = !!d.children;
+
+      const bg = t('#ffffff', '#1a2e1f');
+      const txt = t('#0f172a', '#ffffff');
+      const sub = t('#64748b', '#6b9e7a');
+      const ibg = t('#f8fafc', 'rgba(0,0,0,0.25)');
+      const bdr = t('#e2e8f0', 'rgba(255,255,255,0.08)');
+
+      if (r) {
+        const refCount = (childMap[u.id] || []).length;
+        return `
+          <div xmlns="http://www.w3.org/1999/xhtml" class="tree-node tree-node-root-variant${u.status === 'inactive' ? ' tree-node-inactive' : ''}" style="width:260px; height:200px; padding:16px; background:${bg}; border-color:#3b82f6; position:relative;" onclick="window.nodeClick('${u.id}')">
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:5px">
+              ${avatarEl(u, 48)}
+              <div style="flex:1;min-width:0">
+                <p style="font-size:14px;font-weight:700;color:${txt};margin:0">${u.name}</p>
+                <p style="font-size:11px;font-weight:700;color:#13ec5b;margin:0">${u.username}</p>
+              </div>
+              <span style="padding:2px 8px;border-radius:99px;font-size:9px;font-weight:900;text-transform:uppercase;background:#dbeafe;color:#2563eb">Root</span>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:10px">
+              <div style="background:${ibg};padding:6px;border-radius:8px">
+                <p style="color:${sub};text-transform:uppercase;font-weight:700;margin:0 0 2px">Joined</p>
+                <p style="font-weight:600;color:${txt};margin:0">${u.joinDate}</p>
+              </div>
+              <div style="background:${ibg};padding:6px;border-radius:8px">
+                <p style="color:${sub};text-transform:uppercase;font-weight:700;margin:0 0 2px">Direct Refs</p>
+                <p style="font-weight:600;color:${txt};margin:0">${refCount} users</p>
+              </div>
+            </div>
+            <div style="margin-top:12px;padding-top:12px;border-top:1px solid ${bdr}">
+              <p style="font-size:10px;color:${sub};text-transform:uppercase;font-weight:700;margin:0 0 2px">Commission Generated</p>
+              <p style="font-size:20px;font-weight:900;color:#13ec5b;margin:0">$${u.commission.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
+            </div>
+          </div>`;
+      } else if (l1) {
+        return `
+          <div xmlns="http://www.w3.org/1999/xhtml" class="tree-node${u.status === 'inactive' ? ' tree-node-inactive' : ''}" style="width:220px; height:140px; padding:12px; background:${bg}; border-color:rgba(19,236,91,0.4); position:relative;" onclick="window.nodeClick('${u.id}')">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+              ${avatarEl(u, 32)}
+              <p style="font-size:12px;font-weight:700;color:${txt};margin:0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${u.name}</p>
+              ${statusDot(u)}
+            </div>
+            <div style="font-size:9px;margin-bottom:8px">
+              <div style="display:flex;justify-content:space-between;padding:2px 0">
+                <span style="color:${sub}">ID:</span>
+                <span style="color:${txt};font-weight:600">${u.id}</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;padding:2px 0">
+                <span style="color:${sub}">Commission:</span>
+                <span style="color:#13ec5b;font-weight:700">$${u.commission.toLocaleString()}</span>
+              </div>
+            </div>
+            ${hasKids
+            ? `<button class="expand-btn ${isExpanded ? 'open-state' : ''}" onclick="window.toggleNode(event, '${u.id}')">
+                   <span class="material-symbols-outlined" style="font-size:14px">${isExpanded ? 'remove_circle' : 'add_circle'}</span>
+                   ${isExpanded ? 'COLLAPSE' : 'EXPAND'}
+                 </button>`
+            : `<div style="margin-top:8px;padding:4px 0;text-align:center;font-size:9px;font-weight:700;color:${sub}">No Sub-Referrals</div>`}
+          </div>`;
+      } else {
+        return `
+          <div xmlns="http://www.w3.org/1999/xhtml" class="tree-node${u.status === 'inactive' ? ' tree-node-inactive' : ''}" style="width:180px; height:80px; padding:10px; background:${bg}; border-color:${t('#e2e8f0', 'rgba(255,255,255,0.08)')}; position:relative;" onclick="window.nodeClick('${u.id}')">
+            <div style="display:flex;align-items:center;gap:8px">
+              ${avatarEl(u, 28)}
+              <div style="flex:1;min-width:0">
+                <p style="font-size:10px;font-weight:700;color:${txt};margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${u.name}</p>
+                <p style="font-size:9px;color:${sub};margin:0">${u.id}</p>
+              </div>
+              ${hasKids
+            ? `<button class="expand-btn" style="margin-top:0;width:auto;padding:2px;border:none;background:none" onclick="window.toggleNode(event, '${u.id}')">
+                     <span class="material-symbols-outlined" style="font-size:16px">${isExpanded ? 'expand_less' : 'expand_more'}</span>
+                   </button>`
+            : ''}
+            </div>
+          </div>`;
+      }
+    }
+
+    // ─────────────────────────────────────────────────────
+    // D3.JS RENDERING ENGINE
+    // ─────────────────────────────────────────────────────
+    function buildHierarchyData(nodeId) {
+      const u = byId[nodeId];
+      if (!u) return null;
+      const node = { ...u, isRoot: nodeId === rootId, children: [] };
+      const kids = childMap[nodeId] || [];
+      kids.forEach(kidId => {
+        const childData = buildHierarchyData(kidId);
+        if (childData) node.children.push(childData);
+      });
+      return node;
+    }
+
+    function initD3() {
+      const parentEl = document.getElementById('treeCanvas');
+      const width = parentEl.clientWidth;
+      const height = parentEl.clientHeight;
+
+      d3.select("#treeSvg").selectAll("*").remove();
+
+      svg = d3.select("#treeSvg")
+        .attr("viewBox", [0, 0, width, height]);
+
+      zoomBehavior = d3.zoom()
+        .scaleExtent([0.1, 3])
+        .on("zoom", (event) => {
+          currentTransform = event.transform;
+          gRoot.attr("transform", currentTransform);
+        });
+
+      svg.call(zoomBehavior).on("dblclick.zoom", null);
+
+      const gRoot = svg.append("g");
+      gLink = gRoot.append("g");
+      gNode = gRoot.append("g");
+
+      const rawData = buildHierarchyData(rootId);
+      if (!rawData) {
+        document.getElementById('notFound').style.display = 'flex';
+        updateKPIs();
+        return;
+      }
+      document.getElementById('notFound').style.display = 'none';
+
+      d3root = d3.hierarchy(rawData);
+
+      // Node dimensions based on depth
+      d3root.each(d => {
+        if (d.depth === 0) { d.w = nodeWidthRoot; d.h = nodeHeightRoot; }
+        else if (d.depth === 1) { d.w = nodeWidthL1; d.h = nodeHeightL1; }
+        else { d.w = nodeWidthL2; d.h = nodeHeightL2; }
+      });
+
+      d3root.x0 = width / 2;
+      d3root.y0 = margin.top;
+
+      // Collapse all except direct children initially
+      d3root.descendants().forEach(d => {
+        if (d.depth > 0 && d.children) {
+          d._children = d.children;
+          d.children = null;
+        }
+      });
+
+      // Expand level 1 children specifically when a new tree is set
+      const kids = childMap[rootId] || [];
+      if (d3root.children) {
+        d3root.children.forEach(c => {
+          // Only expand if they have kids
+          if (c._children) { c.children = c._children; c._children = null; }
+        });
+      } else if (d3root._children) {
+        d3root.children = d3root._children;
+        d3root._children = null;
+      }
+
+      updateD3(d3root);
+
+      // Center the root
+      svg.call(
+        zoomBehavior.transform,
+        d3.zoomIdentity.translate(width / 2 - d3root.x0, 80).scale(1)
+      );
+      updateKPIs();
+    }
+
+    // ─────────────────────────────────────────────────────
+    // D3 RENDERING ENGINE
+    // ─────────────────────────────────────────────────────
+
+    // Safe height getter — guards against missing .h after toggle
+    function getH(d) {
+      if (d.h !== undefined) return d.h;
+      return d.depth === 0 ? nodeHeightRoot : d.depth === 1 ? nodeHeightL1 : nodeHeightL2;
+    }
+
+    function updateD3(source) {
+      const treeLayout = d3.tree()
+        .nodeSize([240, 220])
+        .separation((a, b) => a.parent === b.parent ? 1.1 : 1.4);
+
+      const nodes = treeLayout(d3root);
+
+      // Shift so topmost node starts at margin.top
+      let minY = Infinity;
+      nodes.each(d => { if (d.y < minY) minY = d.y; });
+      nodes.each(d => { d.y = d.y - minY + margin.top; });
+
+      // Ensure every node has w/h dimensions
+      nodes.each(d => {
+        if (d.w === undefined) {
+          if (d.depth === 0) { d.w = nodeWidthRoot; d.h = nodeHeightRoot; }
+          else if (d.depth === 1) { d.w = nodeWidthL1; d.h = nodeHeightL1; }
+          else { d.w = nodeWidthL2; d.h = nodeHeightL2; }
+        }
+      });
+
+      const d3nodes = nodes.descendants();
+      const links = nodes.links();
+
+      const TDUR = 400;
+
+      // ── NODES ──────────────────────────────────────────
+      const node = gNode.selectAll('g.node')
+        .data(d3nodes, d => d.data.id);
+
+      // ENTER — spawn at source position, fade in
+      const nodeEnter = node.enter().append('g')
+        .attr('class', 'node')
+        .attr('opacity', 0)
+        .attr('transform', `translate(${source.x0 ?? source.x ?? 0},${source.y0 ?? source.y ?? 0})`);
+
+      nodeEnter.append('foreignObject')
+        .attr('width', d => d.w)
+        .attr('height', d => d.h)
+        .attr('x', d => -d.w / 2)
+        .attr('y', 0)
+        .attr('overflow', 'visible')
+        .html(d => buildNodeHtml(d));
+
+      // Animate ENTER to final position
+      nodeEnter.transition().duration(TDUR).ease(d3.easeCubicInOut)
+        .attr('opacity', 1)
+        .attr('transform', d => `translate(${d.x},${d.y})`);
+
+      // UPDATE — existing nodes move to new position
+      node.transition().duration(TDUR).ease(d3.easeCubicInOut)
+        .attr('opacity', 1)
+        .attr('transform', d => `translate(${d.x},${d.y})`);
+
+      // Refresh card HTML for theme / expand-state changes on all visible nodes
+      node.merge(nodeEnter).select('foreignObject')
+        .attr('width', d => d.w)
+        .attr('height', d => d.h)
+        .attr('x', d => -d.w / 2)
+        .html(d => buildNodeHtml(d));
+
+      // EXIT — collapse toward source, fade out
+      node.exit()
+        .transition().duration(TDUR * 0.75).ease(d3.easeCubicIn)
+        .attr('opacity', 0)
+        .attr('transform', `translate(${source.x ?? 0},${source.y ?? 0})`)
+        .remove();
+
+
+      // ── LINKS ──────────────────────────────────────────
+      const link = gLink.selectAll('path.link')
+        .data(links, d => d.target.data.id);
+
+      // Line from bottom-centre of parent card to top-centre of child card
+      const pathD = d => {
+        const sy = d.source.y + getH(d.source);   // bottom of parent card
+        const ty = d.target.y;                      // top of child card
+        const mx = (sy + ty) / 2;
+        return `M${d.source.x},${sy} C${d.source.x},${mx} ${d.target.x},${mx} ${d.target.x},${ty}`;
+      };
+
+      // Initial path for entering links — collapsed at source bottom
+      const pathDEnter = () => {
+        const sy = (source.y0 ?? source.y ?? 0) + getH(source);
+        const sx = source.x0 ?? source.x ?? 0;
+        return `M${sx},${sy} C${sx},${sy} ${sx},${sy} ${sx},${sy}`;
+      };
+
+      // ENTER
+      const linkEnter = link.enter().append('path')
+        .attr('class', 'link')
+        .attr('d', pathDEnter);
+
+      // Animate enter + update to final path
+      link.merge(linkEnter)
+        .transition().duration(TDUR).ease(d3.easeCubicInOut)
+        .attr('d', pathD);
+
+      // EXIT — retract to source
+      link.exit()
+        .transition().duration(TDUR * 0.75).ease(d3.easeCubicIn)
+        .attr('d', pathDEnter)
+        .remove();
+
+      // Stash positions for next transition reference
+      nodes.each(d => {
+        d.x0 = d.x;
+        d.y0 = d.y;
+      });
+    }
+
+    // Global toggle function
+    window.toggleNode = function (e, id) {
+      e.stopPropagation();
+      // Find correct node
+      const nodes = d3root.descendants();
+      const d = nodes.find(n => n.data.id === id);
+      if (!d) return;
+
+      if (d.children) {
+        d._children = d.children;
+        d.children = null;
+      } else {
+        d.children = d._children;
+        d._children = null;
+      }
+      updateD3(d);
+    };
+
+    // Global click handler
+    window.nodeClick = function (id) {
+      openPanel(id);
+    };
+
+    // ─────────────────────────────────────────────────────
+    // SIDE PANEL
+    // ─────────────────────────────────────────────────────
+    function openPanel(id) {
+      const u = byId[id];
+      if (!u) return;
+      const kids = childMap[id] || [];
+      const kidsHtml = kids.map(kid => {
+        const k = byId[kid];
+        return k ? `<div class="flex items-center justify-between py-2 border-b border-slate-100 dark:border-white/10 last:border-0">
+          <div class="flex items-center gap-2">
+            <div class="w-7 h-7 rounded-full bg-cover bg-center" style="background-image:url('${k.avatar}')"></div>
+            <p class="text-xs font-semibold dark:text-white">${k.name}</p>
+          </div>
+          <span class="text-[10px] font-bold text-primary">$${k.commission.toLocaleString()}</span>
+        </div>` : '';
+      }).join('');
+
+      document.getElementById('panelContent').innerHTML = `
+        <div class="flex items-center gap-4 pb-4 border-b border-slate-100 dark:border-white/10">
+          <div class="w-16 h-16 rounded-xl bg-cover bg-center border-2 border-primary/20" style="background-image:url('${u.avatar}')"></div>
+          <div>
+            <p class="font-black text-base dark:text-white">${u.name}</p>
+            <p class="text-xs text-primary font-bold">${u.username}</p>
+            <span class="inline-block mt-1 px-2 py-0.5 rounded-full text-[9px] font-black uppercase ${u.status === 'active' ? 'bg-primary/10 text-primary' : 'bg-gray-100 dark:bg-white/10 text-gray-400'}">${u.status}</span>
+          </div>
+        </div>
+        <div class="space-y-2 text-xs">
+          ${[['ID', u.id], ['Plan', u.plan], ['Country', u.country], ['Joined', u.joinDate], ['Last Login', u.lastLogin]].map(([l, v]) => `
+          <div class="flex justify-between py-1.5 border-b border-slate-50 dark:border-white/5">
+            <span class="text-slate-400 dark:text-white/40 font-bold uppercase tracking-wider text-[10px]">${l}</span>
+            <span class="font-semibold dark:text-white">${v}</span>
+          </div>`).join('')}
+          <div class="flex justify-between py-1.5">
+            <span class="text-slate-400 dark:text-white/40 font-bold uppercase tracking-wider text-[10px]">Commission</span>
+            <span class="font-black text-primary text-base">$${u.commission.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+          </div>
+        </div>
+        ${kids.length ? `
+        <div class="pt-2">
+          <p class="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-white/40 mb-2">Direct Referrals (${kids.length})</p>
+          ${kidsHtml}
+        </div>` : `<p class="text-xs text-slate-300 dark:text-white/20 font-semibold text-center py-4">No direct referrals</p>`}
+      `;
+      document.getElementById('sidePanel').classList.add('open');
+      document.getElementById('panelOverlay').classList.add('open');
+    }
+    function closePanel() {
+      document.getElementById('sidePanel').classList.remove('open');
+      document.getElementById('panelOverlay').classList.remove('open');
+    }
+    document.getElementById('closePanelBtn').addEventListener('click', closePanel);
+    document.getElementById('panelOverlay').addEventListener('click', closePanel);
+
+    // ─────────────────────────────────────────────────────
+    // SEARCH — reload data then filter by search query
+    // ─────────────────────────────────────────────────────
+    document.getElementById('loadBtn').addEventListener('click', async () => {
+      const q = document.getElementById('treeSearch').value.trim().toLowerCase();
+      await loadData();   // always refresh from Supabase
+      if (!USERS.length) return;
+      if (q) {
+        const found = USERS.find(u =>
+          u.id.toLowerCase().includes(q) ||
+          u.name.toLowerCase().includes(q) ||
+          u.username.toLowerCase().includes(q) ||
+          (u.email && u.email.toLowerCase().includes(q))
+        );
+        if (found) {
+          rootId = found.id;
+        } else {
+          d3.select("#treeSvg").selectAll("*").remove();
+          document.getElementById('notFound').style.display = 'flex';
+          document.getElementById('notFound').querySelector('p').textContent =
+            'No user found. Try a different search.';
+          ['kpiTotal', 'kpiActive', 'kpiComm', 'kpiDepth'].forEach(id => document.getElementById(id).textContent = '—');
+          return;
+        }
+      }
+      initD3();
+    });
+    document.getElementById('treeSearch').addEventListener('keydown', e => {
+      if (e.key === 'Enter') document.getElementById('loadBtn').click();
+    });
+
+    // ─────────────────────────────────────────────────────
+    // ZOOM CONTROLS (external buttons)
+    // ─────────────────────────────────────────────────────
+    document.getElementById('zoomIn').addEventListener('click', () => {
+      if (!svg) return;
+      svg.transition().call(zoomBehavior.scaleBy, 1.2);
+    });
+    document.getElementById('zoomOut').addEventListener('click', () => {
+      if (!svg) return;
+      svg.transition().call(zoomBehavior.scaleBy, 0.8);
+    });
+    document.getElementById('zoomReset').addEventListener('click', () => {
+      if (!svg || !d3root) return;
+      const width = document.getElementById('treeCanvas').clientWidth;
+      svg.transition().duration(500).call(
+        zoomBehavior.transform,
+        d3.zoomIdentity.translate(width / 2 - d3root.x0, 80).scale(1)
+      );
+    });
+    document.getElementById('resetBtn').addEventListener('click', async () => {
+      document.getElementById('treeSearch').value = '';
+      await loadData();
+      initD3();
+    });
+
+    // ─────────────────────────────────────────────────────
+    // DARK MODE — re-render tree so card inline styles update
+    // ─────────────────────────────────────────────────────
+    const darkToggle = document.getElementById('darkModeToggle');
+    const darkIconEl = document.getElementById('darkIcon');
+
+    function updateIcons(isDark) {
+      if (darkIconEl) {
+        darkIconEl.textContent = isDark ? 'dark_mode' : 'light_mode';
+      }
+      if (d3root) updateD3(d3root);
+    }
+
+    // Sync state on load
+    updateIcons(document.documentElement.classList.contains('dark'));
+
+    darkToggle.addEventListener('click', () => {
+      const isDark = document.documentElement.classList.toggle('dark');
+      document.documentElement.classList.toggle('light', !isDark);
+      localStorage.setItem('theme', isDark ? 'dark' : 'light');
+      updateIcons(isDark);
+    });
+
+    // ─────────────────────────────────────────────────────
+    // SIDEBAR TOGGLE
+    // ─────────────────────────────────────────────────────
+    document.getElementById('sidebarToggle').addEventListener('click', () => {
+      document.getElementById('mainSidebar').classList.toggle('sidebar-collapsed');
+    });
+
+    // ─────────────────────────────────────────────────────
+    // ASYNC INIT — load data then render tree
+    // ─────────────────────────────────────────────────────
+    (async () => {
+      await loadData();
+      if (rootId) initD3();
+    })();
+  </script>
+</body>
+
+</html>

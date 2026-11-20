@@ -1,0 +1,682 @@
+<!doctype html>
+<html class="light" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Time Task BD - Help Center &amp; FAQ</title>
+    <!-- Supabase Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../supabase-client.js"></script>
+    <script src="../auth-guard.js"></script>
+    <script src="../navbar-auth.js"></script>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400;500;600;700&amp;display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+      rel="stylesheet"
+    />
+    <script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              primary: "#13ec5b",
+              "background-light": "#f6f8f6",
+              "background-dark": "#102216",
+              "footer-light": "#f0f2f0",
+              "footer-dark": "#1a2e20",
+            },
+            fontFamily: {
+              display: ["Work Sans"],
+            },
+            borderRadius: {
+              DEFAULT: "0.25rem",
+              lg: "0.5rem",
+              xl: "0.75rem",
+              full: "9999px",
+            },
+          },
+        },
+      };
+    </script>
+    <style type="text/tailwindcss">
+      body {
+        font-family: "Work Sans", sans-serif;
+      }
+      .material-symbols-outlined {
+        font-variation-settings:
+          "FILL" 0,
+          "wght" 400,
+          "GRAD" 0,
+          "opsz" 24;
+      }
+      .active-nav-link {
+        @apply text-[#0d1b12] dark:text-white font-bold relative;
+      }
+      .active-nav-link::after {
+        content: "";
+        @apply absolute -bottom-[31px] left-0 w-full h-[3px] bg-primary rounded-t-full;
+      }
+    </style>
+  </head>
+  <body
+    class="bg-background-light dark:bg-background-dark text-[#0d1b12] dark:text-white min-h-screen flex flex-col"
+  >
+    <!-- Universal Header from Header_Footer.html -->
+    <header
+      class="sticky top-0 z-50 w-full bg-white/95 dark:bg-background-dark/95 backdrop-blur-md border-b border-[#e7f3eb] dark:border-white/10"
+    >
+      <div
+        class="max-w-[1280px] mx-auto h-20 flex items-center justify-between"
+      >
+        <div class="flex items-center shrink-0">
+          <a class="flex items-center gap-2 group" href="#">
+            <div
+              class="size-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary"
+            >
+              <span class="material-symbols-outlined text-2xl">update</span>
+            </div>
+            <span
+              class="text-xl font-bold tracking-tight text-[#0d1b12] dark:text-white ml-1"
+              >Time Task <span class="text-primary">BD</span></span
+            >
+          </a>
+        </div>
+        <div class="flex items-center justify-end flex-grow gap-8 ml-auto">
+          <nav class="hidden lg:flex items-center gap-10">
+            <a
+              class="text-sm font-medium hover:text-primary transition-colors text-[#0d1b12] dark:text-gray-300"
+              href="Home_Page.html"
+              >Home</a
+            >
+            <a
+              class="text-sm font-medium hover:text-primary transition-colors text-[#0d1b12] dark:text-gray-300"
+              href="Blog_Page.html"
+              >Blog</a
+            >
+            <a
+              class="text-sm font-medium hover:text-primary transition-colors text-[#0d1b12] dark:text-gray-300"
+              href="Video_Gallery_Page.html"
+              >Video Gallery
+            </a>
+            <a
+              class="text-sm font-medium hover:text-primary transition-colors text-[#0d1b12] dark:text-gray-300"
+              href="About_Page.html"
+              >About Us</a
+            >
+            <a
+              class="text-sm font-medium hover:text-primary transition-colors text-[#0d1b12] dark:text-gray-300"
+              href="Contact_Page.html"
+              >Contact Us</a
+            >
+            <a
+              class="text-sm font-medium hover:text-primary transition-colors text-[#0d1b12] dark:text-gray-300"
+              href="Earning_Page.html"
+              >Earning Page</a
+            >
+          </nav>
+          <div class="flex items-center gap-3">
+            <button
+              class="p-2.5 rounded-lg hover:bg-[#e7f3eb] dark:hover:bg-white/10 transition-colors text-[#0d1b12] dark:text-white flex items-center justify-center"
+            >
+              <span class="material-symbols-outlined text-[22px]"
+                >dark_mode</span
+              >
+            </button>
+            <div class="h-8 w-[1px] bg-[#e7f3eb] dark:bg-white/10 mx-1"></div>
+            <button
+              onclick="window.location.href = 'Login_Page.html'"
+              class="px-4 h-10 text-sm font-bold text-[#0d1b12] dark:text-white hover:text-primary transition-colors"
+            >
+              Login
+            </button>
+            <button
+              onclick="window.location.href = 'Register_Page.html'"
+              class="bg-primary hover:bg-[#11d853] text-black px-6 h-10 rounded-lg text-sm font-bold tracking-wide transition-all shadow-sm"
+            >
+              Register
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="flex flex-col items-center flex-grow">
+      <!-- Hero Search Section -->
+      <section
+        class="w-full bg-gradient-to-br from-[#13ec5b20] via-background-light to-[#13ec5b10] dark:from-[#102216] dark:to-background-dark py-20 px-6"
+      >
+        <div
+          class="max-w-[800px] mx-auto text-center flex flex-col gap-8 items-center"
+        >
+          <div class="flex flex-col gap-4">
+            <h1
+              class="text-[#111813] dark:text-white text-4xl md:text-5xl font-black leading-tight tracking-tight"
+            >
+              How can we help you today?
+            </h1>
+            <p
+              class="text-[#61896f] dark:text-gray-400 text-base md:text-lg max-w-[600px] mx-auto"
+            >
+              Search for articles, keywords, or guides to help you navigate Time
+              Task BD's features and services.
+            </p>
+          </div>
+          <div class="w-full max-w-[600px]">
+            <div
+              class="flex w-full items-stretch rounded-xl h-14 md:h-16 shadow-lg bg-white dark:bg-zinc-900 border border-[#dbe6df] dark:border-white/10 overflow-hidden group focus-within:ring-2 focus-within:ring-primary/50 transition-all"
+            >
+              <div class="text-[#61896f] flex items-center justify-center pl-5">
+                <span class="material-symbols-outlined">search</span>
+              </div>
+              <input
+                class="flex w-full min-w-0 flex-1 border-none bg-transparent text-[#111813] dark:text-white focus:ring-0 px-4 text-base placeholder:text-[#61896f]/60"
+                placeholder="Search for articles, keywords..."
+                type="text"
+              />
+              <div class="flex items-center justify-center pr-2">
+                <button
+                  class="flex min-w-[100px] md:min-w-[120px] cursor-pointer items-center justify-center rounded-lg h-10 md:h-12 px-5 bg-primary text-[#111813] text-sm md:text-base font-bold tracking-tight hover:opacity-90"
+                >
+                  Search
+                </button>
+              </div>
+            </div>
+          </div>
+          <div
+            class="flex flex-wrap justify-center gap-3 text-sm text-[#61896f] dark:text-gray-400"
+          >
+            <span>Popular:</span>
+            <a class="underline hover:text-primary" href="#"
+              >Withdrawal rules</a
+            >
+            <a class="underline hover:text-primary" href="#">Bulk campaigns</a>
+            <a class="underline hover:text-primary" href="#">Security PIN</a>
+          </div>
+        </div>
+      </section>
+      <!-- Category Grid -->
+      <section class="max-w-[1280px] w-full px-6 py-16">
+        <div class="flex items-center justify-between mb-8">
+          <h2
+            class="text-[#111813] dark:text-white text-2xl font-bold leading-tight"
+          >
+            Browse by Category
+          </h2>
+          <a class="text-primary font-semibold text-sm hover:underline" href="#"
+            >View all categories</a
+          >
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <!-- Card 1: Users -->
+          <div
+            class="group flex flex-col gap-4 p-8 rounded-xl border border-[#dbe6df] dark:border-white/10 bg-white dark:bg-zinc-900 transition-all hover:shadow-xl hover:border-primary/50 cursor-pointer"
+          >
+            <div
+              class="size-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-[#111813] transition-colors"
+            >
+              <span class="material-symbols-outlined text-3xl"
+                >account_balance_wallet</span
+              >
+            </div>
+            <div class="flex flex-col gap-2">
+              <h3 class="text-[#111813] dark:text-white text-xl font-bold">
+                For Users
+              </h3>
+              <p
+                class="text-[#61896f] dark:text-gray-400 text-sm leading-relaxed"
+              >
+                Learn everything about earning rewards, completing tasks
+                efficiently, and processing your withdrawals safely.
+              </p>
+            </div>
+            <div
+              class="mt-2 flex items-center gap-2 text-primary font-bold text-sm"
+            >
+              Browse Articles
+              <span class="material-symbols-outlined text-sm"
+                >arrow_forward</span
+              >
+            </div>
+          </div>
+          <!-- Card 2: Buyers -->
+          <div
+            class="group flex flex-col gap-4 p-8 rounded-xl border border-[#dbe6df] dark:border-white/10 bg-white dark:bg-zinc-900 transition-all hover:shadow-xl hover:border-primary/50 cursor-pointer"
+          >
+            <div
+              class="size-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-[#111813] transition-colors"
+            >
+              <span class="material-symbols-outlined text-3xl">campaign</span>
+            </div>
+            <div class="flex flex-col gap-2">
+              <h3 class="text-[#111813] dark:text-white text-xl font-bold">
+                For Buyers
+              </h3>
+              <p
+                class="text-[#61896f] dark:text-gray-400 text-sm leading-relaxed"
+              >
+                Resources for ordering campaigns, managing budgets, billing
+                queries, and tracking your growth statistics.
+              </p>
+            </div>
+            <div
+              class="mt-2 flex items-center gap-2 text-primary font-bold text-sm"
+            >
+              Browse Articles
+              <span class="material-symbols-outlined text-sm"
+                >arrow_forward</span
+              >
+            </div>
+          </div>
+          <!-- Card 3: Security -->
+          <div
+            class="group flex flex-col gap-4 p-8 rounded-xl border border-[#dbe6df] dark:border-white/10 bg-white dark:bg-zinc-900 transition-all hover:shadow-xl hover:border-primary/50 cursor-pointer"
+          >
+            <div
+              class="size-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-[#111813] transition-colors"
+            >
+              <span class="material-symbols-outlined text-3xl"
+                >admin_panel_settings</span
+              >
+            </div>
+            <div class="flex flex-col gap-2">
+              <h3 class="text-[#111813] dark:text-white text-xl font-bold">
+                Account &amp; Security
+              </h3>
+              <p
+                class="text-[#61896f] dark:text-gray-400 text-sm leading-relaxed"
+              >
+                Manage your profile settings, reset passwords, set up two-factor
+                authentication, and secure your PIN.
+              </p>
+            </div>
+            <div
+              class="mt-2 flex items-center gap-2 text-primary font-bold text-sm"
+            >
+              Browse Articles
+              <span class="material-symbols-outlined text-sm"
+                >arrow_forward</span
+              >
+            </div>
+          </div>
+        </div>
+      </section>
+      <!-- FAQ Accordion -->
+      <section class="max-w-[960px] w-full px-6 py-16">
+        <h2
+          class="text-[#111813] dark:text-white text-[28px] font-bold leading-tight mb-8 text-center"
+        >
+          Frequently Asked Questions
+        </h2>
+        <div class="flex flex-col gap-3">
+          <!-- FAQ Item 1 -->
+          <details
+            class="group bg-white dark:bg-zinc-900 border border-[#dbe6df] dark:border-white/10 rounded-xl overflow-hidden"
+            open=""
+          >
+            <summary
+              class="flex items-center justify-between p-6 cursor-pointer list-none"
+            >
+              <h4 class="text-[#111813] dark:text-white font-bold text-lg">
+                How do I withdraw my earnings?
+              </h4>
+              <span
+                class="material-symbols-outlined transition-transform group-open:rotate-180 text-primary"
+                >expand_more</span
+              >
+            </summary>
+            <div
+              class="px-6 pb-6 text-[#61896f] dark:text-gray-400 leading-relaxed"
+            >
+              <p>
+                To withdraw your earnings, navigate to your Wallet dashboard.
+                Click on the "Withdraw" button, select your preferred payment
+                method (e.g., Bank Transfer, Crypto, or Digital Wallet), enter
+                the amount, and confirm with your secure PIN. Processing usually
+                takes 24-48 hours depending on your account level.
+              </p>
+            </div>
+          </details>
+          <!-- FAQ Item 2 -->
+          <details
+            class="group bg-white dark:bg-zinc-900 border border-[#dbe6df] dark:border-white/10 rounded-xl overflow-hidden"
+          >
+            <summary
+              class="flex items-center justify-between p-6 cursor-pointer list-none"
+            >
+              <h4 class="text-[#111813] dark:text-white font-bold text-lg">
+                What is the daily task submission limit?
+              </h4>
+              <span
+                class="material-symbols-outlined transition-transform group-open:rotate-180 text-primary"
+                >expand_more</span
+              >
+            </summary>
+            <div
+              class="px-6 pb-6 text-[#61896f] dark:text-gray-400 leading-relaxed"
+            >
+              <p>
+                Standard users have a daily limit of 50 tasks. However, this
+                limit can be increased by improving your account accuracy score
+                and maintaining a consistent activity record over 30 days.
+                High-tier accounts enjoy unlimited task submissions.
+              </p>
+            </div>
+          </details>
+          <!-- FAQ Item 3 -->
+          <details
+            class="group bg-white dark:bg-zinc-900 border border-[#dbe6df] dark:border-white/10 rounded-xl overflow-hidden"
+          >
+            <summary
+              class="flex items-center justify-between p-6 cursor-pointer list-none"
+            >
+              <h4 class="text-[#111813] dark:text-white font-bold text-lg">
+                How to place a bulk order for campaigns?
+              </h4>
+              <span
+                class="material-symbols-outlined transition-transform group-open:rotate-180 text-primary"
+                >expand_more</span
+              >
+            </summary>
+            <div
+              class="px-6 pb-6 text-[#61896f] dark:text-gray-400 leading-relaxed"
+            >
+              <p>
+                Buyers can place bulk orders by visiting the "Campaign Manager"
+                and selecting "Create New Campaign." Choose the "Bulk Upload"
+                option to import your task list via a CSV or Excel file. Our
+                system will automatically validate the tasks and provide a total
+                cost estimate before you launch.
+              </p>
+            </div>
+          </details>
+          <!-- FAQ Item 4 -->
+          <details
+            class="group bg-white dark:bg-zinc-900 border border-[#dbe6df] dark:border-white/10 rounded-xl overflow-hidden"
+          >
+            <summary
+              class="flex items-center justify-between p-6 cursor-pointer list-none"
+            >
+              <h4 class="text-[#111813] dark:text-white font-bold text-lg">
+                I forgot my security PIN, what should I do?
+              </h4>
+              <span
+                class="material-symbols-outlined transition-transform group-open:rotate-180 text-primary"
+                >expand_more</span
+              >
+            </summary>
+            <div
+              class="px-6 pb-6 text-[#61896f] dark:text-gray-400 leading-relaxed"
+            >
+              <p>
+                For your security, PIN resets require email verification. Go to
+                Account Settings &gt; Security &gt; Reset PIN. You will receive
+                a reset link via your registered email address. If you no longer
+                have access to your email, please contact our support team with
+                your ID verification documents.
+              </p>
+            </div>
+          </details>
+        </div>
+      </section>
+      <!-- Support Contact CTA -->
+      <section class="w-full bg-[#111813] py-20 px-6">
+        <div
+          class="max-w-[800px] mx-auto text-center flex flex-col gap-6 items-center"
+        >
+          <div
+            class="size-16 rounded-full bg-primary/20 flex items-center justify-center text-primary mb-2"
+          >
+            <span class="material-symbols-outlined text-4xl"
+              >contact_support</span
+            >
+          </div>
+          <h2 class="text-white text-3xl md:text-4xl font-black">
+            Still need help?
+          </h2>
+          <p class="text-gray-400 text-base md:text-lg max-w-[500px]">
+            If you couldn't find the answer in our Help Center, our dedicated
+            support team is available 24/7 to assist you.
+          </p>
+          <div class="flex flex-col sm:flex-row gap-4 mt-4">
+            <button
+              class="flex min-w-[200px] items-center justify-center gap-2 rounded-lg h-14 px-8 bg-primary text-[#111813] font-bold hover:scale-105 transition-transform"
+            >
+              <span class="material-symbols-outlined">forum</span>
+              Chat with Support
+            </button>
+            <button
+              class="flex min-w-[200px] items-center justify-center gap-2 rounded-lg h-14 px-8 bg-white/10 text-white font-bold border border-white/20 hover:bg-white/20 transition-all"
+            >
+              <span class="material-symbols-outlined">mail</span>
+              Contact Form
+            </button>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Universal Footer from Header_Footer.html -->
+    <footer
+      class="bg-footer-light dark:bg-footer-dark pt-16 pb-8 border-t border-[#e7f3eb] dark:border-white/5"
+    >
+      <div class="max-w-[1280px] mx-auto">
+        <div
+          class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16"
+        >
+          <div class="space-y-6">
+            <div class="flex items-center gap-3">
+              <div
+                class="size-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary"
+              >
+                <span class="material-symbols-outlined text-2xl">update</span>
+              </div>
+              <span
+                class="text-xl font-bold tracking-tight text-[#0d1b12] dark:text-white"
+                >Time Task <span class="text-primary">BD</span></span
+              >
+            </div>
+            <p class="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">
+              Empowering your digital productivity through innovative task
+              management and streamlined earning opportunities.
+            </p>
+            <div class="flex gap-4">
+              <a
+                class="size-10 rounded-xl border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-black transition-all"
+                href="#"
+              >
+                <span class="material-symbols-outlined text-[20px]"
+                  >public</span
+                >
+              </a>
+              <a
+                class="size-10 rounded-xl border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-black transition-all"
+                href="#"
+              >
+                <span class="material-symbols-outlined text-[20px]">share</span>
+              </a>
+              <a
+                class="size-10 rounded-xl border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-black transition-all"
+                href="#"
+              >
+                <span class="material-symbols-outlined text-[20px]"
+                  >alternate_email</span
+                >
+              </a>
+            </div>
+          </div>
+          <div>
+            <h4
+              class="text-sm font-bold uppercase tracking-widest mb-6 text-[#0d1b12] dark:text-white"
+            >
+              Quick Links
+            </h4>
+            <ul class="space-y-4">
+              <li>
+                <a
+                  class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                  href="Navbar/Home_Page.html"
+                  >Home</a
+                >
+              </li>
+              <li>
+                <a
+                  class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                  href="Navbar/About_Page.html"
+                  >About Us</a
+                >
+              </li>
+              <li>
+                <a
+                  class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                  href="Navbar/Contact_Page.html"
+                  >Contact Us</a
+                >
+              </li>
+              <li>
+                <a
+                  class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                  href="FAQ_Page.html"
+                  >Help Center &amp; FAQ</a
+                >
+              </li>
+              <li>
+                <a
+                  class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                  href="Navbar/Blog_Page.html"
+                  >Our Blog</a
+                >
+              </li>
+            </ul>
+          </div>
+          <div>
+            <h4
+              class="text-sm font-bold uppercase tracking-widest mb-6 text-[#0d1b12] dark:text-white"
+            >
+              Services &amp; Legal
+            </h4>
+            <ul class="space-y-4">
+              <li>
+                <a
+                  class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                  href="Navbar/About_Page.html"
+                  >About Us</a
+                >
+              </li>
+              <li>
+                <a
+                  class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                  href="Privacy_Policy.html"
+                  >Privacy Policy</a
+                >
+              </li>
+              <li>
+                <a
+                  class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                  href="Terms_of_Service.html"
+                  >Terms of Service</a
+                >
+              </li>
+            </ul>
+          </div>
+          <div>
+            <h4
+              class="text-sm font-bold uppercase tracking-widest mb-6 text-[#0d1b12] dark:text-white"
+            >
+              Contact Info
+            </h4>
+            <ul class="space-y-4">
+              <li class="flex items-start gap-3">
+                <span class="material-symbols-outlined text-primary text-[20px]"
+                  >mail</span
+                >
+                <a
+                  class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary"
+                  href="mailto:support@timetaskbd.com"
+                  >support@timetaskbd.com</a
+                >
+              </li>
+              <li class="flex items-start gap-3">
+                <span class="material-symbols-outlined text-primary text-[20px]"
+                  >call</span
+                >
+                <span class="text-sm text-gray-600 dark:text-gray-400"
+                  >+880 1234 567890</span
+                >
+              </li>
+              <li class="flex items-start gap-3">
+                <span class="material-symbols-outlined text-primary text-[20px]"
+                  >location_on</span
+                >
+                <span class="text-sm text-gray-600 dark:text-gray-400"
+                  >Dhaka, Bangladesh</span
+                >
+              </li>
+            </ul>
+            <div
+              class="mt-8 pt-8 border-t border-[#e7f3eb] dark:border-white/5"
+            >
+              <p
+                class="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-4"
+              >
+                Social Media
+              </p>
+              <div class="flex gap-4">
+                <a
+                  class="text-[#4c9a66] hover:text-primary transition-colors"
+                  href="#"
+                >
+                  <svg class="size-6" fill="currentColor" viewBox="0 0 24 24">
+                    <path
+                      d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"
+                    ></path>
+                  </svg>
+                </a>
+                <a
+                  class="text-[#4c9a66] hover:text-primary transition-colors"
+                  href="#"
+                >
+                  <svg class="size-6" fill="currentColor" viewBox="0 0 24 24">
+                    <path
+                      d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.84 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"
+                    ></path>
+                  </svg>
+                </a>
+                <a
+                  class="text-[#4c9a66] hover:text-primary transition-colors"
+                  href="#"
+                >
+                  <svg class="size-6" fill="currentColor" viewBox="0 0 24 24">
+                    <path
+                      d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"
+                    ></path>
+                  </svg>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div
+          class="pt-8 border-t border-[#e7f3eb] dark:border-white/5 flex flex-col md:flex-row items-center justify-between gap-4"
+        >
+          <p class="text-sm text-gray-500 dark:text-gray-400">
+            Copyright © 2024
+            <span class="text-[#0d1b12] dark:text-white font-semibold"
+              >Time Task BD</span
+            >. All rights reserved.
+          </p>
+          <p class="text-sm text-gray-500 dark:text-gray-400">
+            Developed with <span class="text-primary font-bold">★</span> by
+            <a class="text-primary font-medium hover:underline" href="#"
+              >Digital Dynamics Agency</a
+            >
+          </p>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>
